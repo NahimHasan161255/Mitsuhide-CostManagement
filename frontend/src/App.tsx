@@ -15,6 +15,9 @@ import { SiireMasterPage } from './pages/Master/SiireMasterPage';
 import { GK0010Page } from './pages/Cost/GK0010Page';
 import { GK0020Page } from './pages/Cost/GK0020Page';
 import { GK0030Page } from './pages/Cost/GK0030Page';
+import { SR0010Page } from './pages/Purchase/SR0010Page';
+import { UR0010Page } from './pages/Sales/UR0010Page';
+import { VM0010Page } from './pages/Closing/VM0010Page';
 
 const { Paragraph } = Typography;
 
@@ -37,6 +40,15 @@ export const App: React.FC = () => {
 
       case 'ad1790c':
         return <SiireMasterPage />;
+
+      case 'sr0010':
+        return <SR0010Page />;
+
+      case 'ur0010':
+        return <UR0010Page />;
+
+      case 'vm0010':
+        return <VM0010Page />;
 
       case 'dashboard':
       default:
