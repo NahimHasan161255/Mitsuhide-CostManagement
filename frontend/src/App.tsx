@@ -11,7 +11,10 @@ import {
 } from '@ant-design/icons';
 import { MainLayout } from './components/Layout/MainLayout';
 import { JyucyuMasterPage } from './pages/Master/JyucyuMasterPage';
+import { SiireMasterPage } from './pages/Master/SiireMasterPage';
 import { GK0010Page } from './pages/Cost/GK0010Page';
+import { GK0020Page } from './pages/Cost/GK0020Page';
+import { GK0030Page } from './pages/Cost/GK0030Page';
 
 const { Paragraph } = Typography;
 
@@ -23,8 +26,17 @@ export const App: React.FC = () => {
       case 'gk0010':
         return <GK0010Page />;
 
+      case 'gk0020':
+        return <GK0020Page />;
+
+      case 'gk0030':
+        return <GK0030Page />;
+
       case 'ad1780c':
         return <JyucyuMasterPage />;
+
+      case 'ad1790c':
+        return <SiireMasterPage />;
 
       case 'dashboard':
       default:
