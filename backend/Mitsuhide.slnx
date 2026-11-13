@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Mitsuhide.Api/Mitsuhide.Api.csproj" />
+  <Project Path="Mitsuhide.Application/Mitsuhide.Application.csproj" />
+  <Project Path="Mitsuhide.Domain/Mitsuhide.Domain.csproj" />
+  <Project Path="Mitsuhide.Infrastructure/Mitsuhide.Infrastructure.csproj" />
+</Solution>
