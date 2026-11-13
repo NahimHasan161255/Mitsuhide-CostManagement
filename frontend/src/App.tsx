@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { MainLayout } from './components/Layout/MainLayout';
 import { JyucyuMasterPage } from './pages/Master/JyucyuMasterPage';
+import { GK0010Page } from './pages/Cost/GK0010Page';
 
 const { Paragraph } = Typography;
 
@@ -19,6 +20,9 @@ export const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeMenu) {
+      case 'gk0010':
+        return <GK0010Page />;
+
       case 'ad1780c':
         return <JyucyuMasterPage />;
 

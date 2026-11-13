@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Typography, Space, Avatar, Badge, Tag } from 'antd';
+import { Layout, Menu, Space, Avatar, Badge, Tag, Button, Tooltip } from 'antd';
 import {
   HomeOutlined,
   ProjectOutlined,
@@ -8,11 +8,13 @@ import {
   SyncOutlined,
   SettingOutlined,
   UserOutlined,
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  BellOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
 const { Header, Content, Sider, Footer } = Layout;
-const { Title, Text } = Typography;
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -91,30 +93,56 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', width: '100vw', overflowX: 'hidden' }}>
       {/* Sider Menu (AD1010C メニュー) */}
       <Sider
+        trigger={null}
         collapsible
         collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        width={260}
+        width={250}
+        collapsedWidth={70}
         theme="dark"
         style={{
-          boxShadow: '2px 0 8px rgba(0,21,41,.15)',
+          boxShadow: '2px 0 8px 0 rgba(29, 35, 41, 0.05)',
+          zIndex: 10,
+          background: '#141e28',
         }}
       >
-        <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#001529' }}>
-          <Space>
-            <Avatar shape="square" size="small" style={{ backgroundColor: '#1890ff', fontWeight: 'bold' }}>
-              光
-            </Avatar>
-            {!collapsed && (
-              <span style={{ color: '#fff', fontWeight: 'bold', fontSize: 15, letterSpacing: '0.05em' }}>
-                （株）ミツヒデ 原価
-              </span>
-            )}
-          </Space>
+        {/* Brand / Logo */}
+        <div
+          style={{
+            height: 60,
+            display: 'flex',
+            alignItems: 'center',
+            padding: collapsed ? '0 16px' : '0 20px',
+            background: '#0d151d',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            transition: 'all 0.2s',
+          }}
+        >
+          <Avatar
+            shape="square"
+            size={collapsed ? 36 : 32}
+            style={{
+              backgroundColor: '#1890ff',
+              fontWeight: 800,
+              fontSize: 16,
+              borderRadius: 6,
+              flexShrink: 0,
+            }}
+          >
+            光
+          </Avatar>
+          {!collapsed && (
+            <div style={{ marginLeft: 12, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: '0.04em' }}>
+                （株）ミツヒデ
+              </div>
+              <div style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: 10 }}>原価管理 ERP システム</div>
+            </div>
+          )}
         </div>
+
         <Menu
           theme="dark"
           selectedKeys={[activeMenu]}
@@ -122,10 +150,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           mode="inline"
           items={menuItems}
           onClick={({ key }) => onSelectMenu(key)}
+          style={{ background: '#141e28', borderRight: 0, paddingTop: 8 }}
         />
       </Sider>
 
-      <Layout>
+      <Layout style={{ background: '#f5f7fa', flex: 1, minWidth: 0 }}>
         {/* Header */}
         <Header
           style={{
@@ -134,38 +163,76 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid #f0f0f0',
-            height: 56,
+            borderBottom: '1px solid #e8e8e8',
+            height: 60,
+            lineHeight: '60px',
+            position: 'sticky',
+            top: 0,
+            zIndex: 9,
+            boxShadow: '0 1px 4px rgba(0, 21, 41, 0.04)',
           }}
         >
-          <Space>
-            <Title level={5} style={{ margin: 0, color: '#172b3a' }}>
+          {/* Left: Collapse Button & Title */}
+          <Space size="middle">
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ fontSize: 16, width: 36, height: 36 }}
+            />
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#172b3a' }}>
               工事原価・受注・売上・仕入管理システム
-            </Title>
-            <Tag color="cyan">Web Edition v1.0</Tag>
+            </span>
+            <Tag color="processing" style={{ borderRadius: 10, fontSize: 11 }}>
+              稼働中
+            </Tag>
           </Space>
 
+          {/* Right: Date, Notifications & User Profile */}
           <Space size="large">
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              {dateStr}
-            </Text>
-            <Space>
-              <Badge status="success" />
+            <span style={{ color: '#595959', fontSize: 13, background: '#f5f5f5', padding: '4px 12px', borderRadius: 4 }}>
+              📅 {dateStr}
+            </span>
+
+            <Tooltip title="通知">
+              <Badge count={0} dot>
+                <Button type="text" shape="circle" icon={<BellOutlined style={{ fontSize: 16 }} />} />
+              </Badge>
+            </Tooltip>
+
+            <Space size="small" style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}>
               <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
-              <Text strong style={{ fontSize: 13 }}>
-                システム管理者 (酒井)
-              </Text>
+              <div style={{ lineHeight: 1.2 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: '#262626' }}>酒井 太郎</span>
+                <span style={{ display: 'block', fontSize: 10, color: '#8c8c8c' }}>管理者 / 営業部</span>
+              </div>
             </Space>
           </Space>
         </Header>
 
-        {/* Page Content */}
-        <Content style={{ margin: '16px 20px', minHeight: 280 }}>
+        {/* Page Content: Full width with smooth padding */}
+        <Content
+          style={{
+            margin: '20px 24px',
+            minHeight: 'calc(100vh - 145px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           {children}
         </Content>
 
-        <Footer style={{ textAlign: 'center', color: '#888', padding: '12px 50px', fontSize: 12 }}>
-          株式会社ミツヒデ 原価管理システム ©{today.getFullYear()} All Rights Reserved.
+        <Footer
+          style={{
+            textAlign: 'center',
+            color: '#8c8c8c',
+            padding: '12px 24px',
+            fontSize: 12,
+            background: 'transparent',
+            borderTop: '1px solid #ebebeb',
+          }}
+        >
+          株式会社ミツヒデ 原価管理システム Web版 ©{today.getFullYear()} All Rights Reserved.
         </Footer>
       </Layout>
     </Layout>
