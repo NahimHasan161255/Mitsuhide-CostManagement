@@ -19,5 +19,19 @@ services:
       - ./database/init_mitsuhide_db.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql_data:/var/lib/mysql
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: mitsuhide-phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:
