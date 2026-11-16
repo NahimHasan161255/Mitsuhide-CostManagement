@@ -1,22 +1,15 @@
 @echo off
 chcp 65001 >nul
-title Mitsuhide ERP - Initial Environment Setup
+title Mitsuhide ERP - Environment Setup (SQL Server 2019)
 
 echo ==============================================================
 echo   株式会社ミツヒデ 原価管理システム (Mitsuhide ERP)
-echo   [Setup] 初期環境セットアップスクリプト
+echo   [Setup] 初期環境セットアップスクリプト (SQL Server 2019)
 echo ==============================================================
 echo.
 
 REM --- 1. Check prerequisites ---
 echo [1/4] 動作前提環境の確認中...
-
-where docker >nul 2>nul
-if %ERRORLEVEL% neq 0 (
-    echo [ERROR] Docker がインストールされていません。Docker Desktop をインストールしてください。
-    pause
-    exit /b 1
-)
 
 where dotnet >nul 2>nul
 if %ERRORLEVEL% neq 0 (
@@ -32,17 +25,21 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-echo -> Docker, .NET, Node.js の検出に成功しました。
+echo -> .NET SDK, Node.js の検出に成功しました。
 echo.
 
-REM --- 2. Start MySQL Container & Check Database ---
-echo [2/4] MySQL データベースコンテナの起動中...
-docker compose up -d mysql
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Docker コンテナの起動に失敗しました。Docker Desktop が起動しているかご確認ください。
+REM --- 2. Check and start SQL Server 2019 Service ---
+echo [2/4] Microsoft SQL Server 2019 (SQLEXPRESS) サービス確認中...
+sc query "MSSQL$SQLEXPRESS" >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    net start "MSSQL$SQLEXPRESS" >nul 2>nul
+    echo -> SQL Server (SQLEXPRESS) サービスが正常に稼働しています。
 ) else (
-    echo -> MySQL コンテナが正常に稼働しています。
+    echo [INFO] MSSQLSERVER またはデフォルトインスタンスを使用します。
 )
+
+echo -> データベーステーブルおよび初期データのセットアップを実行中...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$sqlFile = '%~dp0database\init_mitsuhide_db_sqlserver.sql'; $content = Get-Content -Path $sqlFile -Raw -Encoding utf8; $connStr = 'Server=localhost\SQLEXPRESS;Database=master;Integrated Security=True;TrustServerCertificate=True;'; try { $conn = New-Object System.Data.SqlClient.SqlConnection($connStr); $conn.Open(); $batches = $content -split '(?m)^\s*GO\s*$'; foreach ($b in $batches) { $t = $b.Trim(); if ($t.Length -gt 0) { $cmd = $conn.CreateCommand(); $cmd.CommandText = $t; $cmd.ExecuteNonQuery() | Out-Null; } }; $conn.Close(); Write-Host '-> データベース mitsuhide_cost_db の初期化が完了しました。'; } catch { Write-Host '-> DB初期化注意: ' $_.Exception.Message; }"
 echo.
 
 REM --- 3. Backend NuGet Restore & Build ---

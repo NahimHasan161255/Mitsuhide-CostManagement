@@ -4,14 +4,13 @@ using Mitsuhide.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Context (MySQL with Pomelo EF Core)
+// 1. Database Context (Microsoft SQL Server 2019 / Express)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=localhost;Port=3306;Database=mitsuhide_cost_db;User=root;Password=root;CharSet=utf8mb4;";
+    ?? "Server=localhost\\SQLEXPRESS;Database=mitsuhide_cost_db;Trusted_Connection=True;TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    // Configure MySQL with Pomelo
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+    options.UseSqlServer(connectionString);
 });
 
 // 2. CORS Policy for React Frontend (Vite) - supports localhost and local network (LAN) IP access
