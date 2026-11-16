@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:5048';
+// Dynamically use the current hostname (e.g. 'localhost' or '192.168.x.x') and configurable port
+const apiHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+const apiPort = import.meta.env.VITE_API_PORT || '5048';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${apiHost}:${apiPort}`;
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api`,
