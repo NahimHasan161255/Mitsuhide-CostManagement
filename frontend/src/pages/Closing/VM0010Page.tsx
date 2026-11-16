@@ -25,6 +25,7 @@ import {
   ProjectOutlined,
   HistoryOutlined,
 } from '@ant-design/icons';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -54,7 +55,7 @@ export const VM0010Page: React.FC = () => {
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5247/api/closing/status');
+      const res = await fetch(`${API_BASE_URL}/api/closing/status`);
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
@@ -118,7 +119,7 @@ export const VM0010Page: React.FC = () => {
             `[${new Date().toLocaleTimeString()}] 進行中工事(${status.activeProjectsCount}件)の仕掛原価(WIP)計算を開始...`,
           ]);
 
-          const res = await fetch('http://localhost:5247/api/closing/execute', {
+          const res = await fetch(`${API_BASE_URL}/api/closing/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

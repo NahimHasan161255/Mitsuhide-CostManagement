@@ -27,6 +27,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { CustomerSelectModal } from '../../components/Modals/CustomerSelectModal';
 import { ProjectSelectModal } from '../../components/Modals/ProjectSelectModal';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -81,7 +82,7 @@ export const UR0010Page: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      let url = `http://localhost:5247/api/uriagedata?page=${page}&pageSize=20`;
+      let url = `${API_BASE_URL}/api/uriagedata?page=${page}&pageSize=20`;
       if (searchKojiCd) url += `&kojiCd=${searchKojiCd}`;
       if (searchJyuCd) url += `&jyuCyuCd=${searchJyuCd}`;
 
@@ -161,14 +162,14 @@ export const UR0010Page: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`http://localhost:5247/api/uriagedata/${editingItem.unqId}`, {
+        await fetch(`${API_BASE_URL}/api/uriagedata/${editingItem.unqId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
         message.success('売上伝票を更新しました。');
       } else {
-        await fetch('http://localhost:5247/api/uriagedata', {
+        await fetch(`${API_BASE_URL}/api/uriagedata`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
@@ -184,7 +185,7 @@ export const UR0010Page: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`http://localhost:5247/api/uriagedata/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/uriagedata/${id}`, { method: 'DELETE' });
       message.success('売上伝票を削除しました。');
       fetchData();
     } catch {

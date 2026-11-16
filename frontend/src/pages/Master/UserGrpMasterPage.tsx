@@ -23,6 +23,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -44,7 +45,7 @@ export const UserGrpMasterPage: React.FC = () => {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5247/api/usergrp');
+      const res = await fetch(`${API_BASE_URL}/api/usergrp`);
       if (res.ok) {
         const result = await res.json();
         setData(result);
@@ -85,14 +86,14 @@ export const UserGrpMasterPage: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`http://localhost:5247/api/usergrp/${editingItem.userGrpCd}`, {
+        await fetch(`${API_BASE_URL}/api/usergrp/${editingItem.userGrpCd}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
         message.success(`グループ [${editingItem.userGrpCd}] を更新しました。`);
       } else {
-        await fetch('http://localhost:5247/api/usergrp', {
+        await fetch(`${API_BASE_URL}/api/usergrp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
@@ -108,7 +109,7 @@ export const UserGrpMasterPage: React.FC = () => {
 
   const handleDelete = async (grpCd: string) => {
     try {
-      await fetch(`http://localhost:5247/api/usergrp/${grpCd}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/usergrp/${grpCd}`, { method: 'DELETE' });
       message.success(`グループ [${grpCd}] を削除しました。`);
       fetchGroups();
     } catch {

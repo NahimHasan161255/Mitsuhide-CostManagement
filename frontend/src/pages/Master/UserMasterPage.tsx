@@ -25,6 +25,7 @@ import {
   KeyOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -60,7 +61,7 @@ export const UserMasterPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      let url = `http://localhost:5247/api/user?page=${page}&pageSize=20`;
+      let url = `${API_BASE_URL}/api/user?page=${page}&pageSize=20`;
       if (searchText) url += `&search=${encodeURIComponent(searchText)}`;
       if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
 
@@ -150,14 +151,14 @@ export const UserMasterPage: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`http://localhost:5247/api/user/${editingItem.userCd}`, {
+        await fetch(`${API_BASE_URL}/api/user/${editingItem.userCd}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
         message.success(`ユーザー [${editingItem.userCd}] を更新しました。`);
       } else {
-        await fetch('http://localhost:5247/api/user', {
+        await fetch(`${API_BASE_URL}/api/user`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
@@ -173,7 +174,7 @@ export const UserMasterPage: React.FC = () => {
 
   const handleDelete = async (userCd: string) => {
     try {
-      await fetch(`http://localhost:5247/api/user/${userCd}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/user/${userCd}`, { method: 'DELETE' });
       message.success(`ユーザー [${userCd}] を削除しました。`);
       fetchUsers();
     } catch {

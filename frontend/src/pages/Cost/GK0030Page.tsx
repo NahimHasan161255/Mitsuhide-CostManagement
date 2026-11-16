@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { ProjectSelectModal } from '../../components/Modals/ProjectSelectModal';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -88,7 +89,7 @@ export const GK0030Page: React.FC = () => {
   const fetchLedger = async (targetCd: number, targetSyu: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5247/api/ledger/${targetCd}/${targetSyu}`);
+      const res = await fetch(`${API_BASE_URL}/api/ledger/${targetCd}/${targetSyu}`);
       if (res.ok) {
         const data = await res.json();
         setLedger(data);
