@@ -27,7 +27,7 @@ public class ControlController : ControllerBase
         [FromQuery] int pageSize = 30,
         [FromQuery] string? subSysCd = null)
     {
-        var query = _context.ControlMaster.AsNoTracking().Where(x => x.DelFg == 0);
+        var query = _context.ControlMaster.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(subSysCd))
             query = query.Where(x => x.SubSysCd == subSysCd);
@@ -80,8 +80,7 @@ public class ControlController : ControllerBase
             Ch2 = req.Ch2,
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
-            NewApid = "AD1770C",
-            DelFg = 0
+            NewApid = "AD1770C"
         };
 
         _context.ControlMaster.Add(entity);
@@ -105,7 +104,7 @@ public class ControlController : ControllerBase
     [HttpPut("{subSysCd}/{progId}")]
     public async Task<IActionResult> Update(string subSysCd, string progId, [FromBody] UpdateControlRequest req)
     {
-        var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId && x.DelFg == 0);
+        var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId);
         if (entity == null) return NotFound();
 
         entity.KanriName = req.KanriName;
@@ -122,19 +121,15 @@ public class ControlController : ControllerBase
     }
 
     /// <summary>
-    /// 処理基準削除 (F7)
+    /// 処理基準削除 (物理削除 - F7)
     /// </summary>
     [HttpDelete("{subSysCd}/{progId}")]
     public async Task<IActionResult> Delete(string subSysCd, string progId)
     {
-        var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId && x.DelFg == 0);
+        var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId);
         if (entity == null) return NotFound();
 
-        entity.DelFg = 1;
-        entity.UpdDate = DateTime.Now;
-        entity.UpdUser = "SYSTEM";
-        entity.UpdApid = "AD1770C";
-
+        _context.ControlMaster.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }

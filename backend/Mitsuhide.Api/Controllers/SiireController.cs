@@ -24,9 +24,7 @@ public class SiireController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResult<SiireDto>>> GetAll([FromQuery] PagedRequest request)
     {
-        var query = _context.SiireMaster
-            .AsNoTracking()
-            .Where(x => x.DelFg == 0);
+        var query = _context.SiireMaster.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
@@ -89,7 +87,7 @@ public class SiireController : ControllerBase
     [HttpGet("{code:int}")]
     public async Task<ActionResult<SiireDto>> GetByCode(int code)
     {
-        var x = await _context.SiireMaster.AsNoTracking().FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var x = await _context.SiireMaster.AsNoTracking().FirstOrDefaultAsync(e => e.Code == code);
         if (x == null) return NotFound(new { message = $"仕入先コード {code} は見つかりません。" });
 
         return Ok(new SiireDto
@@ -170,7 +168,7 @@ public class SiireController : ControllerBase
     [HttpPut("{code:int}")]
     public async Task<IActionResult> Update(int code, [FromBody] CreateOrUpdateSiireDto dto)
     {
-        var entity = await _context.SiireMaster.FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var entity = await _context.SiireMaster.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"仕入先コード {code} は見つかりません。" });
 
         entity.Name = dto.Name;
@@ -203,18 +201,15 @@ public class SiireController : ControllerBase
     }
 
     /// <summary>
-    /// 仕入先削除 (論理削除)
+    /// 仕入先削除 (物理削除 - AD1790C仕様準拠)
     /// </summary>
     [HttpDelete("{code:int}")]
     public async Task<IActionResult> Delete(int code)
     {
-        var entity = await _context.SiireMaster.FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var entity = await _context.SiireMaster.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"仕入先コード {code} は見つかりません。" });
 
-        entity.DelFg = 1;
-        entity.UpdDate = DateTime.Now;
-        entity.UpdApid = "AD1790C";
-
+        _context.SiireMaster.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }

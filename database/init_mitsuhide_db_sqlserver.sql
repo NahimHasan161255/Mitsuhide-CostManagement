@@ -37,7 +37,6 @@ CREATE TABLE dbo.AD_M_USER_GRP (
     [admgrp_upd_date]     DATETIME2 NULL,                 -- 最終更新日
     [admgrp_upd_apid]     VARCHAR(7) NULL,                -- 最終更新APLID
     [admgrp_upd_wsnm]     VARCHAR(20) NULL,               -- 最終更新端末名
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_USER_GRP] PRIMARY KEY CLUSTERED ([admgrp_usergrp_cd])
 );
 GO
@@ -65,7 +64,6 @@ CREATE TABLE dbo.AD_M_NAME (
     [admnam_upd_date]     DATETIME2 NULL,                 -- 最終更新日
     [admnam_upd_apid]     VARCHAR(7) NULL,                -- 最終更新APLID
     [admnam_upd_wsnm]     VARCHAR(20) NULL,               -- 最終更新端末名
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_NAME] PRIMARY KEY CLUSTERED ([admnam_name_kbn], [admnam_name_cd])
 );
 GO
@@ -120,7 +118,6 @@ CREATE TABLE dbo.AD_M_CONTROL (
     [admcon_upd_date]     DATETIME2 NULL,                 -- 最終更新日
     [admcon_upd_apid]     VARCHAR(7) NULL,                -- 最終更新APLID
     [admcon_upd_wsnm]     VARCHAR(20) NULL,               -- 最終更新端末名
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_CONTROL] PRIMARY KEY CLUSTERED ([admcon_subsys_cd], [admcon_prog_id])
 );
 GO
@@ -244,7 +241,6 @@ CREATE TABLE dbo.AD_M_GDATE (
     [admgdt_upd_date]     DATETIME2 NULL,
     [admgdt_upd_apid]     VARCHAR(7) NULL,
     [admgdt_upd_wsnm]     VARCHAR(20) NULL,
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_GDATE] PRIMARY KEY CLUSTERED ([admgdt_yyyymm])
 );
 GO
@@ -319,7 +315,6 @@ CREATE TABLE dbo.AD_M_JYUCYU (
     [admjyu_upd_date]     DATETIME2 NULL,                 -- 最終更新日
     [admjyu_upd_apid]     VARCHAR(7) NULL,                -- 最終更新APLID
     [admjyu_upd_wsnm]     VARCHAR(20) NULL,               -- 最終更新端末名
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_JYUCYU] PRIMARY KEY CLUSTERED ([admjyu_code])
 );
 GO
@@ -361,7 +356,6 @@ CREATE TABLE dbo.AD_M_SIIRE (
     [admsir_upd_date]     DATETIME2 NULL,                 -- 最終更新日
     [admsir_upd_apid]     VARCHAR(7) NULL,                -- 最終更新APLID
     [admsir_upd_wsnm]     VARCHAR(20) NULL,               -- 最終更新端末名
-    [DelFg]               INT NOT NULL DEFAULT 0,         -- 削除フラグ
     CONSTRAINT [PK_AD_M_SIIRE] PRIMARY KEY CLUSTERED ([admsir_code])
 );
 GO
@@ -647,10 +641,10 @@ GO
 
 -- サンプル工事受注データ (新社屋新築工事)
 INSERT INTO dbo.GK_T_KOJIJYU (
-    [gktkjy_kojicd], [gktkjy_kojisyu], [gktkjy_kojinm], [gktkjy_kojiryk], [gktkjy_jyucd],
-    [gktkjy_basyo], [gktkjy_jimusho], [gktkjy_kouki_bgn], [gktkjy_kouki_end], 
-    [gktkjy_keiyaku_gnk], [gktkjy_keiyaku_gkm], [gktkjy_keiyaku_0dt], [gktkjy_keiyaku_0rt], [gktkjy_keiyaku_0nk], [gktkjy_keiyaku_0km],
-    [gktkjy_yosangaku], [gktkjy_kanseikb], [gktkjy_biko1], [gktkjy_new_date], [gktkjy_new_user], [gktkjy_new_apid]
+    [gktkjyu_kojicd], [gktkjyu_kojisyu], [gktkjyu_kojinm], [gktkjyu_kojiryk], [gktkjyu_jyucd],
+    [gktkjyu_basyo], [gktkjyu_jimusho], [gktkjyu_kouki_bgn], [gktkjyu_kouki_end], 
+    [gktkjyu_keiyaku_gnk], [gktkjyu_keiyaku_gkm], [gktkjyu_keiyaku_0dt], [gktkjyu_keiyaku_0rt], [gktkjyu_keiyaku_0nk], [gktkjyu_keiyaku_0km],
+    [gktkjyu_yosangaku], [gktkjyu_kanseikb], [gktkjyu_biko1], [gktkjyu_new_date], [gktkjyu_new_user], [gktkjyu_new_apid]
 ) VALUES (
     1001, 0, N'新社屋新築工事 (鉄骨工事一式)', N'新社屋新築', 1001,
     N'東京都中央区京橋PJ現場', N'東京都中央区京橋二丁目', 20260401, 20261130,

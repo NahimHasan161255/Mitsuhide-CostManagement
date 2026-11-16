@@ -115,6 +115,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.ToTable("AD_M_NAME");
             entity.HasKey(e => new { e.NameKbn, e.NameCd });
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.NewUser).HasColumnName("admnam_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admnam_new_date");
             entity.Property(e => e.NewApid).HasColumnName("admnam_new_apid");
@@ -123,13 +124,13 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admnam_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admnam_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admnam_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
 
         // 処理基準管理マスタ (AD_M_CONTROL)
         modelBuilder.Entity<AdMControl>(entity =>
         {
             entity.HasKey(e => new { e.SubSysCd, e.ProgId });
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.NewUser).HasColumnName("admcon_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admcon_new_date");
             entity.Property(e => e.NewApid).HasColumnName("admcon_new_apid");
@@ -138,12 +139,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admcon_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admcon_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admcon_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
 
         // 受注先マスタ (AD_M_JYUCYU)
         modelBuilder.Entity<AdMJyucyu>(entity =>
         {
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.NewUser).HasColumnName("admjyu_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admjyu_new_date");
             entity.Property(e => e.NewApid).HasColumnName("admjyu_new_apid");
@@ -152,12 +153,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admjyu_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admjyu_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admjyu_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
 
         // 仕入先マスタ (AD_M_SIIRE)
         modelBuilder.Entity<AdMSiire>(entity =>
         {
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.KozaSb).HasConversion<short>();
             entity.Property(e => e.NewUser).HasColumnName("admsir_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admsir_new_date");
@@ -167,12 +168,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admsir_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admsir_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admsir_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
 
         // ユーザーグループマスタ (AD_M_USER_GRP)
         modelBuilder.Entity<AdMUserGrp>(entity =>
         {
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.RunAplCnt).HasConversion<short>();
             entity.Property(e => e.NewUser).HasColumnName("admgrp_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admgrp_new_date");
@@ -182,7 +183,6 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admgrp_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admgrp_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admgrp_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
 
         // ユーザーマスタ (AD_M_USER)
@@ -204,6 +204,7 @@ public class ApplicationDbContext : DbContext
         // 月次日付マスタ (AD_M_GDATE)
         modelBuilder.Entity<AdMGdate>(entity =>
         {
+            entity.Ignore(e => e.DelFg);
             entity.Property(e => e.KosinFlg).HasConversion<short>();
             entity.Property(e => e.NewUser).HasColumnName("admgdt_new_user");
             entity.Property(e => e.NewDate).HasColumnName("admgdt_new_date");
@@ -213,7 +214,6 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdDate).HasColumnName("admgdt_upd_date");
             entity.Property(e => e.UpdApid).HasColumnName("admgdt_upd_apid");
             entity.Property(e => e.UpdWsnm).HasColumnName("admgdt_upd_wsnm");
-            entity.Property(e => e.DelFg).HasColumnName("DelFg");
         });
     }
 }
