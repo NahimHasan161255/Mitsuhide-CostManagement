@@ -6,7 +6,7 @@ title Mitsuhide ERP - Launcher (SQL Server 2019)
 REM ==============================================================
 REM   【ポート設定】必要に応じてここでポート番号を変更できます
 REM ==============================================================
-SET FRONTEND_PORT=5173
+SET FRONTEND_PORT=3001
 SET BACKEND_PORT=5048
 SET DB_INSTANCE=localhost\SQLEXPRESS
 REM ==============================================================
