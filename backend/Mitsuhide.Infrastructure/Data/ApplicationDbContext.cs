@@ -23,6 +23,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<AdMUser> UserMaster => Set<AdMUser>();
     public DbSet<AdMUserGrp> UserGrpMaster => Set<AdMUserGrp>();
     public DbSet<AdMGdate> GdateMaster => Set<AdMGdate>();
+    public DbSet<AdMSysName> SysNameMaster => Set<AdMSysName>();
+    public DbSet<AdMControl> ControlMaster => Set<AdMControl>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,6 +67,18 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasIndex(e => new { e.TargetDate, e.KojiCd })
                   .HasDatabaseName("IX_GK_T_KOJISIK_CKEY1");
+        });
+
+        // システム名称マスタ (AD_M_SYSNAME)
+        modelBuilder.Entity<AdMSysName>(entity =>
+        {
+            entity.HasKey(e => new { e.NameKbn, e.NameCd });
+        });
+
+        // 処理基準管理マスタ (AD_M_CONTROL)
+        modelBuilder.Entity<AdMControl>(entity =>
+        {
+            entity.HasKey(e => new { e.SubSysCd, e.ProgId });
         });
     }
 }

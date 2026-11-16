@@ -2,10 +2,6 @@ import React, { useState } from 'react';
 import { Layout, Menu, Space, Avatar, Badge, Tag, Button, Tooltip } from 'antd';
 import {
   HomeOutlined,
-  ProjectOutlined,
-  DollarOutlined,
-  ShoppingCartOutlined,
-  SyncOutlined,
   SettingOutlined,
   UserOutlined,
   MenuUnfoldOutlined,
@@ -30,12 +26,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
   const reiwaYear = today.getFullYear() - 2018;
   const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 (令和${reiwaYear}年)`;
 
+  // Milestone 1 (V0.0.0_master_data): Focused strictly on Master Data Management (05_マスタ)
   const menuItems: MenuProps['items'] = [
     {
       key: 'dashboard',
       icon: <HomeOutlined />,
-      label: 'ホーム / 業務状況',
+      label: 'ホーム / マスタ概況',
     },
+    {
+      key: 'master',
+      icon: <SettingOutlined />,
+      label: 'マスタ管理 (AD)',
+      children: [
+        { key: 'ad1780c', label: '受注先マスタ (AD1780C)' },
+        { key: 'ad1790c', label: '仕入先マスタ (AD1790C)' },
+        { key: 'ad1730c', label: 'ユーザーマスタ (AD1730C)' },
+        { key: 'ad1720c', label: 'ユーザーグループ (AD1720C)' },
+        { key: 'ad1760c', label: 'システム名称マスタ (AD1760C)' },
+        { key: 'ad1770c', label: '処理基準管理マスタ (AD1770C)' },
+      ],
+    },
+    /* 次期フェーズ公開予定
     {
       key: 'cost',
       icon: <ProjectOutlined />,
@@ -77,19 +88,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         { key: 'vm0110', label: '更新履歴照会 (VM0110)' },
       ],
     },
-    {
-      key: 'master',
-      icon: <SettingOutlined />,
-      label: 'マスタ管理 (AD)',
-      children: [
-        { key: 'ad1780c', label: '受注先マスタ (AD1780C)' },
-        { key: 'ad1790c', label: '仕入先マスタ (AD1790C)' },
-        { key: 'ad1730c', label: 'ユーザーマスタ (AD1730C)' },
-        { key: 'ad1720c', label: 'ユーザーグループ (AD1720C)' },
-        { key: 'ad1760c', label: 'システム名称マスタ (AD1760C)' },
-        { key: 'ad1770c', label: '処理基準管理マスタ (AD1770C)' },
-      ],
-    },
+    */
   ];
 
   return (
@@ -146,7 +145,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         <Menu
           theme="dark"
           selectedKeys={[activeMenu]}
-          defaultOpenKeys={['master', 'cost']}
+          defaultOpenKeys={['master']}
           mode="inline"
           items={menuItems}
           onClick={({ key }) => onSelectMenu(key)}
