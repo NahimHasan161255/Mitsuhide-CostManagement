@@ -18,15 +18,28 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `AD_M_JYUCYU`;
 CREATE TABLE `AD_M_JYUCYU` (
     `admjyu_code`      INT NOT NULL COMMENT '受注先コード (PKEY)',
-    `admjyu_name`      VARCHAR(80) NOT NULL COMMENT '受注先名称',
-    `admjyu_ryakusiki` VARCHAR(40) NULL COMMENT '受注先略称',
-    `admjyu_zip`       VARCHAR(10) NULL COMMENT '郵便番号',
-    `admjyu_addr1`     VARCHAR(80) NULL COMMENT '住所1',
-    `admjyu_addr2`     VARCHAR(80) NULL COMMENT '住所2',
-    `admjyu_tel`       VARCHAR(20) NULL COMMENT '電話番号',
-    `admjyu_fax`       VARCHAR(20) NULL COMMENT 'FAX番号',
-    `admjyu_tantou`    VARCHAR(40) NULL COMMENT '担当者名',
-    `admjyu_simedate`  INT NOT NULL DEFAULT 0 COMMENT '締日 (0:月末, 20:20日締等)',
+    `admjyu_name`      VARCHAR(40) NOT NULL COMMENT '受注先名称',
+    `admjyu_ryaku`     VARCHAR(16) NULL COMMENT '受注先略称',
+    `admjyu_kana`      VARCHAR(20) NULL COMMENT 'カナ名',
+    `admjyu_sekinin`   VARCHAR(30) NULL COMMENT '責任者',
+    `admjyu_yubin`     VARCHAR(8) NULL COMMENT '郵便番号',
+    `admjyu_jyusyo1`   VARCHAR(40) NULL COMMENT '住所1',
+    `admjyu_jyusyo2`   VARCHAR(40) NULL COMMENT '住所2',
+    `admjyu_tel`       VARCHAR(13) NULL COMMENT '電話番号',
+    `admjyu_fax`       VARCHAR(13) NULL COMMENT 'FAX番号',
+    `admjyu_mail`      VARCHAR(40) NULL COMMENT 'メールアドレス',
+    `admjyu_simedd`    INT NOT NULL DEFAULT 0 COMMENT '締日 (0:月末, 20:20日締等)',
+    `admjyu_syukinmm`  INT NOT NULL DEFAULT 0 COMMENT '集金月',
+    `admjyu_syukindd`  INT NOT NULL DEFAULT 0 COMMENT '集金日',
+    `admjyu_kaisyu`    VARCHAR(20) NULL COMMENT '回収方法',
+    `admjyu_tegata`    INT NOT NULL DEFAULT 0 COMMENT '手形割合(%)',
+    `admjyu_genkin`    INT NOT NULL DEFAULT 0 COMMENT '現金割合(%)',
+    `admjyu_kakert`    INT NOT NULL DEFAULT 100 COMMENT '掛率(%)',
+    `admjyu_syosiki`   INT NOT NULL DEFAULT 1 COMMENT '請求書式',
+    `admjyu_torikb`    INT NOT NULL DEFAULT 1 COMMENT '取引区分',
+    `admjyu_biko1`     VARCHAR(60) NULL COMMENT '備考1',
+    `admjyu_biko2`     VARCHAR(60) NULL COMMENT '備考2',
+    `admjyu_biko3`     VARCHAR(60) NULL COMMENT '備考3',
     `NewUser`          VARCHAR(6) NULL COMMENT '作成者',
     `NewDate`          DATETIME NULL COMMENT '作成日時',
     `NewApid`          VARCHAR(7) NULL COMMENT '作成APID',
@@ -45,15 +58,28 @@ CREATE TABLE `AD_M_JYUCYU` (
 DROP TABLE IF EXISTS `AD_M_SIIRE`;
 CREATE TABLE `AD_M_SIIRE` (
     `admsir_code`      INT NOT NULL COMMENT '仕入先コード (PKEY)',
-    `admsir_name`      VARCHAR(80) NOT NULL COMMENT '仕入先名称',
-    `admsir_ryakusiki` VARCHAR(40) NULL COMMENT '仕入先略称',
-    `admsir_zip`       VARCHAR(10) NULL COMMENT '郵便番号',
-    `admsir_addr1`     VARCHAR(80) NULL COMMENT '住所1',
-    `admsir_addr2`     VARCHAR(80) NULL COMMENT '住所2',
-    `admsir_tel`       VARCHAR(20) NULL COMMENT '電話番号',
-    `admsir_fax`       VARCHAR(20) NULL COMMENT 'FAX番号',
-    `admsir_tantou`    VARCHAR(40) NULL COMMENT '担当者名',
-    `admsir_simedate`  INT NOT NULL DEFAULT 0 COMMENT '締日',
+    `admsir_name`      VARCHAR(40) NOT NULL COMMENT '仕入先名称',
+    `admsir_ryaku`     VARCHAR(16) NULL COMMENT '仕入先略称',
+    `admsir_kana`      VARCHAR(20) NULL COMMENT 'カナ名',
+    `admsir_sekinin`   VARCHAR(30) NULL COMMENT '責任者',
+    `admsir_gyousyu`   VARCHAR(20) NULL COMMENT '業種',
+    `admsir_yubin`     VARCHAR(8) NULL COMMENT '郵便番号',
+    `admsir_jyusyo1`   VARCHAR(40) NULL COMMENT '住所1',
+    `admsir_jyusyo2`   VARCHAR(40) NULL COMMENT '住所2',
+    `admsir_tel`       VARCHAR(13) NULL COMMENT '電話番号',
+    `admsir_fax`       VARCHAR(13) NULL COMMENT 'FAX番号',
+    `admsir_mail`      VARCHAR(40) NULL COMMENT 'メールアドレス',
+    `admsir_simedd`    INT NOT NULL DEFAULT 0 COMMENT '支払締日',
+    `admsir_siharai`   VARCHAR(40) NULL COMMENT '支払方法',
+    `admsir_risoku`    DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT '利息',
+    `admsir_bnknm`     VARCHAR(30) NULL COMMENT '銀行名',
+    `admsir_stnnm`     VARCHAR(30) NULL COMMENT '支店名',
+    `admsir_kozasb`    INT NOT NULL DEFAULT 1 COMMENT '口座種別',
+    `admsir_kozano`    VARCHAR(7) NULL COMMENT '口座番号',
+    `admsir_kozanm`    VARCHAR(30) NULL COMMENT '口座名義人',
+    `admsir_biko1`     VARCHAR(60) NULL COMMENT '備考1',
+    `admsir_biko2`     VARCHAR(60) NULL COMMENT '備考2',
+    `admsir_biko3`     VARCHAR(60) NULL COMMENT '備考3',
     `NewUser`          VARCHAR(6) NULL,
     `NewDate`          DATETIME NULL,
     `NewApid`          VARCHAR(7) NULL,
@@ -286,7 +312,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- =============================================================================
 
 -- 受注先マスタ
-INSERT INTO `AD_M_JYUCYU` (`admjyu_code`, `admjyu_name`, `admjyu_ryakusiki`, `admjyu_zip`, `admjyu_addr1`, `admjyu_tel`, `admjyu_simedate`, `NewDate`, `NewUser`, `NewApid`)
+INSERT INTO `AD_M_JYUCYU` (`admjyu_code`, `admjyu_name`, `admjyu_ryaku`, `admjyu_yubin`, `admjyu_jyusyo1`, `admjyu_tel`, `admjyu_simedd`, `NewDate`, `NewUser`, `NewApid`)
 VALUES
 (1001, '清水建設 株式会社', '清水建設', '104-8370', '東京都中央区京橋二丁目16番1号', '03-3561-1111', 20, NOW(), 'INIT', 'SEED'),
 (1002, '大林組 株式会社', '大林組', '108-8502', '東京都港区港南二丁目15番2号', '03-5769-1111', 0, NOW(), 'INIT', 'SEED'),
@@ -294,7 +320,7 @@ VALUES
 (1004, '大成建設 株式会社', '大成建設', '163-0606', '東京都新宿区西新宿一丁目25番1号', '03-3348-1111', 0, NOW(), 'INIT', 'SEED');
 
 -- 仕入先マスタ
-INSERT INTO `AD_M_SIIRE` (`admsir_code`, `admsir_name`, `admsir_ryakusiki`, `admsir_zip`, `admsir_addr1`, `admsir_tel`, `admsir_simedate`, `NewDate`, `NewUser`, `NewApid`)
+INSERT INTO `AD_M_SIIRE` (`admsir_code`, `admsir_name`, `admsir_ryaku`, `admsir_yubin`, `admsir_jyusyo1`, `admsir_tel`, `admsir_simedd`, `NewDate`, `NewUser`, `NewApid`)
 VALUES
 (2001, '阪和興業 株式会社', '阪和興業', '104-8429', '東京都中央区築地一丁目13番1号', '03-3544-2171', 20, NOW(), 'INIT', 'SEED'),
 (2002, 'ミツヒデ 第一工場 (加工外注)', 'ミツヒデ第1工', '136-0082', '東京都江東区新木場三丁目4番5号', '03-3522-8811', 0, NOW(), 'INIT', 'SEED'),
