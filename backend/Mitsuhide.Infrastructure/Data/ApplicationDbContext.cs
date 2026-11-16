@@ -21,6 +21,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AdMJyucyu> Jyucyu => Set<AdMJyucyu>();
     public DbSet<AdMSiire> SiireMaster => Set<AdMSiire>();
     public DbSet<AdMUser> UserMaster => Set<AdMUser>();
+    public DbSet<AdMUserGrp> UserGrpMaster => Set<AdMUserGrp>();
     public DbSet<AdMGdate> GdateMaster => Set<AdMGdate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

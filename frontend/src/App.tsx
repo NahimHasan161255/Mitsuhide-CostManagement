@@ -12,6 +12,8 @@ import {
 import { MainLayout } from './components/Layout/MainLayout';
 import { JyucyuMasterPage } from './pages/Master/JyucyuMasterPage';
 import { SiireMasterPage } from './pages/Master/SiireMasterPage';
+import { UserMasterPage } from './pages/Master/UserMasterPage';
+import { UserGrpMasterPage } from './pages/Master/UserGrpMasterPage';
 import { GK0010Page } from './pages/Cost/GK0010Page';
 import { GK0020Page } from './pages/Cost/GK0020Page';
 import { GK0030Page } from './pages/Cost/GK0030Page';
@@ -40,6 +42,12 @@ export const App: React.FC = () => {
 
       case 'ad1790c':
         return <SiireMasterPage />;
+
+      case 'ad1730c':
+        return <UserMasterPage />;
+
+      case 'ad1720c':
+        return <UserGrpMasterPage />;
 
       case 'sr0010':
         return <SR0010Page />;

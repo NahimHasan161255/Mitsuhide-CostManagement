@@ -67,25 +67,53 @@ CREATE TABLE `AD_M_SIIRE` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='仕入先マスタ';
 
 -- -----------------------------------------------------------------------------
--- 3. ユーザーマスタ (AD_M_USER)
+-- 3. ユーザーグループマスタ (AD_M_USER_GRP)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `AD_M_USER_GRP`;
+CREATE TABLE `AD_M_USER_GRP` (
+    `admgrp_usergrp_cd`   VARCHAR(4) NOT NULL COMMENT 'グループコード (PKEY)',
+    `admgrp_usergrp_name` VARCHAR(20) NOT NULL COMMENT 'グループ名称',
+    `admgrp_run_apl_cnt`  INT NOT NULL DEFAULT 5 COMMENT '同時実行可能画面数',
+    `NewUser`             VARCHAR(6) NULL,
+    `NewDate`             DATETIME NULL,
+    `NewApid`             VARCHAR(7) NULL,
+    `NewWsnm`             VARCHAR(20) NULL,
+    `UpdUser`             VARCHAR(6) NULL,
+    `UpdDate`             DATETIME NULL,
+    `UpdApid`             VARCHAR(7) NULL,
+    `UpdWsnm`             VARCHAR(20) NULL,
+    `DelFg`               INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`admgrp_usergrp_cd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ユーザーグループマスタ';
+
+-- -----------------------------------------------------------------------------
+-- 4. ユーザーマスタ (AD_M_USER)
 -- -----------------------------------------------------------------------------
 DROP TABLE IF EXISTS `AD_M_USER`;
 CREATE TABLE `AD_M_USER` (
-    `admusr_code`      VARCHAR(6) NOT NULL COMMENT '社員コード (PKEY)',
-    `admusr_name`      VARCHAR(40) NOT NULL COMMENT 'ユーザー氏名',
-    `admusr_kana`      VARCHAR(40) NULL COMMENT 'ユーザーカナ',
-    `admusr_passwd`    VARCHAR(128) NOT NULL COMMENT 'パスワードハッシュ',
-    `admusr_grpcd`     INT NOT NULL DEFAULT 1 COMMENT '所属グループ',
-    `NewUser`          VARCHAR(6) NULL,
-    `NewDate`          DATETIME NULL,
-    `NewApid`          VARCHAR(7) NULL,
-    `NewWsnm`          VARCHAR(20) NULL,
-    `UpdUser`          VARCHAR(6) NULL,
-    `UpdDate`          DATETIME NULL,
-    `UpdApid`          VARCHAR(7) NULL,
-    `UpdWsnm`          VARCHAR(20) NULL,
-    `DelFg`            INT NOT NULL DEFAULT 0,
-    PRIMARY KEY (`admusr_code`)
+    `admuse_user_cd`        VARCHAR(6) NOT NULL COMMENT '社員コード (PKEY)',
+    `admuse_user_name`      VARCHAR(20) NOT NULL COMMENT 'ユーザー氏名',
+    `admuse_user_name_r`    VARCHAR(10) NULL COMMENT 'ユーザー略称',
+    `admuse_user_name_k`    VARCHAR(10) NULL COMMENT 'ユーザーフリガナ',
+    `admuse_tanto_kbn`      INT NOT NULL DEFAULT 1 COMMENT '担当者区分 (1:担当者, 9:その他)',
+    `admuse_usergrp_cd`     VARCHAR(4) NOT NULL DEFAULT '1' COMMENT 'グループコード (AD_M_USER_GRP)',
+    `admuse_syubetu`        INT NOT NULL DEFAULT 1 COMMENT '所属部門 (1:営業, 5:工務, 9:経理)',
+    `admuse_biko`           VARCHAR(40) NULL COMMENT '備考',
+    `admuse_pass`           VARCHAR(255) NOT NULL COMMENT 'パスワード',
+    `admuse_pass_upd_date`  DATETIME NULL COMMENT 'パスワード変更日',
+    `admuse_pass_kigen`     INT NULL COMMENT 'パスワード有効期限',
+    `admuse_login_date`     DATETIME NULL COMMENT '最終ログイン日時',
+    `admuse_user_kigen`     INT NULL COMMENT 'ユーザーID有効期限',
+    `NewUser`               VARCHAR(6) NULL,
+    `NewDate`               DATETIME NULL,
+    `NewApid`               VARCHAR(7) NULL,
+    `NewWsnm`               VARCHAR(20) NULL,
+    `UpdUser`               VARCHAR(6) NULL,
+    `UpdDate`               DATETIME NULL,
+    `UpdApid`               VARCHAR(7) NULL,
+    `UpdWsnm`               VARCHAR(20) NULL,
+    `DelFg`                 INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`admuse_user_cd`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='ユーザーマスタ';
 
 -- -----------------------------------------------------------------------------
@@ -275,11 +303,21 @@ VALUES
 (2005, '丸全昭和運輸 株式会社', '丸全昭和運輸', '231-8419', '神奈川県横浜市中区南仲通二丁目15番地', '045-671-5811', 20, NOW(), 'INIT', 'SEED'),
 (2006, '東京重機 株式会社', '東京重機', '140-0002', '東京都品川区東品川三丁目10番21号', '03-3472-9111', 0, NOW(), 'INIT', 'SEED');
 
--- ユーザーマスタ
-INSERT INTO `AD_M_USER` (`admusr_code`, `admusr_name`, `admusr_kana`, `admusr_passwd`, `admusr_grpcd`, `NewDate`, `NewUser`, `NewApid`)
+-- ユーザーグループマスタ
+INSERT INTO `AD_M_USER_GRP` (`admgrp_usergrp_cd`, `admgrp_usergrp_name`, `admgrp_run_apl_cnt`, `NewDate`, `NewUser`, `NewApid`)
 VALUES
-('000001', '酒井 太郎', 'サカイ タロウ', 'admin123', 1, NOW(), 'INIT', 'SEED'),
-('000002', '佐藤 次郎', 'サトウ ジロウ', 'user123', 2, NOW(), 'INIT', 'SEED');
+('1', '一般グループ', 5, NOW(), 'INIT', 'SEED'),
+('9', 'システム管理者グループ', 10, NOW(), 'INIT', 'SEED');
+
+-- ユーザーマスタ
+INSERT INTO `AD_M_USER` (
+    `admuse_user_cd`, `admuse_user_name`, `admuse_user_name_r`, `admuse_user_name_k`, 
+    `admuse_tanto_kbn`, `admuse_usergrp_cd`, `admuse_syubetu`, `admuse_biko`, 
+    `admuse_pass`, `admuse_pass_upd_date`, `NewDate`, `NewUser`, `NewApid`
+) VALUES
+('000001', '酒井 太郎', '酒井', 'サカイ タロウ', 1, '9', 1, 'システム管理者 / 営業統括', 'admin123', NOW(), NOW(), 'INIT', 'SEED'),
+('000002', '佐藤 次郎', '佐藤', 'サトウ ジロウ', 1, '1', 5, '現場工事主任', 'user123', NOW(), NOW(), 'INIT', 'SEED'),
+('000003', '鈴木 花子', '鈴木', 'スズキ ハナコ', 9, '1', 9, '経理・決算担当', 'user123', NOW(), NOW(), 'INIT', 'SEED');
 
 -- 処理基準管理マスタ
 INSERT INTO `AD_M_GDATE` (`admgdt_yyyymm`, `admgdt_kosin_flg`, `NewDate`, `NewUser`, `NewApid`)
