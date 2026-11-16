@@ -67,18 +67,24 @@ export const UserGrpMasterPage: React.FC = () => {
     fetchGroups();
   }, []);
 
+  useEffect(() => {
+    if (isModalOpen) {
+      if (editingItem) {
+        form.setFieldsValue(editingItem);
+      } else {
+        form.resetFields();
+        form.setFieldsValue({ runAplCnt: 5 });
+      }
+    }
+  }, [isModalOpen, editingItem]);
+
   const handleOpenCreate = () => {
     setEditingItem(null);
-    form.resetFields();
-    form.setFieldsValue({
-      runAplCnt: 5,
-    });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (item: UserGrpItem) => {
     setEditingItem(item);
-    form.setFieldsValue(item);
     setIsModalOpen(true);
   };
 
@@ -168,7 +174,7 @@ export const UserGrpMasterPage: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Header */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={12}>
             <Space align="center">
@@ -198,7 +204,7 @@ export const UserGrpMasterPage: React.FC = () => {
       </Card>
 
       {/* Main Table */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Table
           loading={loading}
           dataSource={data}
@@ -217,7 +223,7 @@ export const UserGrpMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={500}
-        destroyOnClose
+        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >

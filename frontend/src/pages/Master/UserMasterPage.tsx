@@ -126,24 +126,29 @@ export const UserMasterPage: React.FC = () => {
     fetchUsers();
   }, [page]);
 
+  useEffect(() => {
+    if (isModalOpen) {
+      if (editingItem) {
+        form.setFieldsValue({ ...editingItem, newPassword: '' });
+      } else {
+        form.resetFields();
+        form.setFieldsValue({
+          tantoKbn: 1,
+          userGrpCd: '1',
+          syubetu: 1,
+          password: 'user123',
+        });
+      }
+    }
+  }, [isModalOpen, editingItem]);
+
   const handleOpenCreate = () => {
     setEditingItem(null);
-    form.resetFields();
-    form.setFieldsValue({
-      tantoKbn: 1,
-      userGrpCd: '1',
-      syubetu: 1,
-      password: 'user123',
-    });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (item: UserItem) => {
     setEditingItem(item);
-    form.setFieldsValue({
-      ...item,
-      newPassword: '',
-    });
     setIsModalOpen(true);
   };
 
@@ -263,7 +268,7 @@ export const UserMasterPage: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Search Header */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
@@ -314,7 +319,7 @@ export const UserMasterPage: React.FC = () => {
       </Card>
 
       {/* Main Table */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Table
           loading={loading}
           dataSource={data}
@@ -339,7 +344,7 @@ export const UserMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={640}
-        destroyOnClose
+        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >

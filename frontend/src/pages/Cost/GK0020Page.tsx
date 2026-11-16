@@ -259,7 +259,7 @@ export const GK0020Page: React.FC = () => {
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 1. Header Toolbar */}
-      <Card bordered={false} bodyStyle={{ padding: '14px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <Card variant="borderless" bodyStyle={{ padding: '14px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 12]}>
           <Col xs={24} md={12}>
             <Space align="center" wrap size="middle">
@@ -293,7 +293,7 @@ export const GK0020Page: React.FC = () => {
 
       {/* 2. Project Context & KPI Bar */}
       {selectedProject ? (
-        <Card bordered={false} bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <Card variant="borderless" bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} md={8}>
               <div>
@@ -315,7 +315,7 @@ export const GK0020Page: React.FC = () => {
                 value={contractGnk}
                 prefix="¥"
                 precision={0}
-                valueStyle={{ color: '#1890ff', fontWeight: 700, fontSize: 18 }}
+                styles={{ content: { color: '#1890ff', fontWeight: 700, fontSize: 18 } }}
               />
             </Col>
 
@@ -325,7 +325,7 @@ export const GK0020Page: React.FC = () => {
                 value={totalBudgetItems}
                 prefix="¥"
                 precision={0}
-                valueStyle={{ color: '#fa8c16', fontWeight: 700, fontSize: 18 }}
+                styles={{ content: { color: '#fa8c16', fontWeight: 700, fontSize: 18 } }}
               />
             </Col>
 
@@ -335,7 +335,7 @@ export const GK0020Page: React.FC = () => {
                 value={totalHassyuItems}
                 prefix="¥"
                 precision={0}
-                valueStyle={{ color: '#262626', fontWeight: 700, fontSize: 18 }}
+                styles={{ content: { color: '#262626', fontWeight: 700, fontSize: 18 } }}
               />
             </Col>
 
@@ -353,7 +353,7 @@ export const GK0020Page: React.FC = () => {
           </Row>
         </Card>
       ) : (
-        <Card bordered={false} style={{ borderRadius: 8, textAlign: 'center', padding: '24px 0' }}>
+        <Card variant="borderless" style={{ borderRadius: 8, textAlign: 'center', padding: '24px 0' }}>
           <ApartmentOutlined style={{ fontSize: 36, color: '#bfbfbf', marginBottom: 12 }} />
           <div>工事コードが選択されていません。「工事呼出 (F5)」から対象の工事を選択してください。</div>
           <Button type="primary" onClick={() => setProjectModalOpen(true)} style={{ marginTop: 12 }}>
@@ -370,7 +370,7 @@ export const GK0020Page: React.FC = () => {
             <span>予算内訳一覧 (明細 {items.length} 件)</span>
           </Space>
         }
-        bordered={false}
+        variant="borderless"
         style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
         bodyStyle={{ padding: 16 }}
       >

@@ -326,7 +326,7 @@ export const SR0010Page: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Search Header */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
@@ -371,7 +371,7 @@ export const SR0010Page: React.FC = () => {
       </Card>
 
       {/* Main Table */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Table
           loading={loading}
           dataSource={data}
@@ -396,7 +396,7 @@ export const SR0010Page: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={720}
-        destroyOnClose
+        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >

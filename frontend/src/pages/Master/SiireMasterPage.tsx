@@ -224,7 +224,7 @@ export const SiireMasterPage: React.FC = () => {
         width={720}
         okText="保存"
         cancelText="キャンセル"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" size="small">
           <Row gutter={16}>
