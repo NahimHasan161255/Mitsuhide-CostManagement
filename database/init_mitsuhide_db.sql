@@ -373,3 +373,78 @@ VALUES
 (1001, 0, 105, 2004, 2800000,  2500000,  '錆止め塗装・耐火塗装仕様', NOW(), 'INIT', 'SEED'),
 (1001, 0, 106, 2005, 1400000,  1200000,  '夜間運搬・トレーラー配送一式', NOW(), 'INIT', 'SEED'),
 (1001, 0, 107, 2006, 2000000,  1800000,  'ラフタークレーン25t / 現場建方合図', NOW(), 'INIT', 'SEED');
+-- -----------------------------------------------------------------------------
+-- 5. システム名称マスタ (AD_M_SYSNAME)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `AD_M_SYSNAME`;
+CREATE TABLE `AD_M_SYSNAME` (
+    `admnam_name_kbn` VARCHAR(5) NOT NULL COMMENT 'システム名称区分 (PKEY)',
+    `admnam_name_cd`  VARCHAR(7) NOT NULL COMMENT 'システム名称CD (PKEY)',
+    `admnam_ch1`      VARCHAR(100) NOT NULL COMMENT '文字項目1 (名称・表示名)',
+    `admnam_ch2`      VARCHAR(100) NULL COMMENT '文字項目2 (略称・補足)',
+    `admnam_nm1`      DECIMAL(11,0) NULL COMMENT '数字項目1 (並び順等)',
+    `admnam_nm2`      DECIMAL(11,0) NULL COMMENT '数字項目2',
+    `admnam_date1`    INT NULL COMMENT '日付項目1',
+    `admnam_date2`    INT NULL COMMENT '日付項目2',
+    `NewUser`         VARCHAR(6) NULL,
+    `NewDate`         DATETIME NULL,
+    `NewApid`         VARCHAR(7) NULL,
+    `NewWsnm`         VARCHAR(20) NULL,
+    `UpdUser`         VARCHAR(6) NULL,
+    `UpdDate`         DATETIME NULL,
+    `UpdApid`         VARCHAR(7) NULL,
+    `UpdWsnm`         VARCHAR(20) NULL,
+    `DelFg`           INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`admnam_name_kbn`, `admnam_name_cd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='システム名称マスタ';
+
+-- -----------------------------------------------------------------------------
+-- 6. 処理基準管理マスタ (AD_M_CONTROL)
+-- -----------------------------------------------------------------------------
+DROP TABLE IF EXISTS `AD_M_CONTROL`;
+CREATE TABLE `AD_M_CONTROL` (
+    `admcon_subsys_cd`   VARCHAR(2) NOT NULL COMMENT 'サブシステムCD (PKEY: GK, UR, SR, VM, AD)',
+    `admcon_prog_id`     VARCHAR(7) NOT NULL COMMENT 'プログラムID (PKEY)',
+    `admcon_kanri_name`  VARCHAR(40) NOT NULL COMMENT '管理名称',
+    `admcon_nm1`         DECIMAL(11,0) NULL COMMENT '数値項目1 (基準値等)',
+    `admcon_nm2`         DECIMAL(11,0) NULL COMMENT '数値項目2 (税率等)',
+    `admcon_ch1`         VARCHAR(100) NULL COMMENT '文字項目1',
+    `admcon_ch2`         VARCHAR(100) NULL COMMENT '文字項目2',
+    `NewUser`            VARCHAR(6) NULL,
+    `NewDate`            DATETIME NULL,
+    `NewApid`            VARCHAR(7) NULL,
+    `NewWsnm`            VARCHAR(20) NULL,
+    `UpdUser`            VARCHAR(6) NULL,
+    `UpdDate`            DATETIME NULL,
+    `UpdApid`            VARCHAR(7) NULL,
+    `UpdWsnm`            VARCHAR(20) NULL,
+    `DelFg`              INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`admcon_subsys_cd`, `admcon_prog_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='処理基準管理マスタ';
+
+-- システム名称マスタ 初期データ
+INSERT INTO `AD_M_SYSNAME` (`admnam_name_kbn`, `admnam_name_cd`, `admnam_ch1`, `admnam_ch2`, `admnam_nm1`, `NewDate`, `NewUser`, `NewApid`)
+VALUES
+('GK001', '0', '未成', '工事施工中・仕掛', 1, NOW(), 'INIT', 'SEED'),
+('GK001', '1', '完成', '完工引渡済', 2, NOW(), 'INIT', 'SEED'),
+('GK002', '1', '民間', '一般企業・民間工事', 1, NOW(), 'INIT', 'SEED'),
+('GK002', '2', '官公庁', '公共工事・入札', 2, NOW(), 'INIT', 'SEED'),
+('GK003', '1', '元請', '直接請負', 1, NOW(), 'INIT', 'SEED'),
+('GK003', '2', '下請', 'ゼネコン一次下請', 2, NOW(), 'INIT', 'SEED'),
+('GK004', '1', '課税 (10%)', '標準税率', 10, NOW(), 'INIT', 'SEED'),
+('GK004', '2', '非課税', '非課税取引', 0, NOW(), 'INIT', 'SEED'),
+('AD001', '1', '20日締め', '毎月20日締切', 20, NOW(), 'INIT', 'SEED'),
+('AD001', '2', '末日締め', '当月末日締切', 99, NOW(), 'INIT', 'SEED'),
+('AD002', '1', '営業担当', '受注・顧客窓口', 1, NOW(), 'INIT', 'SEED'),
+('AD002', '2', '工務担当', '施工・現場管理', 2, NOW(), 'INIT', 'SEED'),
+('AD002', '9', '経理担当', '請求・支払・管理', 9, NOW(), 'INIT', 'SEED');
+
+-- 処理基準管理マスタ 初期データ
+INSERT INTO `AD_M_CONTROL` (`admcon_subsys_cd`, `admcon_prog_id`, `admcon_kanri_name`, `admcon_nm1`, `admcon_nm2`, `admcon_ch1`, `NewDate`, `NewUser`, `NewApid`)
+VALUES
+('GK', 'GK0010', '工事番号採番体系', 2026, 4, '年度(4桁)＋連番(4桁)', NOW(), 'INIT', 'SEED'),
+('GK', 'GK0020', '実行予算承認基準額', 50000000, 1, '5千万円以上役員承認', NOW(), 'INIT', 'SEED'),
+('UR', 'UR0010', '売上消費税端数処理', 1, 10, '四捨五入 (1:切捨, 2:四捨五入, 3:切上)', NOW(), 'INIT', 'SEED'),
+('SR', 'SR0010', '仕入消費税端数処理', 1, 10, '切捨て', NOW(), 'INIT', 'SEED'),
+('VM', 'VM0010', '月次更新締日基準', 99, 0, '当月末日一括更新', NOW(), 'INIT', 'SEED'),
+('AD', 'AD0000', 'システム標準消費税率', 10, 8, '標準税率10% / 軽減税率8%', NOW(), 'INIT', 'SEED');
