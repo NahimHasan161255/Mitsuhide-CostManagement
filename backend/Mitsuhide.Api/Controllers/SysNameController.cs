@@ -9,6 +9,7 @@ namespace Mitsuhide.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Route("api/name")]
 public class SysNameController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
