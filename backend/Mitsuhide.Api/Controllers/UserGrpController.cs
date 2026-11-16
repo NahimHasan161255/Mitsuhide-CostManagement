@@ -25,7 +25,6 @@ public class UserGrpController : ControllerBase
     {
         var groups = await _context.UserGrpMaster
             .AsNoTracking()
-            .Where(x => x.DelFg == 0)
             .OrderBy(x => x.UserGrpCd)
             .Select(x => new UserGrpDto
             {
@@ -54,8 +53,7 @@ public class UserGrpController : ControllerBase
             RunAplCnt = req.RunAplCnt,
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
-            NewApid = "AD1720C",
-            DelFg = 0
+            NewApid = "AD1720C"
         };
 
         _context.UserGrpMaster.Add(entity);
@@ -75,7 +73,7 @@ public class UserGrpController : ControllerBase
     [HttpPut("{grpCd}")]
     public async Task<IActionResult> Update(string grpCd, [FromBody] UpdateUserGrpRequest req)
     {
-        var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd && x.DelFg == 0);
+        var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd);
         if (entity == null) return NotFound();
 
         entity.UserGrpName = req.UserGrpName;
@@ -89,19 +87,15 @@ public class UserGrpController : ControllerBase
     }
 
     /// <summary>
-    /// ユーザーグループ削除 (F7)
+    /// ユーザーグループ削除 (物理削除 - F7)
     /// </summary>
     [HttpDelete("{grpCd}")]
     public async Task<IActionResult> Delete(string grpCd)
     {
-        var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd && x.DelFg == 0);
+        var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd);
         if (entity == null) return NotFound();
 
-        entity.DelFg = 1;
-        entity.UpdDate = DateTime.Now;
-        entity.UpdUser = "SYSTEM";
-        entity.UpdApid = "AD1720C";
-
+        _context.UserGrpMaster.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }

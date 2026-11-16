@@ -24,9 +24,7 @@ public class JyucyuController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<PagedResult<JyucyuDto>>> GetAll([FromQuery] PagedRequest request)
     {
-        var query = _context.Jyucyu
-            .AsNoTracking()
-            .Where(x => x.DelFg == 0);
+        var query = _context.Jyucyu.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
@@ -89,7 +87,7 @@ public class JyucyuController : ControllerBase
     [HttpGet("{code:int}")]
     public async Task<ActionResult<JyucyuDto>> GetByCode(int code)
     {
-        var x = await _context.Jyucyu.AsNoTracking().FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var x = await _context.Jyucyu.AsNoTracking().FirstOrDefaultAsync(e => e.Code == code);
         if (x == null) return NotFound(new { message = $"受注先コード {code} は見つかりません。" });
 
         return Ok(new JyucyuDto
@@ -170,7 +168,7 @@ public class JyucyuController : ControllerBase
     [HttpPut("{code:int}")]
     public async Task<IActionResult> Update(int code, [FromBody] CreateOrUpdateJyucyuDto dto)
     {
-        var entity = await _context.Jyucyu.FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var entity = await _context.Jyucyu.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"受注先コード {code} は見つかりません。" });
 
         entity.Name = dto.Name;
@@ -203,18 +201,15 @@ public class JyucyuController : ControllerBase
     }
 
     /// <summary>
-    /// 受注先削除 (論理削除)
+    /// 受注先削除 (物理削除 - AD1780C仕様準拠: DELETE 受注先コード = 画面.受注先コード)
     /// </summary>
     [HttpDelete("{code:int}")]
     public async Task<IActionResult> Delete(int code)
     {
-        var entity = await _context.Jyucyu.FirstOrDefaultAsync(e => e.Code == code && e.DelFg == 0);
+        var entity = await _context.Jyucyu.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"受注先コード {code} は見つかりません。" });
 
-        entity.DelFg = 1;
-        entity.UpdDate = DateTime.Now;
-        entity.UpdApid = "AD1780C";
-
+        _context.Jyucyu.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }

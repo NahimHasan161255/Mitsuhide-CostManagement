@@ -33,8 +33,7 @@ public class ClosingController : ControllerBase
                 KosinFlg = 0,
                 NewDate = DateTime.Now,
                 NewUser = "INIT",
-                NewApid = "VM0010",
-                DelFg = 0
+                NewApid = "VM0010"
             };
             _context.GdateMaster.Add(currentGdate);
             await _context.SaveChangesAsync();
@@ -161,8 +160,7 @@ public class ClosingController : ControllerBase
                     KosinFlg = 0,
                     NewDate = DateTime.Now,
                     NewUser = req.ExecutedBy,
-                    NewApid = "VM0010",
-                    DelFg = 0
+                    NewApid = "VM0010"
                 });
             }
 

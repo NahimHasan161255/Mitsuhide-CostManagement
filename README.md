@@ -8,7 +8,7 @@ A modern, enterprise-grade Construction Cost, Order, Budget, Purchasing, Sales, 
 
 - **Frontend:** React 19 + TypeScript + Ant Design (AntD) + Vite
 - **Backend:** C# ASP.NET Core Web API (.NET 10) Clean Architecture
-- **Database:** MySQL (InnoDB, `utf8mb4_unicode_ci`) with Entity Framework Core (`Pomelo.EntityFrameworkCore.MySql`)
+- **Database:** Microsoft SQL Server 2019 (Express / Standard) with Entity Framework Core (`Microsoft.EntityFrameworkCore.SqlServer`)
 
 ---
 

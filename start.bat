@@ -1,30 +1,30 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
-title Mitsuhide ERP - Launcher
+title Mitsuhide ERP - Launcher (SQL Server 2019)
 
 REM ==============================================================
 REM   【ポート設定】必要に応じてここでポート番号を変更できます
 REM ==============================================================
 SET FRONTEND_PORT=5173
 SET BACKEND_PORT=5048
-SET DB_PORT=3306
-SET PMA_PORT=8080
+SET DB_INSTANCE=localhost\SQLEXPRESS
 REM ==============================================================
 
 echo ==============================================================
 echo   株式会社ミツヒデ 原価管理システム (Mitsuhide ERP)
-echo   システム一括起動スクリプト
+echo   システム一括起動スクリプト (Microsoft SQL Server 2019)
 echo ==============================================================
 echo.
 
-REM --- 1. Start MySQL via Docker ---
-echo [1/3] データベース (MySQL 8.0) の確認・起動中...
-docker compose up -d mysql
-if %ERRORLEVEL% neq 0 (
-    echo [WARNING] Docker の起動に失敗した可能性があります。Docker Desktop が立ち上がっているかご確認ください。
+REM --- 1. Check & Ensure SQL Server 2019 is running ---
+echo [1/3] データベース (SQL Server 2019: %DB_INSTANCE%) の確認中...
+sc query "MSSQL$SQLEXPRESS" >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    net start "MSSQL$SQLEXPRESS" >nul 2>nul
+    echo -> SQL Server (SQLEXPRESS) は稼働中です。
 ) else (
-    echo -> データベースは正常に準備完了しました。(ポート: %DB_PORT%)
+    echo -> SQL Server サービス稼働中。
 )
 echo.
 
@@ -60,8 +60,8 @@ echo.
 echo   ◆ バックエンド API Swagger (開発・検証用):
 echo      -> http://localhost:%BACKEND_PORT%/swagger
 echo.
-echo   ◆ データベース管理 (phpMyAdmin):
-echo      -> http://localhost:%PMA_PORT%
+echo   ◆ データベース:
+echo      -> Microsoft SQL Server 2019 (%DB_INSTANCE%)
 echo.
 echo   ※ システムを終了する場合は「stop.bat」をダブルクリックしてください。
 echo ==============================================================

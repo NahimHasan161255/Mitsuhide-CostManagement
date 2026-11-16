@@ -9,6 +9,7 @@ namespace Mitsuhide.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Route("api/name")]
 public class SysNameController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -28,7 +29,7 @@ public class SysNameController : ControllerBase
         [FromQuery] string? nameKbn = null,
         [FromQuery] string? keyword = null)
     {
-        var query = _context.SysNameMaster.AsNoTracking().Where(x => x.DelFg == 0);
+        var query = _context.SysNameMaster.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(nameKbn))
             query = query.Where(x => x.NameKbn == nameKbn);
@@ -73,7 +74,7 @@ public class SysNameController : ControllerBase
     {
         var items = await _context.SysNameMaster
             .AsNoTracking()
-            .Where(x => x.NameKbn == kbn && x.DelFg == 0)
+            .Where(x => x.NameKbn == kbn)
             .OrderBy(x => x.Nm1 ?? 0)
             .ThenBy(x => x.NameCd)
             .Select(x => new SysNameDto
@@ -108,8 +109,7 @@ public class SysNameController : ControllerBase
             Nm2 = req.Nm2,
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
-            NewApid = "AD1760C",
-            DelFg = 0
+            NewApid = "AD1760C"
         };
 
         _context.SysNameMaster.Add(entity);
@@ -132,7 +132,7 @@ public class SysNameController : ControllerBase
     [HttpPut("{nameKbn}/{nameCd}")]
     public async Task<IActionResult> Update(string nameKbn, string nameCd, [FromBody] UpdateSysNameRequest req)
     {
-        var entity = await _context.SysNameMaster.FirstOrDefaultAsync(x => x.NameKbn == nameKbn && x.NameCd == nameCd && x.DelFg == 0);
+        var entity = await _context.SysNameMaster.FirstOrDefaultAsync(x => x.NameKbn == nameKbn && x.NameCd == nameCd);
         if (entity == null) return NotFound();
 
         entity.Ch1 = req.Ch1;
@@ -148,19 +148,15 @@ public class SysNameController : ControllerBase
     }
 
     /// <summary>
-    /// システム名称削除 (F7)
+    /// システム名称削除 (物理削除 - F7)
     /// </summary>
     [HttpDelete("{nameKbn}/{nameCd}")]
     public async Task<IActionResult> Delete(string nameKbn, string nameCd)
     {
-        var entity = await _context.SysNameMaster.FirstOrDefaultAsync(x => x.NameKbn == nameKbn && x.NameCd == nameCd && x.DelFg == 0);
+        var entity = await _context.SysNameMaster.FirstOrDefaultAsync(x => x.NameKbn == nameKbn && x.NameCd == nameCd);
         if (entity == null) return NotFound();
 
-        entity.DelFg = 1;
-        entity.UpdDate = DateTime.Now;
-        entity.UpdUser = "SYSTEM";
-        entity.UpdApid = "AD1760C";
-
+        _context.SysNameMaster.Remove(entity);
         await _context.SaveChangesAsync();
         return NoContent();
     }

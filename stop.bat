@@ -8,16 +8,10 @@ echo   システム停止スクリプト
 echo ==============================================================
 echo.
 
-REM --- 1. Stop Frontend and Backend by Port ---
-echo [1/2] フロントエンド (Port 5173) およびバックエンド (Port 5048) プロセスを停止中...
+REM --- Stop Frontend and Backend by Port ---
+echo フロントエンド (Port 5173) およびバックエンド (Port 5048) プロセスを停止中...
 powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 5048,5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }"
 echo -> アプリケーションプロセスを正常に終了しました。
-echo.
-
-REM --- 2. Stop Docker MySQL ---
-echo [2/2] MySQL データベースコンテナを停止中...
-docker compose stop
-echo -> データベースコンテナを停止しました。
 echo.
 
 echo ==============================================================
