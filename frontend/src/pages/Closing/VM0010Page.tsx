@@ -25,6 +25,7 @@ import {
   ProjectOutlined,
   HistoryOutlined,
 } from '@ant-design/icons';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -54,7 +55,7 @@ export const VM0010Page: React.FC = () => {
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5247/api/closing/status');
+      const res = await fetch(`${API_BASE_URL}/api/closing/status`);
       if (res.ok) {
         const data = await res.json();
         setStatus(data);
@@ -118,7 +119,7 @@ export const VM0010Page: React.FC = () => {
             `[${new Date().toLocaleTimeString()}] 進行中工事(${status.activeProjectsCount}件)の仕掛原価(WIP)計算を開始...`,
           ]);
 
-          const res = await fetch('http://localhost:5247/api/closing/execute', {
+          const res = await fetch(`${API_BASE_URL}/api/closing/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -163,7 +164,7 @@ export const VM0010Page: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Title Card */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle">
           <Col>
             <Space align="center">
@@ -190,11 +191,11 @@ export const VM0010Page: React.FC = () => {
       {status && (
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={6}>
-            <Card bordered={false} style={{ background: '#e6f7ff', border: '1px solid #91d5ff' }}>
+            <Card variant="borderless" style={{ background: '#e6f7ff', border: '1px solid #91d5ff' }}>
               <Statistic
                 title="現在 処理基準年月"
                 value={formatYm(status.currentYyyyMm)}
-                valueStyle={{ color: '#096dd9', fontWeight: 700 }}
+                styles={{ content: { color: '#096dd9', fontWeight: 700 } }}
               />
               <div style={{ marginTop: 8 }}>
                 {status.isClosed ? (
@@ -207,12 +208,12 @@ export const VM0010Page: React.FC = () => {
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card bordered={false} style={{ background: '#f6ffed', border: '1px solid #b7eb8f' }}>
+            <Card variant="borderless" style={{ background: '#f6ffed', border: '1px solid #b7eb8f' }}>
               <Statistic
                 title="更新後 予定年月"
                 value={formatYm(status.nextYyyyMm)}
                 prefix={<ArrowRightOutlined />}
-                valueStyle={{ color: '#389e0d', fontWeight: 700 }}
+                styles={{ content: { color: '#389e0d', fontWeight: 700 } }}
               />
               <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                 更新実行時に自動繰り上げ
@@ -221,12 +222,12 @@ export const VM0010Page: React.FC = () => {
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card bordered={false} style={{ background: '#fff7e6', border: '1px solid #ffd591' }}>
+            <Card variant="borderless" style={{ background: '#fff7e6', border: '1px solid #ffd591' }}>
               <Statistic
                 title="当月 発生仕入累計"
                 value={status.totalMonthlyPurchase}
                 prefix="¥"
-                valueStyle={{ color: '#d46b08', fontWeight: 700 }}
+                styles={{ content: { color: '#d46b08', fontWeight: 700 } }}
               />
               <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                 <ShoppingCartOutlined /> 未締切仕入伝票
@@ -235,12 +236,12 @@ export const VM0010Page: React.FC = () => {
           </Col>
 
           <Col xs={24} sm={12} lg={6}>
-            <Card bordered={false} style={{ background: '#f9f0ff', border: '1px solid #d3adf7' }}>
+            <Card variant="borderless" style={{ background: '#f9f0ff', border: '1px solid #d3adf7' }}>
               <Statistic
                 title="当月 請求売上累計"
                 value={status.totalMonthlySales}
                 prefix="¥"
-                valueStyle={{ color: '#722ed1', fontWeight: 700 }}
+                styles={{ content: { color: '#722ed1', fontWeight: 700 } }}
               />
               <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                 <DollarOutlined /> 進行工事数: {status.activeProjectsCount}件
@@ -258,11 +259,11 @@ export const VM0010Page: React.FC = () => {
             <span>月次締め・仕掛計算バッチ実行</span>
           </Space>
         }
-        bordered={false}
+        variant="borderless"
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
       >
         <Alert
-          message="月次更新の注意事項"
+          title="月次更新の注意事項"
           description="月次更新を実行する前に、当月日付の仕入伝票（SR0010）および売上伝票（UR0010）がすべて入力完了していることをご確認ください。更新実行後は当月の伝票追加・変更が制限されます。"
           type="warning"
           showIcon
@@ -324,7 +325,7 @@ export const VM0010Page: React.FC = () => {
       {/* Pre-closing Checklist */}
       <Card
         title="月次更新前 チェック項目リスト"
-        bordered={false}
+        variant="borderless"
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
       >
         <List

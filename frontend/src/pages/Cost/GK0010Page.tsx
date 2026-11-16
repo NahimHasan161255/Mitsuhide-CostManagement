@@ -162,7 +162,7 @@ export const GK0010Page: React.FC = () => {
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 1. Top Action Toolbar */}
       <Card
-        bordered={false}
+        variant="borderless"
         style={{
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
           borderRadius: 8,
@@ -224,43 +224,43 @@ export const GK0010Page: React.FC = () => {
       {/* 2. Executive Real-Time Financial Metric Strip */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <Statistic
               title={<span style={{ fontSize: 12, color: '#595959', fontWeight: 600 }}>契約額合計 (税抜)</span>}
               value={totalTaxExcluded}
               precision={0}
               prefix="¥"
-              valueStyle={{ color: '#1890ff', fontWeight: 700, fontSize: 22 }}
+              styles={{ content: { color: '#1890ff', fontWeight: 700, fontSize: 22 } }}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <Statistic
               title={<span style={{ fontSize: 12, color: '#595959', fontWeight: 600 }}>契約額合計 (税込)</span>}
               value={totalTaxIncluded}
               precision={0}
               prefix="¥"
-              valueStyle={{ color: '#262626', fontWeight: 700, fontSize: 22 }}
+              styles={{ content: { color: '#262626', fontWeight: 700, fontSize: 22 } }}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <Statistic
               title={<span style={{ fontSize: 12, color: '#595959', fontWeight: 600 }}>実行予算額 (原価)</span>}
               value={form.getFieldValue('yosangaku') || 0}
               precision={0}
               prefix="¥"
-              valueStyle={{ color: '#fa8c16', fontWeight: 700, fontSize: 22 }}
+              styles={{ content: { color: '#fa8c16', fontWeight: 700, fontSize: 22 } }}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" bodyStyle={{ padding: '16px 20px' }} style={{ borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <span style={{ fontSize: 12, color: '#595959', fontWeight: 600 }}>予定粗利 / 粗利率</span>
@@ -285,7 +285,7 @@ export const GK0010Page: React.FC = () => {
 
       {/* 3. Main Structured Form with Tabs */}
       <Card
-        bordered={false}
+        variant="borderless"
         style={{
           borderRadius: 8,
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',

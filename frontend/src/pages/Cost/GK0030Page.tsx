@@ -27,6 +27,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { ProjectSelectModal } from '../../components/Modals/ProjectSelectModal';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -88,7 +89,7 @@ export const GK0030Page: React.FC = () => {
   const fetchLedger = async (targetCd: number, targetSyu: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5247/api/ledger/${targetCd}/${targetSyu}`);
+      const res = await fetch(`${API_BASE_URL}/api/ledger/${targetCd}/${targetSyu}`);
       if (res.ok) {
         const data = await res.json();
         setLedger(data);
@@ -249,7 +250,7 @@ export const GK0030Page: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Top Search & Actions Bar */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={12}>
             <Space align="center" wrap>
@@ -301,7 +302,7 @@ export const GK0030Page: React.FC = () => {
       {/* Project Basic Overview */}
       {ledger && (
         <>
-          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
             <Descriptions
               title={
                 <Space>
@@ -334,13 +335,13 @@ export const GK0030Page: React.FC = () => {
           {/* 4 Financial Highlight KPI Cards */}
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ background: '#f6ffed', border: '1px solid #b7eb8f' }}>
+              <Card variant="borderless" style={{ background: '#f6ffed', border: '1px solid #b7eb8f' }}>
                 <Statistic
                   title="契約額 (税抜受注額)"
                   value={ledger.keiyakuGnk}
                   precision={0}
                   prefix="¥"
-                  valueStyle={{ color: '#237804', fontWeight: 700 }}
+                  styles={{ content: { color: '#237804', fontWeight: 700 } }}
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                   税込: ¥{ledger.keiyakuGkm.toLocaleString()}
@@ -349,13 +350,13 @@ export const GK0030Page: React.FC = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ background: '#e6f7ff', border: '1px solid #91d5ff' }}>
+              <Card variant="borderless" style={{ background: '#e6f7ff', border: '1px solid #91d5ff' }}>
                 <Statistic
                   title="実行予算額 (予定原価)"
                   value={ledger.yosangaku}
                   precision={0}
                   prefix="¥"
-                  valueStyle={{ color: '#096dd9', fontWeight: 700 }}
+                  styles={{ content: { color: '#096dd9', fontWeight: 700 } }}
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                   予定粗利率: <Text strong>{ledger.plannedMarginRate}%</Text> (¥{ledger.plannedMargin.toLocaleString()})
@@ -364,13 +365,13 @@ export const GK0030Page: React.FC = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ background: '#fff7e6', border: '1px solid #ffd591' }}>
+              <Card variant="borderless" style={{ background: '#fff7e6', border: '1px solid #ffd591' }}>
                 <Statistic
                   title="発生原価実績 (仕入累計)"
                   value={ledger.actualSiireGk}
                   precision={0}
                   prefix="¥"
-                  valueStyle={{ color: '#d46b08', fontWeight: 700 }}
+                  styles={{ content: { color: '#d46b08', fontWeight: 700 } }}
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                   予算残高: <Text strong style={{ color: ledger.remainingBudget >= 0 ? '#52c41a' : '#f5222d' }}>
@@ -381,13 +382,13 @@ export const GK0030Page: React.FC = () => {
             </Col>
 
             <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} style={{ background: '#f9f0ff', border: '1px solid #d3adf7' }}>
+              <Card variant="borderless" style={{ background: '#f9f0ff', border: '1px solid #d3adf7' }}>
                 <Statistic
                   title="累計請求売上 / 実績粗利"
                   value={ledger.actualMargin}
                   precision={0}
                   prefix="¥"
-                  valueStyle={{ color: '#722ed1', fontWeight: 700 }}
+                  styles={{ content: { color: '#722ed1', fontWeight: 700 } }}
                 />
                 <div style={{ marginTop: 8, fontSize: 12, color: '#555' }}>
                   実績粗利率: <Text strong>{ledger.actualMarginRate}%</Text> (売上: ¥{ledger.actualUriageGk.toLocaleString()})
@@ -397,7 +398,7 @@ export const GK0030Page: React.FC = () => {
           </Row>
 
           {/* Budget Execution Progress */}
-          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
             <Row align="middle" gutter={24}>
               <Col xs={24} md={6}>
                 <Text strong style={{ fontSize: 15 }}>
@@ -422,7 +423,7 @@ export const GK0030Page: React.FC = () => {
           </Card>
 
           {/* Detailed Ledger Tabs */}
-          <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
             <Tabs
               defaultActiveKey="budget"
               items={[

@@ -151,9 +151,9 @@ export const ProjectSelectModal: React.FC<ProjectSelectModalProps> = ({ open, on
       onCancel={onCancel}
       footer={null}
       width={780}
-      destroyOnClose
+      destroyOnHidden
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
         <Space>
           <Input
             placeholder="工事コード・工事名・受注先で検索"

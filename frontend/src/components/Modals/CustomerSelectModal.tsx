@@ -99,9 +99,9 @@ export const CustomerSelectModal: React.FC<CustomerSelectModalProps> = ({ open, 
       onCancel={onCancel}
       footer={null}
       width={680}
-      destroyOnClose
+      destroyOnHidden
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
         <Space>
           <Input
             placeholder="コード・名称・カナで検索"

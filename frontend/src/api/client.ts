@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+export const API_BASE_URL = 'http://localhost:5048';
+
 export const apiClient = axios.create({
-  baseURL: 'https://localhost:7001/api', // default ASP.NET Core HTTPS port
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

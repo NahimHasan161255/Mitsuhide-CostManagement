@@ -27,6 +27,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { ProjectSelectModal } from '../../components/Modals/ProjectSelectModal';
 import { SupplierSelectModal } from '../../components/Modals/SupplierSelectModal';
+import { API_BASE_URL } from '../../api/client';
 
 const { Title, Text } = Typography;
 
@@ -96,7 +97,7 @@ export const SR0010Page: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      let url = `http://localhost:5247/api/siiredata?page=${page}&pageSize=20`;
+      let url = `${API_BASE_URL}/api/siiredata?page=${page}&pageSize=20`;
       if (searchKojiCd) url += `&kojiCd=${searchKojiCd}`;
       if (searchSiireCd) url += `&siireCd=${searchSiireCd}`;
 
@@ -201,14 +202,14 @@ export const SR0010Page: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`http://localhost:5247/api/siiredata/${editingItem.unqId}`, {
+        await fetch(`${API_BASE_URL}/api/siiredata/${editingItem.unqId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
         message.success('仕入伝票を更新しました。');
       } else {
-        await fetch('http://localhost:5247/api/siiredata', {
+        await fetch(`${API_BASE_URL}/api/siiredata`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
@@ -224,7 +225,7 @@ export const SR0010Page: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetch(`http://localhost:5247/api/siiredata/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/siiredata/${id}`, { method: 'DELETE' });
       message.success('仕入伝票を削除しました。');
       fetchData();
     } catch {
@@ -325,7 +326,7 @@ export const SR0010Page: React.FC = () => {
   return (
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Search Header */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
@@ -370,7 +371,7 @@ export const SR0010Page: React.FC = () => {
       </Card>
 
       {/* Main Table */}
-      <Card bordered={false} style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Table
           loading={loading}
           dataSource={data}
@@ -395,7 +396,7 @@ export const SR0010Page: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={720}
-        destroyOnClose
+        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >

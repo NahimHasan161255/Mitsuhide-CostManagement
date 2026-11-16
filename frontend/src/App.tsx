@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ConfigProvider, Card, Row, Col, Statistic, Button, Space, Typography, Alert } from 'antd';
+import { ConfigProvider, App as AntdApp, Card, Row, Col, Statistic, Button, Space, Typography, Alert } from 'antd';
 import jaJP from 'antd/locale/ja_JP';
 import {
   ProjectOutlined,
@@ -12,6 +12,8 @@ import {
 import { MainLayout } from './components/Layout/MainLayout';
 import { JyucyuMasterPage } from './pages/Master/JyucyuMasterPage';
 import { SiireMasterPage } from './pages/Master/SiireMasterPage';
+import { UserMasterPage } from './pages/Master/UserMasterPage';
+import { UserGrpMasterPage } from './pages/Master/UserGrpMasterPage';
 import { GK0010Page } from './pages/Cost/GK0010Page';
 import { GK0020Page } from './pages/Cost/GK0020Page';
 import { GK0030Page } from './pages/Cost/GK0030Page';
@@ -41,6 +43,12 @@ export const App: React.FC = () => {
       case 'ad1790c':
         return <SiireMasterPage />;
 
+      case 'ad1730c':
+        return <UserMasterPage />;
+
+      case 'ad1720c':
+        return <UserGrpMasterPage />;
+
       case 'sr0010':
         return <SR0010Page />;
 
@@ -53,9 +61,9 @@ export const App: React.FC = () => {
       case 'dashboard':
       default:
         return (
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
             <Alert
-              message="システム稼働状況"
+              title="システム稼働状況"
               description="株式会社ミツヒデ 原価管理システム（Web版）の初期基盤が正常にセットアップされました。左側メニューから各業務モジュールを選択できます。"
               type="info"
               showIcon
@@ -65,50 +73,50 @@ export const App: React.FC = () => {
             {/* KPI Summary Cards */}
             <Row gutter={16}>
               <Col span={6}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="当期 契約額合計 (受注)"
                     value={184500000}
                     precision={0}
                     prefix="¥"
-                    valueStyle={{ color: '#1890ff', fontWeight: 'bold' }}
+                    styles={{ content: { color: '#1890ff', fontWeight: 'bold' } }}
                   />
                   <small style={{ color: '#888' }}>前年同期比 +12.5%</small>
                 </Card>
               </Col>
               <Col span={6}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="当期 予算総額"
                     value={142000000}
                     precision={0}
                     prefix="¥"
-                    valueStyle={{ color: '#52c41a', fontWeight: 'bold' }}
+                    styles={{ content: { color: '#52c41a', fontWeight: 'bold' } }}
                   />
                   <small style={{ color: '#888' }}>予算消化率 76.9%</small>
                 </Card>
               </Col>
               <Col span={6}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="当月 仕入実績 (原価発生)"
                     value={18250000}
                     precision={0}
                     prefix="¥"
-                    valueStyle={{ color: '#fa8c16', fontWeight: 'bold' }}
+                    styles={{ content: { color: '#fa8c16', fontWeight: 'bold' } }}
                   />
                   <small style={{ color: '#888' }}>未処理伝票: 0件</small>
                 </Card>
               </Col>
               <Col span={6}>
-                <Card bordered={false}>
+                <Card variant="borderless">
                   <Statistic
                     title="当月 予想粗利率"
                     value={23.0}
                     precision={1}
                     suffix="%"
                     prefix={<RiseOutlined />}
-                    valueStyle={{ color: '#722ed1', fontWeight: 'bold' }}
+                    styles={{ content: { color: '#722ed1', fontWeight: 'bold' } }}
                   />
                   <small style={{ color: '#888' }}>目標粗利率 20.0% 達成</small>
                 </Card>
@@ -118,7 +126,7 @@ export const App: React.FC = () => {
             {/* Quick Actions */}
             <Row gutter={16}>
               <Col span={16}>
-                <Card title="クイック業務アクション" bordered={false}>
+                <Card title="クイック業務アクション" variant="borderless">
                   <Paragraph type="secondary">よく使用する業務画面へワンクリックでアクセスできます。</Paragraph>
                   <Space wrap size="middle">
                     <Button
@@ -155,7 +163,7 @@ export const App: React.FC = () => {
               </Col>
 
               <Col span={8}>
-                <Card title="月次更新・締日ステータス" bordered={false}>
+                <Card title="月次更新・締日ステータス" variant="borderless">
                   <Paragraph>
                     <strong>現在処理基準年月:</strong> 2026年11月
                   </Paragraph>
@@ -184,9 +192,11 @@ export const App: React.FC = () => {
         },
       }}
     >
-      <MainLayout activeMenu={activeMenu} onSelectMenu={setActiveMenu}>
-        {renderContent()}
-      </MainLayout>
+      <AntdApp>
+        <MainLayout activeMenu={activeMenu} onSelectMenu={setActiveMenu}>
+          {renderContent()}
+        </MainLayout>
+      </AntdApp>
     </ConfigProvider>
   );
 };

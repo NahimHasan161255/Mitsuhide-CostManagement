@@ -108,9 +108,9 @@ export const SupplierSelectModal: React.FC<SupplierSelectModalProps> = ({ open, 
       onCancel={onCancel}
       footer={null}
       width={720}
-      destroyOnClose
+      destroyOnHidden
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
         <Space>
           <Input
             placeholder="仕入先コード・名称・業種で検索"
