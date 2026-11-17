@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. Database Context (Microsoft SQL Server 2019 / Express)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=localhost\\SQLEXPRESS;Database=mitsuhide_cost_db;Trusted_Connection=True;TrustServerCertificate=True;";
+    ?? "Server=.\\SQLEXPRESS;Database=mitsuhide_cost_db;Trusted_Connection=True;TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
