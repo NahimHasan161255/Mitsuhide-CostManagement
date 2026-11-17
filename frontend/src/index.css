@@ -1,4 +1,42 @@
-/* Enterprise ERP CSS Reset */
+/* ==============================================================
+   株式会社ミツヒデ 原価管理システム - Enterprise ERP Design System
+   Modern Executive Design Tokens & Animations
+   ============================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand Palette */
+  --erp-brand-navy: #090d16;
+  --erp-brand-surface: #0f172a;
+  --erp-brand-card: #141e33;
+  --erp-primary: #2563eb;
+  --erp-primary-hover: #3b82f6;
+  --erp-primary-light: #eff6ff;
+  --erp-primary-glow: rgba(37, 99, 235, 0.25);
+  
+  /* Status Colors */
+  --erp-emerald: #10b981;
+  --erp-emerald-glow: rgba(16, 185, 129, 0.2);
+  --erp-amber: #f59e0b;
+  --erp-amber-glow: rgba(245, 158, 11, 0.2);
+  --erp-purple: #8b5cf6;
+  --erp-purple-glow: rgba(139, 92, 246, 0.2);
+  --erp-cyan: #06b6d4;
+  --erp-cyan-glow: rgba(6, 182, 212, 0.2);
+  --erp-rose: #f43f5e;
+
+  /* Surfaces & Shadows */
+  --erp-bg: #f8fafc;
+  --erp-card-bg: #ffffff;
+  --erp-border: #e2e8f0;
+  --erp-border-subtle: #edf2f7;
+  --erp-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+  --erp-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --erp-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --erp-shadow-hover: 0 12px 24px -4px rgba(37, 99, 235, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -8,24 +46,125 @@ html, body, #root {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  background-color: #f5f7fa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", "Meiryo", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--erp-bg);
+  font-family: 'Plus Jakarta Sans', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", sans-serif;
+  color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar for dense tables and modals */
+/* ==============================================================
+   Interactive Animations & Hover States
+   ============================================================== */
+
+/* Smooth Card Hover Lift */
+.erp-hover-card {
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid var(--erp-border) !important;
+}
+
+.erp-hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--erp-shadow-hover) !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Glassmorphism Surface */
+.erp-glass-card {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Pulsing Status Dot */
+@keyframes erp-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.erp-status-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: erp-pulse 2s infinite;
+}
+
+/* ==============================================================
+   Sider / Menu Custom Gorgeous Overrides
+   ============================================================== */
+.mitsuhide-sider {
+  background: linear-gradient(180deg, #090d16 0%, #0d1527 50%, #080d18 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Ant Design Menu Dark Theme Refinements */
+.mitsuhide-menu.ant-menu-dark {
+  background: transparent !important;
+}
+
+.mitsuhide-menu .ant-menu-item {
+  border-radius: 8px !important;
+  margin: 4px 10px !important;
+  width: calc(100% - 20px) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+}
+
+.mitsuhide-menu .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  transform: translateX(3px);
+  color: #ffffff !important;
+}
+
+.mitsuhide-menu .ant-menu-item-selected {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.3) 0%, rgba(37, 99, 235, 0.08) 100%) !important;
+  color: #60a5fa !important;
+  font-weight: 600 !important;
+  border-left: 3.5px solid #3b82f6 !important;
+  box-shadow: inset 0 0 12px rgba(59, 130, 246, 0.15) !important;
+}
+
+.mitsuhide-menu .ant-menu-submenu-title {
+  border-radius: 8px !important;
+  margin: 4px 10px !important;
+  width: calc(100% - 20px) !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  color: #94a3b8 !important;
+}
+
+.mitsuhide-menu .ant-menu-submenu-title:hover {
+  color: #f1f5f9 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Dense modern scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #94a3b8;
 }

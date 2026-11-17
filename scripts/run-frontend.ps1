@@ -14,6 +14,10 @@ $logFile = Join-Path $logsDir "frontend.log"
 Set-Location $frontendDir
 $env:VITE_PORT = "$Port"
 $env:VITE_API_PORT = "$ApiPort"
+$env:CI = "true"
 
-# Run Vite and cleanly capture output to logs/frontend.log
-cmd.exe /c "npx vite --host 0.0.0.0 --port $Port > `"$logFile`" 2>&1"
+# Auto-restart daemon loop: keeps Vite alive permanently in the background
+while ($true) {
+    cmd.exe /c "npx vite --host 0.0.0.0 --port $Port <nul > `"$logFile`" 2>&1"
+    Start-Sleep -Seconds 2
+}
