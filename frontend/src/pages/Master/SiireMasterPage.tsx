@@ -151,6 +151,7 @@ export const SiireMasterPage: React.FC = () => {
       title: '操作',
       width: 110,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -180,12 +181,12 @@ export const SiireMasterPage: React.FC = () => {
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
-              <SolutionOutlined style={{ fontSize: 24, color: '#10b981' }} />
+              <SolutionOutlined className="erp-banner-icon" style={{ color: '#10b981' }} />
               <div>
-                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                <Title level={4} className="erp-page-title">
                   仕入先マスタ保守 (AD1790C)
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="erp-page-desc">
                   外注協力会社・資材仕入先のコード、名称、締日、支払条件を管理
                 </Text>
               </div>
@@ -195,27 +196,28 @@ export const SiireMasterPage: React.FC = () => {
           <Col xs={24} md={14} style={{ textAlign: 'right' }}>
             <Space wrap>
               <Input
+                className="erp-filter-input"
                 placeholder="仕入先CD / 名称 / 業種"
                 prefix={<SearchOutlined />}
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 onPressEnter={handleSearch}
-                style={{ width: 220 }}
                 allowClear
               />
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                検索 (F5)
+              <Button type="primary" className="erp-banner-btn" icon={<SearchOutlined />} onClick={handleSearch}>
+                検索<span className="erp-btn-shortcut"> (F5)</span>
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchData}>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
               <Button
                 type="primary"
+                className="erp-banner-btn"
                 icon={<PlusOutlined />}
                 onClick={() => handleOpenModal()}
                 style={{ background: '#52c41a', borderColor: '#52c41a' }}
               >
-                新規登録 (F1)
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -231,6 +233,7 @@ export const SiireMasterPage: React.FC = () => {
           loading={loading}
           size="middle"
           bordered
+          scroll={{ x: 1050 }}
           pagination={{
             current: page,
             pageSize,
@@ -251,6 +254,7 @@ export const SiireMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={720}
+        style={{ maxWidth: '92vw' }}
         okText="保存"
         cancelText="キャンセル"
       >

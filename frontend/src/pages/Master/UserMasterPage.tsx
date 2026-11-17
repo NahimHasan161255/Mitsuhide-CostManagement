@@ -249,6 +249,7 @@ export const UserMasterPage: React.FC = () => {
       key: 'action',
       width: 130,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)} />
@@ -272,12 +273,12 @@ export const UserMasterPage: React.FC = () => {
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
-              <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+              <UserOutlined className="erp-banner-icon" style={{ color: '#1890ff' }} />
               <div>
-                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                <Title level={4} className="erp-page-title">
                   ユーザーマスタ保守 (AD1730C)
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="erp-page-desc">
                   社員アカウント・ログイン権限・所属部門の管理
                 </Text>
               </div>
@@ -287,15 +288,17 @@ export const UserMasterPage: React.FC = () => {
           <Col xs={24} md={14} style={{ textAlign: 'right' }}>
             <Space wrap>
               <Input
+                className="erp-filter-input"
                 placeholder="社員CD / 氏名 / フリガナ"
-                style={{ width: 200 }}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 onPressEnter={fetchUsers}
+                allowClear
               />
               <Select
+                className="erp-filter-select"
                 placeholder="グループ権限"
-                style={{ width: 130 }}
+                style={{ width: 140 }}
                 allowClear
                 value={selectedGrp}
                 onChange={(v) => setSelectedGrp(v)}
@@ -304,14 +307,20 @@ export const UserMasterPage: React.FC = () => {
                   { value: '9', label: '管理者グループ' },
                 ]}
               />
-              <Button type="primary" icon={<SearchOutlined />} onClick={fetchUsers}>
-                検索 (F5)
+              <Button type="primary" className="erp-banner-btn" icon={<SearchOutlined />} onClick={fetchUsers}>
+                検索<span className="erp-btn-shortcut"> (F5)</span>
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchUsers}>
                 再読込
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate} style={{ background: '#52c41a' }}>
-                新規登録 (F1)
+              <Button
+                type="primary"
+                className="erp-banner-btn"
+                icon={<PlusOutlined />}
+                onClick={handleOpenCreate}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -334,6 +343,7 @@ export const UserMasterPage: React.FC = () => {
           }}
           bordered
           size="middle"
+          scroll={{ x: 1000 }}
         />
       </Card>
 
@@ -344,6 +354,7 @@ export const UserMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={640}
+        style={{ maxWidth: '92vw' }}
         okText="保存"
         cancelText="キャンセル"
       >

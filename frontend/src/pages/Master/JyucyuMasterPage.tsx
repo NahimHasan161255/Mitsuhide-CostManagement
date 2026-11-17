@@ -148,6 +148,7 @@ export const JyucyuMasterPage: React.FC = () => {
       title: '操作',
       width: 120,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -177,12 +178,12 @@ export const JyucyuMasterPage: React.FC = () => {
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
-              <ShopOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+              <ShopOutlined className="erp-banner-icon" style={{ color: '#2563eb' }} />
               <div>
-                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                <Title level={4} className="erp-page-title">
                   受注先マスタ保守 (AD1780C)
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="erp-page-desc">
                   得意先・元請会社のコード、名称、締日、入金区分を登録管理
                 </Text>
               </div>
@@ -192,27 +193,28 @@ export const JyucyuMasterPage: React.FC = () => {
           <Col xs={24} md={14} style={{ textAlign: 'right' }}>
             <Space wrap>
               <Input
+                className="erp-filter-input"
                 placeholder="受注先CD / 名称 / カナ"
                 prefix={<SearchOutlined />}
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 onPressEnter={handleSearch}
-                style={{ width: 220 }}
                 allowClear
               />
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                検索 (F5)
+              <Button type="primary" className="erp-banner-btn" icon={<SearchOutlined />} onClick={handleSearch}>
+                検索<span className="erp-btn-shortcut"> (F5)</span>
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchData}>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
               <Button
                 type="primary"
+                className="erp-banner-btn"
                 icon={<PlusOutlined />}
                 onClick={() => handleOpenModal()}
                 style={{ background: '#52c41a', borderColor: '#52c41a' }}
               >
-                新規登録 (F1)
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -228,6 +230,7 @@ export const JyucyuMasterPage: React.FC = () => {
           loading={loading}
           size="middle"
           bordered
+          scroll={{ x: 1000 }}
           pagination={{
             current: page,
             pageSize,
@@ -248,6 +251,7 @@ export const JyucyuMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={720}
+        style={{ maxWidth: '92vw' }}
         okText="保存"
         cancelText="キャンセル"
       >

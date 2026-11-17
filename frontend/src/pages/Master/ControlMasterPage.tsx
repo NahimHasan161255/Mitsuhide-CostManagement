@@ -279,32 +279,33 @@ export const ControlMasterPage: React.FC = () => {
     <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Header Banner */}
       <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <Row align="middle" justify="space-between">
-          <Col>
+        <Row align="middle" justify="space-between" gutter={[16, 16]}>
+          <Col xs={24} md={12}>
             <Space align="center" size="middle">
-              <ControlOutlined style={{ fontSize: 28, color: '#1890ff' }} />
+              <ControlOutlined className="erp-banner-icon" style={{ color: '#1890ff' }} />
               <div>
-                <Title level={4} style={{ margin: 0 }}>
+                <Title level={4} className="erp-page-title">
                   処理基準管理マスタ (AD1770C)
                 </Title>
-                <Text type="secondary">
+                <Text type="secondary" className="erp-page-desc">
                   各業務サブシステム（原価・売上・仕入・月次）の動作基準、計算ルール、採番体系を集中管理します
                 </Text>
               </div>
             </Space>
           </Col>
-          <Col>
-            <Space>
-              <Button icon={<ReloadOutlined />} onClick={fetchData}>
+          <Col xs={24} md={12} style={{ textAlign: 'right' }}>
+            <Space wrap>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
               <Button
                 type="primary"
+                className="erp-banner-btn"
                 icon={<PlusOutlined />}
                 onClick={handleOpenAdd}
                 style={{ background: '#52c41a', borderColor: '#52c41a' }}
               >
-                新規登録 (F1)
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -314,8 +315,9 @@ export const ControlMasterPage: React.FC = () => {
       {/* Filter and Table */}
       <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-          <Col span={8}>
+          <Col xs={24} sm={12} md={8}>
             <Select
+              className="erp-filter-select"
               style={{ width: '100%' }}
               value={selectedSubSys}
               onChange={(val) => {
@@ -354,6 +356,7 @@ export const ControlMasterPage: React.FC = () => {
         okText="保存 (F12)"
         cancelText="キャンセル"
         width={580}
+        style={{ maxWidth: '92vw' }}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
           <Row gutter={16}>

@@ -195,6 +195,7 @@ export const SysNameMasterPage: React.FC = () => {
       key: 'action',
       width: 130,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)} />
@@ -218,12 +219,12 @@ export const SysNameMasterPage: React.FC = () => {
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={10}>
             <Space align="center">
-              <TagsOutlined style={{ fontSize: 24, color: '#13c2c2' }} />
+              <TagsOutlined className="erp-banner-icon" style={{ color: '#13c2c2' }} />
               <div>
-                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                <Title level={4} className="erp-page-title">
                   システム名称マスタ保守 (AD1760C)
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="erp-page-desc">
                   汎用コード体系・ドロップダウン項目・区分名称の一元管理
                 </Text>
               </div>
@@ -233,28 +234,36 @@ export const SysNameMasterPage: React.FC = () => {
           <Col xs={24} md={14} style={{ textAlign: 'right' }}>
             <Space wrap>
               <Select
+                className="erp-filter-select"
                 placeholder="区分で絞り込み"
-                style={{ width: 180 }}
+                style={{ width: 170 }}
                 allowClear
                 value={selectedKbn}
                 onChange={(v) => setSelectedKbn(v)}
                 options={NAME_KBN_OPTIONS}
               />
               <Input
+                className="erp-filter-input"
                 placeholder="コード / 名称検索"
-                style={{ width: 160 }}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 onPressEnter={fetchData}
+                allowClear
               />
-              <Button type="primary" icon={<SearchOutlined />} onClick={fetchData}>
-                検索 (F5)
+              <Button type="primary" className="erp-banner-btn" icon={<SearchOutlined />} onClick={fetchData}>
+                検索<span className="erp-btn-shortcut"> (F5)</span>
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchData}>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate} style={{ background: '#52c41a' }}>
-                新規登録 (F1)
+              <Button
+                type="primary"
+                className="erp-banner-btn"
+                icon={<PlusOutlined />}
+                onClick={handleOpenCreate}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -277,6 +286,7 @@ export const SysNameMasterPage: React.FC = () => {
           }}
           bordered
           size="middle"
+          scroll={{ x: 850 }}
         />
       </Card>
 
@@ -287,6 +297,7 @@ export const SysNameMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={560}
+        style={{ maxWidth: '92vw' }}
         okText="保存"
         cancelText="キャンセル"
       >

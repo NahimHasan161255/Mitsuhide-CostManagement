@@ -233,3 +233,410 @@ html, body, #root {
     display: none !important;
   }
 }
+
+/* ==============================================================
+   Fluid & Responsive Typography System (Custom User Scaled)
+   ============================================================== */
+
+/* Hero Banner & Buttons */
+.erp-hero-banner {
+  background: linear-gradient(135deg, #091124 0%, #0f1d38 50%, #1e3a8a 100%);
+  border-radius: 16px;
+  padding: 26px 32px;
+  color: #ffffff;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.2);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.erp-hero-title {
+  color: #ffffff !important;
+  margin: 0 0 8px 0 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  font-size: clamp(14px, 2.2vw, 26px) !important;
+  line-height: 1.3 !important;
+}
+
+.erp-hero-desc {
+  color: #cbd5e1 !important;
+  font-size: clamp(11px, 1.1vw, 13.5px) !important;
+  max-width: 680px !important;
+  margin: 0 !important;
+  line-height: 1.6 !important;
+}
+
+.erp-hero-actions {
+  text-align: right;
+}
+
+.erp-hero-btn {
+  height: 40px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 9px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.erp-hero-btn.primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+}
+
+.erp-hero-btn.secondary {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px);
+}
+
+.erp-section-title {
+  font-size: clamp(14px, 1.5vw, 18px) !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  color: #0f172a !important;
+}
+
+/* Master Page Header Banner Title */
+.erp-page-title {
+  margin: 0 !important;
+  color: #172b3a !important;
+  font-weight: 700 !important;
+  font-size: 18px !important;
+}
+
+.erp-page-desc {
+  font-size: 12px !important;
+  color: #64748b !important;
+}
+
+/* Master Card Component & Typography */
+.erp-master-card .ant-card-body {
+  padding: 20px !important;
+}
+
+.erp-card-category {
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: block;
+}
+
+.erp-card-title {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 2px 0 6px 0;
+  line-height: 1.35;
+}
+
+.erp-card-icon-box {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.erp-card-icon-box .anticon {
+  font-size: 22px;
+}
+
+.erp-stat-value,
+.erp-stat-value .ant-statistic-content,
+.erp-stat-value .ant-statistic-content-value {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+.erp-stat-value .ant-statistic-content-suffix {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin-left: 4px !important;
+}
+
+.erp-card-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.erp-card-footer-desc {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.erp-card-footer-action {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* Banner Buttons & Filter Inputs (Default / Desktop) */
+.erp-banner-btn {
+  height: 38px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.erp-btn-shortcut {
+  display: inline;
+  opacity: 0.85;
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+.erp-filter-input {
+  width: 220px;
+  height: 38px;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.erp-filter-select {
+  border-radius: 8px;
+}
+
+.erp-banner-icon {
+  font-size: clamp(20px, 2.2vw, 26px) !important;
+}
+
+/* Tablet Media Queries (768px - 1199px) */
+@media (max-width: 1199px) {
+  .erp-btn-shortcut {
+    display: none !important;
+  }
+  .erp-page-title {
+    font-size: 13.5px !important;
+    line-height: 1.3 !important;
+  }
+  .erp-page-desc {
+    font-size: 10.5px !important;
+  }
+  .erp-banner-icon {
+    font-size: 20px !important;
+  }
+  .ant-card-body {
+    padding: 16px !important;
+  }
+  .erp-hero-banner {
+    padding: 18px 22px !important;
+  }
+  .erp-hero-title {
+    font-size: 16px !important;
+    margin-bottom: 6px !important;
+  }
+  .erp-hero-desc {
+    font-size: 11.5px !important;
+    line-height: 1.5 !important;
+  }
+  .erp-hero-btn {
+    height: 34px !important;
+    font-size: 12px !important;
+    padding: 0 14px !important;
+  }
+  .erp-master-card .ant-card-body {
+    padding: 16px !important;
+  }
+  .erp-card-category {
+    font-size: 10.5px !important;
+  }
+  .erp-card-title {
+    font-size: 13.5px !important;
+    margin: 2px 0 4px 0 !important;
+  }
+  .erp-card-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+  .erp-card-icon-box .anticon {
+    font-size: 18px !important;
+  }
+  .erp-stat-value,
+  .erp-stat-value .ant-statistic-content,
+  .erp-stat-value .ant-statistic-content-value {
+    font-size: 18px !important;
+  }
+  .erp-stat-value .ant-statistic-content-suffix {
+    font-size: 11.5px !important;
+  }
+  .erp-card-footer {
+    margin-top: 10px !important;
+    padding-top: 8px !important;
+  }
+  .erp-card-footer-desc,
+  .erp-card-footer-action {
+    font-size: 11px !important;
+  }
+  .erp-banner-btn {
+    height: 34px !important;
+    font-size: 12.5px !important;
+    padding: 0 10px !important;
+  }
+  .erp-filter-input {
+    width: 175px !important;
+    height: 34px !important;
+    font-size: 12.5px !important;
+  }
+  .erp-filter-select {
+    width: 140px !important;
+    font-size: 12.5px !important;
+  }
+  .ant-table {
+    font-size: 10px !important;
+  }
+  .ant-table-thead > tr > th {
+    padding: 8px 8px !important;
+    font-size: 10px !important;
+  }
+  .ant-table-tbody > tr > td {
+    padding: 8px 8px !important;
+    font-size: 10px !important;
+  }
+  .ant-table .ant-btn {
+    height: 26px !important;
+    font-size: 11px !important;
+    padding: 0 6px !important;
+  }
+}
+
+/* Mobile Media Queries (< 768px) */
+@media (max-width: 767px) {
+  .erp-page-title {
+    font-size: 11.5px !important;
+    line-height: 1.25 !important;
+  }
+  .erp-page-desc {
+    font-size: 9.5px !important;
+    line-height: 1.3 !important;
+  }
+  .erp-banner-icon {
+    font-size: 16px !important;
+  }
+  .erp-hero-banner {
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+  .erp-hero-title {
+    font-size: 13.5px !important;
+    line-height: 1.35 !important;
+    margin-bottom: 4px !important;
+  }
+  .erp-hero-desc {
+    font-size: 10.5px !important;
+    line-height: 1.45 !important;
+  }
+  .erp-hero-actions {
+    text-align: left !important;
+    margin-top: -6px !important;
+  }
+  .erp-hero-btn {
+    height: 30px !important;
+    font-size: 11px !important;
+    padding: 0 10px !important;
+    border-radius: 6px !important;
+  }
+  .erp-section-title {
+    font-size: 13.5px !important;
+  }
+  .erp-banner-btn {
+    height: 32px !important;
+    font-size: 11.5px !important;
+    padding: 0 8px !important;
+  }
+  .erp-filter-input {
+    width: 100% !important;
+    min-width: 130px !important;
+    height: 32px !important;
+    font-size: 11.5px !important;
+  }
+  .erp-filter-select {
+    width: 100% !important;
+    font-size: 11.5px !important;
+  }
+  .erp-master-card .ant-card-body {
+    padding: 10px 12px !important;
+  }
+  .erp-card-category {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+  .erp-card-title {
+    font-size: 11.5px !important;
+    margin: 1px 0 2px 0 !important;
+    line-height: 1.25 !important;
+  }
+  .erp-card-icon-box {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 8px !important;
+  }
+  .erp-card-icon-box .anticon {
+    font-size: 15px !important;
+  }
+  .erp-stat-value,
+  .erp-stat-value .ant-statistic-content,
+  .erp-stat-value .ant-statistic-content-value {
+    font-size: 13.5px !important;
+    line-height: 1.2 !important;
+  }
+  .erp-stat-value .ant-statistic-content-suffix {
+    font-size: 9.5px !important;
+    margin-left: 2px !important;
+  }
+  .erp-card-footer {
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+  }
+  .erp-card-footer-desc {
+    font-size: 9px !important;
+  }
+  .erp-card-footer-action {
+    font-size: 9.5px !important;
+  }
+  .ant-table {
+    font-size: 9px !important;
+  }
+  .ant-table-thead > tr > th {
+    padding: 6px 6px !important;
+    font-size: 9px !important;
+    white-space: nowrap !important;
+  }
+  .ant-table-tbody > tr > td {
+    padding: 6px 6px !important;
+    font-size: 9px !important;
+  }
+  .ant-table .ant-btn {
+    height: 22px !important;
+    font-size: 10px !important;
+    padding: 0 4px !important;
+  }
+  .ant-card-body {
+    padding: 12px !important;
+  }
+  .ant-modal-title {
+    font-size: 14px !important;
+  }
+  .ant-form-item-label > label {
+    font-size: 11.5px !important;
+  }
+  .ant-btn {
+    font-size: 12px !important;
+    height: 32px !important;
+  }
+}
