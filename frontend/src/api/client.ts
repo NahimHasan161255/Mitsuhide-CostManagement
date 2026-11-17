@@ -1,12 +1,15 @@
 import axios from 'axios';
 
-// Dynamically use the current hostname (e.g. 'localhost' or '192.168.x.x') and configurable port
-const apiHost = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
-const apiPort = import.meta.env.VITE_API_PORT || '5048';
-export const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${apiHost}:${apiPort}`;
+// Unified Same-Origin API Client:
+// Uses relative '/api' endpoint so requests route through port 3001 (Vite proxy)
+// directly to backend. This completely eliminates:
+// 1. Windows Firewall blocking port 5048 on Wi-Fi / Public networks.
+// 2. Extra cross-origin CORS OPTIONS preflight latency on Wi-Fi connections.
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api`,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },

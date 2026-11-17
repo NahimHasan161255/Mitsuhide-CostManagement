@@ -10,6 +10,7 @@ import {
   Tooltip,
   Input,
   Dropdown,
+  Drawer,
 } from 'antd';
 import {
   HomeOutlined,
@@ -28,8 +29,11 @@ import {
   CompressOutlined,
   SearchOutlined,
   CheckCircleFilled,
+  CalendarOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { useDeviceType } from '../../hooks/useDeviceType';
 
 const { Header, Content, Sider, Footer } = Layout;
 
@@ -40,29 +44,43 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, onSelectMenu }) => {
+  const { isMobile, isTablet, isDesktop } = useDeviceType();
+
   // Sidebar state
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [siderWidth, setSiderWidth] = useState<number>(270); // 270 (Standard) or 330 (Wide)
   const [searchKeyword, setSearchKeyword] = useState<string>('');
 
-  // Responsive auto-collapse on tablet / small screens
+  // Auto-collapse sidebar on tablet / small screens
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 992) {
-        setCollapsed(true);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    if (isTablet) {
+      setCollapsed(true);
+    } else if (isDesktop) {
+      setCollapsed(false);
+    }
+  }, [isTablet, isDesktop]);
+
+  const handleSelectMenu = (key: string) => {
+    onSelectMenu(key);
+    if (isMobile) {
+      setMobileDrawerOpen(false);
+    }
+  };
+
+  // Live Japanese Imperial & Western Date/Time with live clock
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Japanese Date Formatter (e.g. 2026年11月17日 (火) 令和8年)
-  const today = new Date();
   const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-  const reiwaYear = today.getFullYear() - 2018;
-  const dayOfWeek = dayNames[today.getDay()];
-  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 (${dayOfWeek}) 令和${reiwaYear}年`;
+  const reiwaYear = currentTime.getFullYear() - 2018;
+  const dayOfWeek = dayNames[currentTime.getDay()];
+  const dateBaseStr = `${currentTime.getFullYear()}年${currentTime.getMonth() + 1}月${currentTime.getDate()}日 (${dayOfWeek})`;
+  const eraStr = `令和${reiwaYear}年`;
+  const timeStr = currentTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   // Toggle between Standard (270px) and Wide (330px)
   const toggleSiderWidth = () => {
@@ -174,117 +192,172 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
   return (
     <Layout style={{ minHeight: '100vh', width: '100vw', overflowX: 'hidden' }}>
       {/* ==============================================================
-          GORGEOUS SIDER (Responsive, Resizable, Modern Dark Styling)
+          GORGEOUS SIDER (Desktop & Tablet)
           ============================================================== */}
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        width={siderWidth}
-        collapsedWidth={80}
-        className="mitsuhide-sider"
-        style={{
-          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.25)',
-          zIndex: 20,
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* Brand Area */}
-        <div
+      {!isMobile && (
+        <Sider
+          trigger={null}
+          collapsible
+          collapsed={collapsed}
+          width={siderWidth}
+          collapsedWidth={80}
+          className="mitsuhide-sider"
           style={{
-            height: 68,
+            boxShadow: '4px 0 24px rgba(0, 0, 0, 0.25)',
+            zIndex: 20,
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
             display: 'flex',
-            alignItems: 'center',
-            padding: collapsed ? '0 20px' : '0 20px',
-            background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.6) 100%)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            cursor: 'pointer',
+            flexDirection: 'column',
           }}
-          onClick={() => onSelectMenu('dashboard')}
         >
-          {/* Logo Mark */}
+          {/* Brand Area */}
           <div
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #06b6d4 100%)',
+              height: 68,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
-              flexShrink: 0,
+              padding: collapsed ? '0 20px' : '0 20px',
+              background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.6) 100%)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              cursor: 'pointer',
             }}
+            onClick={() => handleSelectMenu('dashboard')}
           >
-            <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, fontFamily: 'serif' }}>光</span>
+            {/* Logo Mark */}
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #06b6d4 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                flexShrink: 0,
+              }}
+            >
+              <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, fontFamily: 'serif' }}>光</span>
+            </div>
+
+            {/* Logo Text (Visible when expanded) */}
+            {!collapsed && (
+              <div style={{ marginLeft: 14, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#ffffff', fontWeight: 700, fontSize: 15, letterSpacing: '0.04em' }}>
+                    株式会社ミツヒデ
+                  </span>
+                  <span className="erp-status-pulse" title="System Online" />
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500, letterSpacing: '0.02em' }}>
+                  原価管理 ERP システム
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Logo Text (Visible when expanded) */}
+          {/* Menu Navigation Container */}
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 0' }}>
+            <Menu
+              theme="dark"
+              selectedKeys={[activeMenu]}
+              defaultOpenKeys={['master']}
+              mode="inline"
+              items={menuItems}
+              onClick={({ key }) => handleSelectMenu(key)}
+              className="mitsuhide-menu"
+            />
+          </div>
+
+          {/* Sider Bottom Widget (Database & Resizer) */}
           {!collapsed && (
-            <div style={{ marginLeft: 14, overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#ffffff', fontWeight: 700, fontSize: 15, letterSpacing: '0.04em' }}>
-                  株式会社ミツヒデ
-                </span>
-                <span className="erp-status-pulse" title="System Online" />
+            <div
+              style={{
+                padding: '12px 16px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(15, 23, 42, 0.75)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <Space size={6}>
+                  <DatabaseOutlined style={{ color: '#10b981', fontSize: 13 }} />
+                  <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600 }}>SQL Server 2019</span>
+                </Space>
+                <Tooltip title={siderWidth === 270 ? 'メニュー幅を広げる (Wide)' : '標準幅に戻す (Standard)'}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={siderWidth === 270 ? <ExpandOutlined /> : <CompressOutlined />}
+                    onClick={toggleSiderWidth}
+                    style={{ color: '#94a3b8', fontSize: 11 }}
+                  >
+                    {siderWidth === 270 ? '拡大' : '縮小'}
+                  </Button>
+                </Tooltip>
               </div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500, letterSpacing: '0.02em' }}>
-                原価管理 ERP システム
+              <div style={{ color: '#64748b', fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
+                <span>mitsuhide_cost_db</span>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>● 接続中</span>
               </div>
             </div>
           )}
-        </div>
+        </Sider>
+      )}
 
-        {/* Menu Navigation Container */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 0' }}>
-          <Menu
-            theme="dark"
-            selectedKeys={[activeMenu]}
-            defaultOpenKeys={['master']}
-            mode="inline"
-            items={menuItems}
-            onClick={({ key }) => onSelectMenu(key)}
-            className="mitsuhide-menu"
-          />
-        </div>
-
-        {/* Sider Bottom Widget (Database & Resizer) */}
-        {!collapsed && (
-          <div
-            style={{
-              padding: '12px 16px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              background: 'rgba(15, 23, 42, 0.75)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Space size={6}>
-                <DatabaseOutlined style={{ color: '#10b981', fontSize: 13 }} />
-                <span style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600 }}>SQL Server 2019</span>
-              </Space>
-              <Tooltip title={siderWidth === 270 ? 'メニュー幅を広げる (Wide)' : '標準幅に戻す (Standard)'}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={siderWidth === 270 ? <ExpandOutlined /> : <CompressOutlined />}
-                  onClick={toggleSiderWidth}
-                  style={{ color: '#94a3b8', fontSize: 11 }}
-                >
-                  {siderWidth === 270 ? '拡大' : '縮小'}
-                </Button>
-              </Tooltip>
+      {/* ==============================================================
+          SMART MOBILE DRAWER (For Phones & Smart Devices < 768px)
+          ============================================================== */}
+      {isMobile && (
+        <Drawer
+          placement="left"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          width={280}
+          styles={{
+            body: { padding: 0, background: '#090d16' },
+            header: { background: '#090d16', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', color: '#fff' },
+          }}
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #06b6d4 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <span style={{ color: '#fff', fontWeight: 800, fontSize: 16 }}>光</span>
+              </div>
+              <div>
+                <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 14 }}>
+                  株式会社ミツヒデ
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: 10 }}>
+                  原価管理 ERP
+                </div>
+              </div>
             </div>
-            <div style={{ color: '#64748b', fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
-              <span>mitsuhide_cost_db</span>
-              <span style={{ color: '#10b981', fontWeight: 600 }}>● 接続中</span>
-            </div>
+          }
+        >
+          <div style={{ padding: '12px 0', height: '100%', overflowY: 'auto' }}>
+            <Menu
+              theme="dark"
+              selectedKeys={[activeMenu]}
+              defaultOpenKeys={['master']}
+              mode="inline"
+              items={menuItems}
+              onClick={({ key }) => handleSelectMenu(key)}
+              className="mitsuhide-menu"
+            />
           </div>
-        )}
-      </Sider>
+        </Drawer>
+      )}
 
       {/* ==============================================================
           MAIN CONTENT AREA & MODERN GLASS HEADER
@@ -310,11 +383,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         >
           {/* Left: Collapse Toggle & Breadcrumb Title */}
           <Space size="middle" align="center">
-            <Tooltip title={collapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}>
+            <Tooltip title={isMobile ? 'メニューを開く' : collapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}>
               <Button
                 type="text"
-                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                onClick={() => setCollapsed(!collapsed)}
+                icon={isMobile || collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => {
+                  if (isMobile) {
+                    setMobileDrawerOpen(!mobileDrawerOpen);
+                  } else {
+                    setCollapsed(!collapsed);
+                  }
+                }}
                 style={{
                   fontSize: 18,
                   width: 40,
@@ -326,9 +405,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
               />
             </Tooltip>
 
-            <div>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>
+                <span
+                  className="erp-header-title"
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   工事原価・受注・売上・仕入管理システム
                 </span>
                 <Tag
@@ -340,6 +430,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                     border: '1px solid #bfdbfe',
                     background: '#eff6ff',
                     color: '#1d4ed8',
+                    flexShrink: 0,
                   }}
                 >
                   <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
@@ -350,10 +441,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           </Space>
 
           {/* Right: Quick Search, Date, Notifications & User Profile */}
-          <Space size="middle" align="center">
+          <Space size="middle" align="center" style={{ flexShrink: 0 }}>
             {/* Quick Master Filter / Navigation Search */}
             <Input
-              placeholder="画面コード / 検索 (例: AD1780C)..."
+              className="erp-header-search"
+              placeholder="画面CD / 検索..."
               prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
@@ -366,31 +458,37 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                 else if (kw.includes('1760') || kw.includes('名称') || kw.includes('コード')) onSelectMenu('ad1760c');
                 else if (kw.includes('1770') || kw.includes('基準') || kw.includes('採番')) onSelectMenu('ad1770c');
               }}
-              style={{
-                width: 220,
-                borderRadius: 20,
-                background: '#f1f5f9',
-                border: '1px solid #e2e8f0',
-              }}
             />
 
-            {/* Live Japanese Calendar Date Pill */}
+            {/* Live Japanese Calendar Date & Real-time Clock Pill */}
             <div
-              style={{
-                background: '#f1f5f9',
-                padding: '6px 14px',
-                borderRadius: 20,
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: '#475569',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              className="erp-header-datetime"
+              title={`${dateBaseStr} ${eraStr} ${timeStr}`}
             >
-              <span>📅</span>
-              <span>{dateStr}</span>
+              <CalendarOutlined style={{ color: '#2563eb', fontSize: 14 }} />
+              <span className="erp-header-date-text">{dateBaseStr}</span>
+              <Tag
+                className="erp-header-era"
+                color="blue"
+                style={{
+                  margin: 0,
+                  fontSize: 10.5,
+                  padding: '0 6px',
+                  borderRadius: 6,
+                  lineHeight: '18px',
+                  border: 'none',
+                  background: '#dbeafe',
+                  color: '#1d4ed8',
+                  fontWeight: 700,
+                }}
+              >
+                {eraStr}
+              </Tag>
+              <span className="erp-header-time-divider" style={{ color: '#cbd5e1' }}>|</span>
+              <ClockCircleOutlined style={{ color: '#0284c7', fontSize: 13 }} />
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, color: '#0f172a' }}>
+                {timeStr}
+              </span>
             </div>
 
             {/* Notification Bell */}
@@ -440,7 +538,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         {/* Dynamic Page Content */}
         <Content
           style={{
-            margin: '24px 28px',
+            margin: isMobile ? '12px 10px' : isTablet ? '16px 18px' : '24px 28px',
             minHeight: 'calc(100vh - 150px)',
             display: 'flex',
             flexDirection: 'column',
@@ -460,7 +558,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             borderTop: '1px solid #e2e8f0',
           }}
         >
-          株式会社ミツヒデ 原価管理システム Web版 ©{today.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
+          株式会社ミツヒデ 原価管理システム Web版 ©{currentTime.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
         </Footer>
       </Layout>
     </Layout>

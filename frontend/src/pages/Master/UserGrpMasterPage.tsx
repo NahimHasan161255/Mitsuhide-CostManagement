@@ -155,6 +155,7 @@ export const UserGrpMasterPage: React.FC = () => {
       key: 'action',
       width: 130,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)} />
@@ -178,12 +179,12 @@ export const UserGrpMasterPage: React.FC = () => {
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={12}>
             <Space align="center">
-              <TeamOutlined style={{ fontSize: 24, color: '#722ed1' }} />
+              <TeamOutlined className="erp-banner-icon" style={{ color: '#722ed1' }} />
               <div>
-                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                <Title level={4} className="erp-page-title">
                   ユーザーグループマスタ保守 (AD1720C)
                 </Title>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="erp-page-desc">
                   ユーザーグループコードおよび同時実行画面数の管理
                 </Text>
               </div>
@@ -192,11 +193,17 @@ export const UserGrpMasterPage: React.FC = () => {
 
           <Col xs={24} md={12} style={{ textAlign: 'right' }}>
             <Space wrap>
-              <Button icon={<ReloadOutlined />} onClick={fetchGroups}>
+              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchGroups}>
                 再読込
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate} style={{ background: '#52c41a' }}>
-                新規グループ登録 (F1)
+              <Button
+                type="primary"
+                className="erp-banner-btn"
+                icon={<PlusOutlined />}
+                onClick={handleOpenCreate}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                新規登録<span className="erp-btn-shortcut"> (F1)</span>
               </Button>
             </Space>
           </Col>
@@ -213,6 +220,7 @@ export const UserGrpMasterPage: React.FC = () => {
           pagination={false}
           bordered
           size="middle"
+          scroll={{ x: 650 }}
         />
       </Card>
 
@@ -223,7 +231,7 @@ export const UserGrpMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={500}
-        destroyOnHidden
+        style={{ maxWidth: '92vw' }}
         okText="保存"
         cancelText="キャンセル"
       >
