@@ -23,10 +23,22 @@ export default defineConfig({
   server: {
     host: true, // Listen on 0.0.0.0 for LAN access
     port: Number(process.env.VITE_PORT) || 3001,
+    proxy: {
+      '/api': {
+        target: `http://127.0.0.1:${process.env.VITE_API_PORT || 5048}`,
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: true, // Listen on 0.0.0.0 for LAN / Tablet access
     port: Number(process.env.VITE_PORT) || 3001,
+    proxy: {
+      '/api': {
+        target: `http://127.0.0.1:${process.env.VITE_API_PORT || 5048}`,
+        changeOrigin: true,
+      },
+    },
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'antd', '@ant-design/icons', 'axios', 'dayjs'],
