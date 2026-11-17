@@ -415,6 +415,20 @@ html, body, #root {
   font-size: clamp(20px, 2.2vw, 26px) !important;
 }
 
+/* Table Cell Content Safety & Tag Protection */
+.ant-table-cell {
+  word-break: break-word;
+}
+
+.ant-table-cell .ant-tag {
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+  margin-inline-end: 4px !important;
+}
+
 /* Tablet Media Queries (768px - 1199px) */
 @media (max-width: 1199px) {
   .erp-btn-shortcut {
@@ -512,6 +526,10 @@ html, body, #root {
     height: 26px !important;
     font-size: 11px !important;
     padding: 0 6px !important;
+  }
+  .ant-table-cell .ant-tag {
+    font-size: 9.5px !important;
+    padding: 0 4px !important;
   }
 }
 
@@ -625,6 +643,10 @@ html, body, #root {
     height: 22px !important;
     font-size: 10px !important;
     padding: 0 4px !important;
+  }
+  .ant-table-cell .ant-tag {
+    font-size: 9px !important;
+    padding: 0 3px !important;
   }
   .ant-card-body {
     padding: 12px !important;

@@ -23,9 +23,11 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   ControlOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
+import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
@@ -99,9 +101,9 @@ export const ControlMasterPage: React.FC = () => {
   const handleOpenAdd = () => {
     setEditingItem(null);
     form.resetFields();
-    form.setFieldsValue({
-      subSysCd: selectedSubSys !== 'ALL' ? selectedSubSys : 'GK',
-    });
+    if (selectedSubSys !== 'ALL') {
+      form.setFieldsValue({ subSysCd: selectedSubSys });
+    }
     setIsModalOpen(true);
   };
 
@@ -171,6 +173,50 @@ export const ControlMasterPage: React.FC = () => {
       }
     } catch {
       message.error('通信エラーが発生しました。');
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      let exportData = data;
+      try {
+        let url = `${API_BASE_URL}/api/control?page=1&pageSize=1000`;
+        if (selectedSubSys && selectedSubSys !== 'ALL') {
+          url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
+        }
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.items && json.items.length > 0) {
+            exportData = json.items;
+          }
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to loaded data', err);
+      }
+
+      if (!exportData || exportData.length === 0) {
+        message.warning('出力対象のデータがありません。');
+        return;
+      }
+
+      exportToCsv(
+        `処理基準管理マスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
+        [
+          { header: 'サブシステムCD', key: 'subSysCd' },
+          { header: 'プログラムID', key: 'progId' },
+          { header: '管理名称', key: 'kanriName' },
+          { header: '数値1', key: 'nm1' },
+          { header: '数値2', key: 'nm2' },
+          { header: '文字1', key: 'ch1' },
+          { header: '文字2', key: 'ch2' },
+        ],
+        exportData
+      );
+      message.success('CSVファイルを出力しました。');
+    } catch (err) {
+      console.error('CSV export failed:', err);
+      message.error('CSV出力に失敗しました。');
     }
   };
 
@@ -298,6 +344,9 @@ export const ControlMasterPage: React.FC = () => {
               <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
+              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
+              </Button>
               <Button
                 type="primary"
                 className="erp-banner-btn"
@@ -349,7 +398,19 @@ export const ControlMasterPage: React.FC = () => {
 
       {/* Add / Edit Modal */}
       <Modal
-        title={editingItem ? '処理基準 編集' : '処理基準 新規登録'}
+        title={
+          editingItem ? (
+            <Space>
+              <Tag color="orange">修正モード</Tag>
+              <span>処理基準マスタ編集 [{editingItem.subSysCd} - {editingItem.progId}]</span>
+            </Space>
+          ) : (
+            <Space>
+              <Tag color="green">新規登録モード</Tag>
+              <span>処理基準マスタ新規登録</span>
+            </Space>
+          )
+        }
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}

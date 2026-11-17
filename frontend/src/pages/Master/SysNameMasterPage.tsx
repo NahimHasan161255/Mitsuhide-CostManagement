@@ -23,9 +23,11 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   TagsOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
+import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
@@ -103,10 +105,9 @@ export const SysNameMasterPage: React.FC = () => {
         form.setFieldsValue(editingItem);
       } else {
         form.resetFields();
-        form.setFieldsValue({
-          nameKbn: selectedKbn || 'GK001',
-          nm1: 1,
-        });
+        if (selectedKbn) {
+          form.setFieldsValue({ nameKbn: selectedKbn });
+        }
       }
     }
   }, [isModalOpen, editingItem]);
@@ -153,6 +154,48 @@ export const SysNameMasterPage: React.FC = () => {
       fetchData();
     } catch {
       message.error('削除に失敗しました。');
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      let exportData = data;
+      try {
+        let url = `${API_BASE_URL}/api/sysname?page=1&pageSize=1000`;
+        if (selectedKbn) url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+        if (searchText) url += `&keyword=${encodeURIComponent(searchText)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.items && json.items.length > 0) {
+            exportData = json.items;
+          }
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to loaded data', err);
+      }
+
+      if (!exportData || exportData.length === 0) {
+        message.warning('出力対象のデータがありません。');
+        return;
+      }
+
+      exportToCsv(
+        `システム名称マスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
+        [
+          { header: '名称区分', key: 'nameKbn' },
+          { header: '名称CD', key: 'nameCd' },
+          { header: '名称・文字列1', key: 'ch1' },
+          { header: '略称・文字列2', key: 'ch2' },
+          { header: '数値1', key: 'nm1' },
+          { header: '数値2', key: 'nm2' },
+        ],
+        exportData
+      );
+      message.success('CSVファイルを出力しました。');
+    } catch (err) {
+      console.error('CSV export failed:', err);
+      message.error('CSV出力に失敗しました。');
     }
   };
 
@@ -256,6 +299,9 @@ export const SysNameMasterPage: React.FC = () => {
               <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
+              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
+              </Button>
               <Button
                 type="primary"
                 className="erp-banner-btn"
@@ -292,7 +338,19 @@ export const SysNameMasterPage: React.FC = () => {
 
       {/* Modal */}
       <Modal
-        title={editingItem ? `システム名称編集 [${editingItem.nameKbn}-${editingItem.nameCd}]` : '新規システム名称登録 (F1)'}
+        title={
+          editingItem ? (
+            <Space>
+              <Tag color="orange">修正モード</Tag>
+              <span>システム名称編集 [{editingItem.nameKbn}-{editingItem.nameCd}]</span>
+            </Space>
+          ) : (
+            <Space>
+              <Tag color="green">新規登録モード</Tag>
+              <span>新規システム名称登録</span>
+            </Space>
+          )
+        }
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
