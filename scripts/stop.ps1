@@ -2,7 +2,7 @@
 
 Write-Host "==============================================================" -ForegroundColor Cyan
 Write-Host "  株式会社ミツヒデ 原価管理システム (Mitsuhide ERP)" -ForegroundColor Cyan
-Write-Host "  システム停止スクリプト (Stop Services)" -ForegroundColor Cyan
+Write-Host "  システム停止スクリプト (Stop Services & Unregister Autostart)" -ForegroundColor Cyan
 Write-Host "==============================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -23,7 +23,7 @@ if ($pids) {
     Write-Host " -> 稼働中のポートプロセスはありません。" -ForegroundColor Gray
 }
 
-# 2. Kill any Mitsuhide.Api or Mitsuhide processes (excluding shell processes)
+# 2. Kill any Mitsuhide background processes
 Write-Host "[2/3] Mitsuhide 関連のバックグラウンドプロセスを確認中..." -ForegroundColor Yellow
 $currentPid = [System.Diagnostics.Process]::GetCurrentProcess().Id
 $mitsuhideProcesses = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
@@ -43,27 +43,23 @@ if ($mitsuhideProcesses) {
     Write-Host " -> 関連バックグラウンドプロセスはありません。" -ForegroundColor Gray
 }
 
-# 3. Close windows with title containing 'Mitsuhide'
-Write-Host "[3/3] Mitsuhide 関連ウィンドウを終了中..." -ForegroundColor Yellow
-$windows = Get-Process -ErrorAction SilentlyContinue | Where-Object {
-    $_.MainWindowTitle -like "*Mitsuhide*" -and $_.Id -ne $currentPid
-}
+# 3. Automatically remove Windows Startup shortcut
+Write-Host "[3/3] Windows Startup 自動起動ショートカットの解除中..." -ForegroundColor Yellow
+$startupFolder = [Environment]::GetFolderPath('Startup')
+$shortcutPath = Join-Path $startupFolder "MitsuhideERP.lnk"
 
-if ($windows) {
-    foreach ($w in $windows) {
-        try {
-            Stop-Process -Id $w.Id -Force -ErrorAction SilentlyContinue
-            Write-Host " -> ウィンドウ (PID: $($w.Id)) を終了しました。" -ForegroundColor Green
-        } catch {}
-    }
+if (Test-Path $shortcutPath) {
+    Remove-Item -Path $shortcutPath -Force -ErrorAction SilentlyContinue
+    Write-Host " -> Windows Startup フォルダから「MitsuhideERP.lnk」を削除しました。" -ForegroundColor Green
 } else {
-    Write-Host " -> 関連ウィンドウはありません。" -ForegroundColor Gray
+    Write-Host " -> Startup フォルダに自動起動ショートカットはありません。" -ForegroundColor Gray
 }
 
 Write-Host ""
 Write-Host "==============================================================" -ForegroundColor Cyan
-Write-Host "  【停止完了】すべてのサービスとウィンドウが正常に終了しました。" -ForegroundColor Green
-Write-Host "  再度起動する場合は「start.bat」を実行してください。" -ForegroundColor Cyan
+Write-Host "  【停止完了】すべてのサービスが停止し、自動起動を解除しました。" -ForegroundColor Green
+Write-Host "  次回 PC 起動時も自動実行はされません。" -ForegroundColor White
+Write-Host "  再度起動する場合は「start.bat」をダブルクリックしてください。" -ForegroundColor Cyan
 Write-Host "==============================================================" -ForegroundColor Cyan
 Write-Host ""
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 2
