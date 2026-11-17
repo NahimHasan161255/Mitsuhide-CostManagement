@@ -28,10 +28,13 @@ import { UserMasterPage } from './pages/Master/UserMasterPage';
 import { UserGrpMasterPage } from './pages/Master/UserGrpMasterPage';
 import { SysNameMasterPage } from './pages/Master/SysNameMasterPage';
 import { ControlMasterPage } from './pages/Master/ControlMasterPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './pages/Auth/LoginPage';
 
 const { Paragraph, Title, Text } = Typography;
 
-export const App: React.FC = () => {
+const MainApp: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
 
   // Real-time Master Counts loaded from backend
@@ -437,6 +440,18 @@ export const App: React.FC = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return (
+    <MainLayout activeMenu={activeMenu} onSelectMenu={setActiveMenu}>
+      {renderContent()}
+    </MainLayout>
+  );
+};
+
+export const App: React.FC = () => {
   return (
     <ConfigProvider
       locale={jaJP}
@@ -469,9 +484,9 @@ export const App: React.FC = () => {
       }}
     >
       <AntdApp>
-        <MainLayout activeMenu={activeMenu} onSelectMenu={setActiveMenu}>
-          {renderContent()}
-        </MainLayout>
+        <AuthProvider>
+          <MainApp />
+        </AuthProvider>
       </AntdApp>
     </ConfigProvider>
   );

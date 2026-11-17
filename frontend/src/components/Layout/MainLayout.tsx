@@ -11,6 +11,7 @@ import {
   Input,
   Dropdown,
   Drawer,
+  Modal,
 } from 'antd';
 import {
   HomeOutlined,
@@ -31,9 +32,11 @@ import {
   CheckCircleFilled,
   CalendarOutlined,
   ClockCircleOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useDeviceType } from '../../hooks/useDeviceType';
+import { useAuth } from '../../context/AuthContext';
 
 const { Header, Content, Sider, Footer } = Layout;
 
@@ -45,6 +48,7 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, onSelectMenu }) => {
   const { isMobile, isTablet, isDesktop } = useDeviceType();
+  const { user, logout } = useAuth();
 
   // Sidebar state
   const [collapsed, setCollapsed] = useState(false);
@@ -182,11 +186,36 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
   ];
 
   // User Profile Menu
+  const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'logout') {
+      Modal.confirm({
+        title: 'ログアウト確認',
+        content: '工事管理システムからログアウトしますか？',
+        okText: 'ログアウト',
+        cancelText: 'キャンセル',
+        okButtonProps: { danger: true },
+        onOk: () => {
+          logout();
+        },
+      });
+    }
+  };
+
   const userMenuItems: MenuProps['items'] = [
-    { key: 'profile', label: 'ユーザープロフィール' },
-    { key: 'security', label: 'パスワード・セキュリティ変更' },
+    {
+      key: 'userinfo',
+      disabled: true,
+      label: (
+        <div style={{ color: '#0f172a', fontWeight: 600 }}>
+          <div>{user?.userName || '未ログイン'}</div>
+          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 400 }}>
+            社員CD: {user?.userCd || '------'}
+          </div>
+        </div>
+      ),
+    },
     { type: 'divider' },
-    { key: 'logout', danger: true, label: 'ログアウト' },
+    { key: 'logout', danger: true, icon: <LogoutOutlined />, label: 'ログアウト' },
   ];
 
   return (
@@ -504,7 +533,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             </Tooltip>
 
             {/* User Profile Pill */}
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+            <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight" trigger={['click']}>
               <div
                 style={{
                   display: 'flex',
@@ -522,13 +551,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                   size={32}
                   icon={<UserOutlined />}
                   style={{
-                    backgroundColor: '#2563eb',
+                    backgroundColor: user?.userGrpCd === '9' ? '#722ed1' : '#2563eb',
                     boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
                   }}
                 />
                 <div style={{ lineHeight: 1.25, textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>酒井 太郎</div>
-                  <div style={{ fontSize: 10.5, color: '#64748b' }}>営業部 / 管理者</div>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>
+                    {user?.userName || '未ログイン'}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#64748b' }}>
+                    {user ? `${user.syubetuNm} / ${user.userGrpNm || '一般'}` : 'ログオン待ち'}
+                  </div>
                 </div>
               </div>
             </Dropdown>
