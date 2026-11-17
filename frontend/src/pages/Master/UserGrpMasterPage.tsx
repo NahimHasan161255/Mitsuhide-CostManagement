@@ -21,9 +21,11 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   TeamOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
+import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
@@ -73,7 +75,6 @@ export const UserGrpMasterPage: React.FC = () => {
         form.setFieldsValue(editingItem);
       } else {
         form.resetFields();
-        form.setFieldsValue({ runAplCnt: 5 });
       }
     }
   }, [isModalOpen, editingItem]);
@@ -120,6 +121,27 @@ export const UserGrpMasterPage: React.FC = () => {
       fetchGroups();
     } catch {
       message.error('削除に失敗しました。');
+    }
+  };
+
+  const handleExportCsv = () => {
+    try {
+      if (!data || data.length === 0) {
+        message.warning('出力対象のデータがありません。');
+        return;
+      }
+      exportToCsv(
+        `ユーザーグループマスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
+        [
+          { header: 'グループCD', key: 'userGrpCd' },
+          { header: 'グループ名称', key: 'userGrpName' },
+          { header: '同時実行可能APL数', key: 'runAplCnt' },
+        ],
+        data
+      );
+      message.success('CSVファイルを出力しました。');
+    } catch {
+      message.error('CSV出力に失敗しました。');
     }
   };
 
@@ -196,6 +218,9 @@ export const UserGrpMasterPage: React.FC = () => {
               <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchGroups}>
                 再読込
               </Button>
+              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
+              </Button>
               <Button
                 type="primary"
                 className="erp-banner-btn"
@@ -226,7 +251,19 @@ export const UserGrpMasterPage: React.FC = () => {
 
       {/* Modal */}
       <Modal
-        title={editingItem ? `グループ編集 [${editingItem.userGrpCd}]` : '新規グループ登録 (F1)'}
+        title={
+          editingItem ? (
+            <Space>
+              <Tag color="orange">修正モード</Tag>
+              <span>グループ情報編集 (CD: {editingItem.userGrpCd})</span>
+            </Space>
+          ) : (
+            <Space>
+              <Tag color="green">新規登録モード</Tag>
+              <span>新規グループ登録</span>
+            </Space>
+          )
+        }
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}

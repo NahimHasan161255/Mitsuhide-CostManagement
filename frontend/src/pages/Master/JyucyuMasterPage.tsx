@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Input, Space, Modal, Form, Row, Col, InputNumber, message, Popconfirm, Tag, Typography } from 'antd';
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Input, Space, Modal, Form, Row, Col, InputNumber, message, Popconfirm, Tag, Typography, Select, Divider } from 'antd';
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, ShopOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '../../api/client';
 import type { Jyucyu, PagedResult } from '../../types/master';
+import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
@@ -58,16 +59,6 @@ export const JyucyuMasterPage: React.FC = () => {
     } else {
       setEditingItem(null);
       form.resetFields();
-      form.setFieldsValue({
-        simeDd: 20,
-        syukinMm: 1,
-        syukinDd: 30,
-        tegata: 0,
-        genkin: 100,
-        kakeRt: 100,
-        syosiki: 1,
-        toriKb: 1,
-      });
     }
     setIsModalOpen(true);
   };
@@ -96,6 +87,61 @@ export const JyucyuMasterPage: React.FC = () => {
       fetchData();
     } catch {
       message.error('削除に失敗しました。');
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      let exportData = data;
+      try {
+        const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
+          params: { page: 1, pageSize: 1000, keyword },
+        });
+        if (res.data?.items && res.data.items.length > 0) {
+          exportData = res.data.items;
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to loaded data', err);
+      }
+
+      if (!exportData || exportData.length === 0) {
+        message.warning('出力対象のデータがありません。');
+        return;
+      }
+
+      exportToCsv(
+        `受注先マスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
+        [
+          { header: '受注先CD', key: 'code' },
+          { header: '受注先名', key: 'name' },
+          { header: '略称', key: 'ryaku' },
+          { header: 'カナ名', key: 'kana' },
+          { header: '責任者', key: 'sekinin' },
+          { header: '郵便番号', key: 'yubin' },
+          { header: '住所1', key: 'jyusyo1' },
+          { header: '住所2', key: 'jyusyo2' },
+          { header: 'TEL', key: 'tel' },
+          { header: 'FAX', key: 'fax' },
+          { header: 'メールアドレス', key: 'mail' },
+          { header: '請求締日', key: 'simeDd' },
+          { header: '集金月', key: 'syukinMm' },
+          { header: '集金日', key: 'syukinDd' },
+          { header: '回収方法', key: 'kaisyu' },
+          { header: '手形割合', key: 'tegata' },
+          { header: '現金割合', key: 'genkin' },
+          { header: '掛率', key: 'kakeRt' },
+          { header: '請求書式', key: 'syosiki' },
+          { header: '取引区分', key: 'toriKb' },
+          { header: '備考1', key: 'biko1' },
+          { header: '備考2', key: 'biko2' },
+          { header: '備考3', key: 'biko3' },
+        ],
+        exportData
+      );
+      message.success('CSVファイルを出力しました。');
+    } catch (err) {
+      console.error('CSV export failed:', err);
+      message.error('CSV出力に失敗しました。');
     }
   };
 
@@ -207,6 +253,9 @@ export const JyucyuMasterPage: React.FC = () => {
               <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
+              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
+              </Button>
               <Button
                 type="primary"
                 className="erp-banner-btn"
@@ -246,18 +295,31 @@ export const JyucyuMasterPage: React.FC = () => {
 
       {/* Add / Edit Modal */}
       <Modal
-        title={editingItem ? `受注先編集 [${editingItem.code}]` : '受注先新規登録'}
+        title={
+          editingItem ? (
+            <Space>
+              <Tag color="orange">修正モード</Tag>
+              <span>受注先マスタ編集 (コード: {editingItem.code})</span>
+            </Space>
+          ) : (
+            <Space>
+              <Tag color="green">新規登録モード</Tag>
+              <span>受注先マスタ新規登録</span>
+            </Space>
+          )
+        }
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
-        width={720}
-        style={{ maxWidth: '92vw' }}
+        width={760}
+        style={{ maxWidth: '94vw' }}
         okText="保存"
         cancelText="キャンセル"
       >
         <Form form={form} layout="vertical" size="small">
+          <Divider titlePlacement="left" style={{ margin: '8px 0 16px 0', fontSize: 13, color: '#1677ff' }}>基本情報</Divider>
           <Row gutter={16}>
-            <Col span={8}>
+            <Col xs={24} sm={8}>
               <Form.Item
                 label="受注先コード"
                 name="code"
@@ -266,7 +328,7 @@ export const JyucyuMasterPage: React.FC = () => {
                 <InputNumber style={{ width: '100%' }} disabled={!!editingItem} placeholder="6桁" />
               </Form.Item>
             </Col>
-            <Col span={16}>
+            <Col xs={24} sm={16}>
               <Form.Item
                 label="受注先名"
                 name="name"
@@ -278,12 +340,12 @@ export const JyucyuMasterPage: React.FC = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item label="略称" name="ryaku">
                 <Input placeholder="画面表示用略称" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item label="カナ名 (検索用)" name="kana">
                 <Input placeholder="半角・全角カナ" />
               </Form.Item>
@@ -291,55 +353,128 @@ export const JyucyuMasterPage: React.FC = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
+            <Col xs={24} sm={8}>
               <Form.Item label="責任者" name="sekinin">
-                <Input />
+                <Input placeholder="担当者・責任者名" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={8}>
               <Form.Item label="TEL" name="tel">
-                <Input />
+                <Input placeholder="00-0000-0000" />
               </Form.Item>
             </Col>
-            <Col span={8}>
+            <Col xs={24} sm={8}>
               <Form.Item label="FAX" name="fax">
-                <Input />
+                <Input placeholder="00-0000-0000" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col span={6}>
+            <Col xs={24} sm={6}>
               <Form.Item label="郵便番号" name="yubin">
                 <Input placeholder="000-0000" />
               </Form.Item>
             </Col>
-            <Col span={18}>
-              <Form.Item label="住所1" name="jyusyo1">
+            <Col xs={24} sm={18}>
+              <Form.Item label="住所1 (都道府県・市区町村)" name="jyusyo1">
                 <Input placeholder="都道府県・市区町村・番地" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col span={6}>
+            <Col xs={24} sm={14}>
+              <Form.Item label="住所2 (ビル・建物名)" name="jyusyo2">
+                <Input placeholder="ビル・マンション名、階数" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={10}>
+              <Form.Item label="メールアドレス" name="mail">
+                <Input placeholder="info@example.com" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider titlePlacement="left" style={{ margin: '12px 0 16px 0', fontSize: 13, color: '#1677ff' }}>請求・集金条件 (AD1780C)</Divider>
+          <Row gutter={16}>
+            <Col xs={12} sm={6}>
               <Form.Item label="請求締日 (DD)" name="simeDd">
-                <InputNumber min={1} max={31} style={{ width: '100%' }} />
+                <InputNumber min={1} max={31} style={{ width: '100%' }} placeholder="31:月末" />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Form.Item label="集金月 (何ヶ月後)" name="syukinMm">
-                <InputNumber min={0} max={12} style={{ width: '100%' }} />
+                <InputNumber min={0} max={12} style={{ width: '100%' }} placeholder="例: 1" />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Form.Item label="集金日 (DD)" name="syukinDd">
-                <InputNumber min={1} max={31} style={{ width: '100%' }} />
+                <InputNumber min={1} max={31} style={{ width: '100%' }} placeholder="31:月末" />
               </Form.Item>
             </Col>
-            <Col span={6}>
+            <Col xs={12} sm={6}>
               <Form.Item label="回収方法" name="kaisyu">
                 <Input placeholder="振込/手形など" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={12} sm={6}>
+              <Form.Item label="手形割合 (%)" name="tegata">
+                <InputNumber min={0} max={100} style={{ width: '100%' }} placeholder="0-100" />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Form.Item label="現金割合 (%)" name="genkin">
+                <InputNumber min={0} max={100} style={{ width: '100%' }} placeholder="0-100" />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={4}>
+              <Form.Item label="掛率 (%)" name="kakeRt">
+                <InputNumber min={0} max={200} style={{ width: '100%' }} placeholder="100" />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={4}>
+              <Form.Item label="請求書式" name="syosiki">
+                <Select
+                  options={[
+                    { label: '1: 自社書式', value: 1 },
+                    { label: '2: 指定書式', value: 2 },
+                  ]}
+                  placeholder="書式"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={4}>
+              <Form.Item label="取引区分" name="toriKb">
+                <Select
+                  options={[
+                    { label: '1: 通常取引', value: 1 },
+                    { label: '2: 取引停止', value: 2 },
+                  ]}
+                  placeholder="区分"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Divider titlePlacement="left" style={{ margin: '12px 0 16px 0', fontSize: 13, color: '#1677ff' }}>備考</Divider>
+          <Row gutter={16}>
+            <Col xs={24} sm={8}>
+              <Form.Item label="備考1" name="biko1">
+                <Input placeholder="備考1" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item label="備考2" name="biko2">
+                <Input placeholder="備考2" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item label="備考3" name="biko3">
+                <Input placeholder="備考3" />
               </Form.Item>
             </Col>
           </Row>

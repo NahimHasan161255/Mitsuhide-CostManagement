@@ -23,9 +23,11 @@ import {
   ReloadOutlined,
   UserOutlined,
   KeyOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
+import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
@@ -132,12 +134,6 @@ export const UserMasterPage: React.FC = () => {
         form.setFieldsValue({ ...editingItem, newPassword: '' });
       } else {
         form.resetFields();
-        form.setFieldsValue({
-          tantoKbn: 1,
-          userGrpCd: '1',
-          syubetu: 1,
-          password: 'user123',
-        });
       }
     }
   }, [isModalOpen, editingItem]);
@@ -187,18 +183,66 @@ export const UserMasterPage: React.FC = () => {
     }
   };
 
+  const handleExportCsv = async () => {
+    try {
+      let exportData = data;
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/user?page=1&pageSize=1000${
+            searchText ? `&search=${encodeURIComponent(searchText)}` : ''
+          }${selectedGrp ? `&userGrpCd=${encodeURIComponent(selectedGrp)}` : ''}`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          if (json.items && json.items.length > 0) {
+            exportData = json.items;
+          }
+        }
+      } catch (err) {
+        console.warn('API fetch failed, falling back to loaded data', err);
+      }
+
+      if (!exportData || exportData.length === 0) {
+        message.warning('出力対象のデータがありません。');
+        return;
+      }
+
+      exportToCsv(
+        `ユーザーマスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
+        [
+          { header: '社員CD', key: 'userCd' },
+          { header: '氏名', key: 'userName' },
+          { header: 'フリガナ', key: 'userNameK' },
+          { header: '略称', key: 'userNameR' },
+          { header: '所属部門', key: 'syubetuNm' },
+          { header: 'グループ権限', key: 'userGrpNm' },
+          { header: '担当者区分', key: 'tantoKbnNm' },
+          { header: '備考', key: 'biko' },
+          { header: '最終ログイン日時', key: 'loginDate' },
+        ],
+        exportData
+      );
+      message.success('CSVファイルを出力しました。');
+    } catch (err) {
+      console.error('CSV export failed:', err);
+      message.error('CSV出力に失敗しました。');
+    }
+  };
+
   const columns: ColumnsType<UserItem> = [
     {
       title: '社員CD',
       dataIndex: 'userCd',
       key: 'userCd',
-      width: 100,
+      width: 90,
       render: (val) => <Tag color="blue">{val}</Tag>,
     },
     {
       title: '氏名 / フリガナ',
       dataIndex: 'userName',
       key: 'userName',
+      width: 160,
+      ellipsis: true,
       render: (val, r) => (
         <div>
           <Text strong>{val}</Text>
@@ -212,7 +256,7 @@ export const UserMasterPage: React.FC = () => {
       title: '所属部門',
       dataIndex: 'syubetuNm',
       key: 'syubetuNm',
-      width: 120,
+      width: 110,
       render: (val) => {
         const color = val === '営業部' ? 'green' : val === '工務部' ? 'orange' : 'purple';
         return <Tag color={color}>{val}</Tag>;
@@ -222,9 +266,9 @@ export const UserMasterPage: React.FC = () => {
       title: 'グループ権限',
       dataIndex: 'userGrpNm',
       key: 'userGrpNm',
-      width: 140,
+      width: 190,
       render: (val, r) => (
-        <span>
+        <span style={{ display: 'inline-block', maxWidth: '100%' }}>
           {r.userGrpCd === '9' ? (
             <Tag color="magenta">👑 {val || '管理者'}</Tag>
           ) : (
@@ -243,11 +287,14 @@ export const UserMasterPage: React.FC = () => {
       title: '備考',
       dataIndex: 'biko',
       key: 'biko',
+      width: 180,
+      ellipsis: true,
+      render: (val) => val || '-',
     },
     {
       title: '操作',
       key: 'action',
-      width: 130,
+      width: 110,
       align: 'center',
       fixed: 'right',
       render: (_, record) => (
@@ -313,6 +360,9 @@ export const UserMasterPage: React.FC = () => {
               <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchUsers}>
                 再読込
               </Button>
+              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
+              </Button>
               <Button
                 type="primary"
                 className="erp-banner-btn"
@@ -349,12 +399,24 @@ export const UserMasterPage: React.FC = () => {
 
       {/* User Create/Edit Modal */}
       <Modal
-        title={editingItem ? `ユーザー編集 [${editingItem.userCd}]` : '新規ユーザー登録 (F1)'}
+        title={
+          editingItem ? (
+            <Space>
+              <Tag color="orange">修正モード</Tag>
+              <span>ユーザーマスタ編集 (社員CD: {editingItem.userCd})</span>
+            </Space>
+          ) : (
+            <Space>
+              <Tag color="green">新規登録モード</Tag>
+              <span>ユーザーマスタ新規登録</span>
+            </Space>
+          )
+        }
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
-        width={640}
-        style={{ maxWidth: '92vw' }}
+        width={680}
+        style={{ maxWidth: '94vw' }}
         okText="保存"
         cancelText="キャンセル"
       >
@@ -398,8 +460,10 @@ export const UserMasterPage: React.FC = () => {
 
           <Row gutter={16}>
             <Col span={8}>
-              <Form.Item name="syubetu" label="所属部門" rules={[{ required: true }]}>
+              <Form.Item name="syubetu" label="所属部門" rules={[{ required: true, message: '所属部門を選択してください' }]}>
                 <Select
+                  placeholder="所属部門を選択"
+                  allowClear
                   options={[
                     { value: 1, label: '1: 営業部' },
                     { value: 5, label: '5: 工務部' },
@@ -409,8 +473,10 @@ export const UserMasterPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="userGrpCd" label="権限グループ" rules={[{ required: true }]}>
+              <Form.Item name="userGrpCd" label="権限グループ" rules={[{ required: true, message: '権限グループを選択してください' }]}>
                 <Select
+                  placeholder="権限グループを選択"
+                  allowClear
                   options={[
                     { value: '1', label: '1: 一般ユーザー' },
                     { value: '9', label: '9: システム管理者' },
@@ -419,8 +485,10 @@ export const UserMasterPage: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name="tantoKbn" label="担当者区分" rules={[{ required: true }]}>
+              <Form.Item name="tantoKbn" label="担当者区分" rules={[{ required: true, message: '担当者区分を選択してください' }]}>
                 <Select
+                  placeholder="担当者区分を選択"
+                  allowClear
                   options={[
                     { value: 1, label: '1: 担当者' },
                     { value: 9, label: '9: 担当者以外' },
