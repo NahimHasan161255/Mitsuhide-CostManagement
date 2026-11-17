@@ -276,7 +276,7 @@ export const ControlMasterPage: React.FC = () => {
   ];
 
   return (
-    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* Header Banner */}
       <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row align="middle" justify="space-between">
@@ -353,7 +353,6 @@ export const ControlMasterPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         okText="保存 (F12)"
         cancelText="キャンセル"
-        destroyOnHidden
         width={580}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>

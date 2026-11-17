@@ -96,7 +96,7 @@ export const App: React.FC = () => {
       case 'dashboard':
       default:
         return (
-          <Space direction="vertical" size={24} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={24} style={{ width: '100%' }}>
             {/* ==============================================================
                 HERO BANNER: Clean, Professional Welcome Header
                 ============================================================== */}

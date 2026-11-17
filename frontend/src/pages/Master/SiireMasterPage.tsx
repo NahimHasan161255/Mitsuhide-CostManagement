@@ -174,7 +174,7 @@ export const SiireMasterPage: React.FC = () => {
   ];
 
   return (
-    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
       {/* 1. Header Banner Card */}
       <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
@@ -253,7 +253,6 @@ export const SiireMasterPage: React.FC = () => {
         width={720}
         okText="保存"
         cancelText="キャンセル"
-        destroyOnHidden
       >
         <Form form={form} layout="vertical" size="small">
           <Row gutter={16}>

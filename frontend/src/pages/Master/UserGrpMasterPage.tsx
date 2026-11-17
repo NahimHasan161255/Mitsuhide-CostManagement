@@ -223,7 +223,6 @@ export const UserGrpMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={500}
-        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >

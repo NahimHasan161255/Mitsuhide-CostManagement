@@ -344,7 +344,6 @@ export const UserMasterPage: React.FC = () => {
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
         width={640}
-        destroyOnHidden
         okText="保存"
         cancelText="キャンセル"
       >
