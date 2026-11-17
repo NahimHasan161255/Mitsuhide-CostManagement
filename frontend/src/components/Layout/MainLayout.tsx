@@ -28,6 +28,8 @@ import {
   CompressOutlined,
   SearchOutlined,
   CheckCircleFilled,
+  CalendarOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -57,12 +59,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Japanese Date Formatter (e.g. 2026年11月17日 (火) 令和8年)
-  const today = new Date();
+  // Live Japanese Imperial & Western Date/Time with live clock
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-  const reiwaYear = today.getFullYear() - 2018;
-  const dayOfWeek = dayNames[today.getDay()];
-  const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 (${dayOfWeek}) 令和${reiwaYear}年`;
+  const reiwaYear = currentTime.getFullYear() - 2018;
+  const dayOfWeek = dayNames[currentTime.getDay()];
+  const dateBaseStr = `${currentTime.getFullYear()}年${currentTime.getMonth() + 1}月${currentTime.getDate()}日 (${dayOfWeek})`;
+  const eraStr = `令和${reiwaYear}年`;
+  const timeStr = currentTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   // Toggle between Standard (270px) and Wide (330px)
   const toggleSiderWidth = () => {
@@ -326,9 +335,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
               />
             </Tooltip>
 
-            <div>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>
+                <span
+                  className="erp-header-title"
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   工事原価・受注・売上・仕入管理システム
                 </span>
                 <Tag
@@ -340,6 +360,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                     border: '1px solid #bfdbfe',
                     background: '#eff6ff',
                     color: '#1d4ed8',
+                    flexShrink: 0,
                   }}
                 >
                   <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
@@ -350,10 +371,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           </Space>
 
           {/* Right: Quick Search, Date, Notifications & User Profile */}
-          <Space size="middle" align="center">
+          <Space size="middle" align="center" style={{ flexShrink: 0 }}>
             {/* Quick Master Filter / Navigation Search */}
             <Input
-              placeholder="画面コード / 検索 (例: AD1780C)..."
+              className="erp-header-search"
+              placeholder="画面CD / 検索..."
               prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
@@ -366,31 +388,37 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                 else if (kw.includes('1760') || kw.includes('名称') || kw.includes('コード')) onSelectMenu('ad1760c');
                 else if (kw.includes('1770') || kw.includes('基準') || kw.includes('採番')) onSelectMenu('ad1770c');
               }}
-              style={{
-                width: 220,
-                borderRadius: 20,
-                background: '#f1f5f9',
-                border: '1px solid #e2e8f0',
-              }}
             />
 
-            {/* Live Japanese Calendar Date Pill */}
+            {/* Live Japanese Calendar Date & Real-time Clock Pill */}
             <div
-              style={{
-                background: '#f1f5f9',
-                padding: '6px 14px',
-                borderRadius: 20,
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: '#475569',
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
+              className="erp-header-datetime"
+              title={`${dateBaseStr} ${eraStr} ${timeStr}`}
             >
-              <span>📅</span>
-              <span>{dateStr}</span>
+              <CalendarOutlined style={{ color: '#2563eb', fontSize: 14 }} />
+              <span className="erp-header-date-text">{dateBaseStr}</span>
+              <Tag
+                className="erp-header-era"
+                color="blue"
+                style={{
+                  margin: 0,
+                  fontSize: 10.5,
+                  padding: '0 6px',
+                  borderRadius: 6,
+                  lineHeight: '18px',
+                  border: 'none',
+                  background: '#dbeafe',
+                  color: '#1d4ed8',
+                  fontWeight: 700,
+                }}
+              >
+                {eraStr}
+              </Tag>
+              <span className="erp-header-time-divider" style={{ color: '#cbd5e1' }}>|</span>
+              <ClockCircleOutlined style={{ color: '#0284c7', fontSize: 13 }} />
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, color: '#0f172a' }}>
+                {timeStr}
+              </span>
             </div>
 
             {/* Notification Bell */}
@@ -460,7 +488,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             borderTop: '1px solid #e2e8f0',
           }}
         >
-          株式会社ミツヒデ 原価管理システム Web版 ©{today.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
+          株式会社ミツヒデ 原価管理システム Web版 ©{currentTime.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
         </Footer>
       </Layout>
     </Layout>

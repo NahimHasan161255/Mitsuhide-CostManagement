@@ -22,6 +22,13 @@ export default defineConfig({
   plugins: [react(), cleanNetworkUrlsPlugin()],
   server: {
     host: true, // Listen on 0.0.0.0 for LAN access
-    port: Number(process.env.VITE_PORT) || 5173,
+    port: Number(process.env.VITE_PORT) || 3001,
+  },
+  preview: {
+    host: true, // Listen on 0.0.0.0 for LAN / Tablet access
+    port: Number(process.env.VITE_PORT) || 3001,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'antd', '@ant-design/icons', 'axios', 'dayjs'],
   },
 })

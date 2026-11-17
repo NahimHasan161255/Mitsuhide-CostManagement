@@ -3,8 +3,6 @@
    Modern Executive Design Tokens & Animations
    ============================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
-
 :root {
   /* Brand Palette */
   --erp-brand-navy: #090d16;
@@ -167,4 +165,71 @@ html, body, #root {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* ==============================================================
+   Header Responsive Date/Time & Controls
+   ============================================================== */
+.erp-header-datetime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  height: 36px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.erp-header-search {
+  width: 200px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.erp-header-search:focus-within {
+  width: 230px;
+}
+
+@media (max-width: 1400px) {
+  .erp-header-era {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .erp-header-search {
+    width: 150px !important;
+  }
+  .erp-header-datetime {
+    padding: 4px 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .erp-header-time-divider {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .erp-header-date-text {
+    display: none !important;
+  }
+  .erp-header-title {
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-header-datetime {
+    display: none !important;
+  }
 }
