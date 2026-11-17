@@ -147,5 +147,10 @@ if (-not $Silent) {
 
     # Open browser
     Start-Process "http://localhost:$FrontendPort"
-    Start-Sleep -Seconds 2
+
+    Write-Host "  [i] IPアドレスやポート確認用にこの画面を開いたまま（または最小化）にしておけます。" -ForegroundColor Cyan
+    Write-Host "      この情報画面を閉じたい場合は [Enter] を押すか、ウィンドウの [X] を押してください。" -ForegroundColor Gray
+    Write-Host "      (この画面を閉じてもシステムはバックグラウンドで動き続けます)" -ForegroundColor DarkGray
+    Write-Host ""
+    Read-Host "Press [Enter] to close this status window"
 }
