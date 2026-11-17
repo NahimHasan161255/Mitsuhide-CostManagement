@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Input, Space, Modal, Form, Row, Col, InputNumber, message, Popconfirm, Tag } from 'antd';
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Card, Button, Input, Space, Modal, Form, Row, Col, InputNumber, message, Popconfirm, Tag, Typography } from 'antd';
+import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '../../api/client';
 import type { Jyucyu, PagedResult } from '../../types/master';
+
+const { Title, Text } = Typography;
 
 export const JyucyuMasterPage: React.FC = () => {
   const [data, setData] = useState<Jyucyu[]>([]);
@@ -169,48 +171,75 @@ export const JyucyuMasterPage: React.FC = () => {
   ];
 
   return (
-    <Card
-      title="受注先マスタ保守 (AD1780C)"
-      extra={
-        <Space>
-          <Input
-            placeholder="コード・名称・カナで検索"
-            prefix={<SearchOutlined />}
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onPressEnter={handleSearch}
-            style={{ width: 240 }}
-            allowClear
-          />
-          <Button icon={<SearchOutlined />} onClick={handleSearch}>
-            検索
-          </Button>
-          <Button icon={<ReloadOutlined />} onClick={fetchData}>
-            更新
-          </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenModal()}>
-            新規登録
-          </Button>
-        </Space>
-      }
-    >
-      <Table
-        rowKey="code"
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        size="small"
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          onChange: (p, ps) => {
-            setPage(p);
-            setPageSize(ps);
-          },
-          showTotal: (t) => `全 ${t} 件`,
-        }}
-      />
+    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      {/* 1. Header Banner Card */}
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <Row justify="space-between" align="middle" gutter={[16, 16]}>
+          <Col xs={24} md={10}>
+            <Space align="center">
+              <ShopOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+              <div>
+                <Title level={4} style={{ margin: 0, color: '#172b3a' }}>
+                  受注先マスタ保守 (AD1780C)
+                </Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  得意先・元請会社のコード、名称、締日、入金区分を登録管理
+                </Text>
+              </div>
+            </Space>
+          </Col>
+
+          <Col xs={24} md={14} style={{ textAlign: 'right' }}>
+            <Space wrap>
+              <Input
+                placeholder="受注先CD / 名称 / カナ"
+                prefix={<SearchOutlined />}
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                onPressEnter={handleSearch}
+                style={{ width: 220 }}
+                allowClear
+              />
+              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+                検索 (F5)
+              </Button>
+              <Button icon={<ReloadOutlined />} onClick={fetchData}>
+                再読込
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => handleOpenModal()}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                新規登録 (F1)
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* 2. Main Table Card */}
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <Table
+          rowKey="code"
+          columns={columns}
+          dataSource={data}
+          loading={loading}
+          size="middle"
+          bordered
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
+            showTotal: (t) => `全 ${t} 件`,
+          }}
+        />
+      </Card>
 
       {/* Add / Edit Modal */}
       <Modal
@@ -313,6 +342,6 @@ export const JyucyuMasterPage: React.FC = () => {
           </Row>
         </Form>
       </Modal>
-    </Card>
+    </Space>
   );
 };

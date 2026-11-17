@@ -11,5 +11,8 @@ $logFile = Join-Path $logsDir "backend.log"
 Set-Location $backendDir
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 
-# Run backend API without rebuild delay and capture logs
-cmd.exe /c "dotnet run --no-build --urls http://0.0.0.0:$Port > `"$logFile`" 2>&1"
+# Auto-restart daemon loop: keeps Backend API alive permanently in the background
+while ($true) {
+    cmd.exe /c "dotnet run --no-build --urls http://0.0.0.0:$Port <nul > `"$logFile`" 2>&1"
+    Start-Sleep -Seconds 2
+}

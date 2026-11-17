@@ -15,6 +15,7 @@ import {
   message,
   Popconfirm,
   Typography,
+  Tooltip,
 } from 'antd';
 import {
   PlusOutlined,
@@ -244,18 +245,19 @@ export const ControlMasterPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 140,
+      width: 110,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenEdit(record)}
-          >
-            編集
-          </Button>
+          <Tooltip title="編集">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleOpenEdit(record)}
+            />
+          </Tooltip>
           <Popconfirm
             title="削除確認"
             description={`「${record.kanriName} (${record.progId})」を削除してもよろしいですか？`}
@@ -264,9 +266,9 @@ export const ControlMasterPage: React.FC = () => {
             cancelText="キャンセル"
             okButtonProps={{ danger: true }}
           >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              削除
-            </Button>
+            <Tooltip title="削除">
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
@@ -274,9 +276,9 @@ export const ControlMasterPage: React.FC = () => {
   ];
 
   return (
-    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       {/* Header Banner */}
-      <Card variant="borderless" style={{ background: '#fafafa' }}>
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row align="middle" justify="space-between">
           <Col>
             <Space align="center" size="middle">
@@ -296,8 +298,13 @@ export const ControlMasterPage: React.FC = () => {
               <Button icon={<ReloadOutlined />} onClick={fetchData}>
                 再読込
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd}>
-                新規基準登録 (F1)
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleOpenAdd}
+                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+              >
+                新規登録 (F1)
               </Button>
             </Space>
           </Col>
@@ -305,7 +312,7 @@ export const ControlMasterPage: React.FC = () => {
       </Card>
 
       {/* Filter and Table */}
-      <Card variant="borderless">
+      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col span={8}>
             <Select
@@ -325,6 +332,7 @@ export const ControlMasterPage: React.FC = () => {
           columns={columns}
           dataSource={data}
           loading={loading}
+          scroll={{ x: 1100 }}
           pagination={{
             current: page,
             pageSize: 20,

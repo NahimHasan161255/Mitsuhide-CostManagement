@@ -19,10 +19,6 @@ import {
   TeamOutlined,
   TagsOutlined,
   ControlOutlined,
-  ProjectOutlined,
-  DollarOutlined,
-  ShoppingCartOutlined,
-  SyncOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   BellOutlined,
@@ -165,61 +161,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         },
       ],
     },
-    {
-      key: 'cost',
-      icon: <ProjectOutlined style={{ fontSize: 16, color: '#34d399' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>原価・現場台帳 (GK)</span>
-          {!collapsed && (
-            <Tag color="#065f46" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
-              原価
-            </Tag>
-          )}
-        </div>
-      ),
-      children: [
-        { key: 'gk0010', label: '工事受注入力 (GK0010)' },
-        { key: 'gk0020', label: '工事予算入力 (GK0020)' },
-        { key: 'gk0030', label: '工事台帳照会 (GK0030)' },
-      ],
-    },
-    {
-      key: 'purchase',
-      icon: <ShoppingCartOutlined style={{ fontSize: 16, color: '#fbbf24' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>購買・仕入業務 (SR)</span>
-        </div>
-      ),
-      children: [
-        { key: 'sr0010', label: '仕入入力 (SR0010)' },
-      ],
-    },
-    {
-      key: 'sales',
-      icon: <DollarOutlined style={{ fontSize: 16, color: '#818cf8' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>売上・請求業務 (UR)</span>
-        </div>
-      ),
-      children: [
-        { key: 'ur0010', label: '工事種目明細入力 (UR0010)' },
-      ],
-    },
-    {
-      key: 'closing',
-      icon: <SyncOutlined style={{ fontSize: 16, color: '#f43f5e' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>月次決算・更新 (VM)</span>
-        </div>
-      ),
-      children: [
-        { key: 'vm0010', label: '月次更新処理 (VM0010)' },
-      ],
-    },
   ];
 
   // User Profile Menu
@@ -303,7 +244,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           <Menu
             theme="dark"
             selectedKeys={[activeMenu]}
-            defaultOpenKeys={['master', 'cost']}
+            defaultOpenKeys={['master']}
             mode="inline"
             items={menuItems}
             onClick={({ key }) => onSelectMenu(key)}
@@ -420,11 +361,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                 const kw = searchKeyword.trim().toLowerCase();
                 if (kw.includes('1780') || kw.includes('受注')) onSelectMenu('ad1780c');
                 else if (kw.includes('1790') || kw.includes('仕入先')) onSelectMenu('ad1790c');
-                else if (kw.includes('1730') || kw.includes('ユーザー')) onSelectMenu('ad1730c');
-                else if (kw.includes('1720') || kw.includes('グループ')) onSelectMenu('ad1720c');
-                else if (kw.includes('1760') || kw.includes('名称')) onSelectMenu('ad1760c');
-                else if (kw.includes('1770') || kw.includes('基準')) onSelectMenu('ad1770c');
-                else if (kw.includes('gk') || kw.includes('工事')) onSelectMenu('gk0010');
+                else if (kw.includes('1730') || kw.includes('ユーザー') || kw.includes('社員')) onSelectMenu('ad1730c');
+                else if (kw.includes('1720') || kw.includes('グループ') || kw.includes('権限')) onSelectMenu('ad1720c');
+                else if (kw.includes('1760') || kw.includes('名称') || kw.includes('コード')) onSelectMenu('ad1760c');
+                else if (kw.includes('1770') || kw.includes('基準') || kw.includes('採番')) onSelectMenu('ad1770c');
               }}
               style={{
                 width: 220,

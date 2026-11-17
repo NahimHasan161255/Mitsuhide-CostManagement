@@ -27,9 +27,9 @@ if ($pids) {
 Write-Host "[2/3] Mitsuhide 関連のバックグラウンドプロセスを確認中..." -ForegroundColor Yellow
 $currentPid = [System.Diagnostics.Process]::GetCurrentProcess().Id
 $mitsuhideProcesses = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-    ($_.CommandLine -like "*Mitsuhide.Api*" -or $_.CommandLine -like "*Mitsuhide-CostManagement*") -and
+    ($_.CommandLine -like "*Mitsuhide.Api*" -or $_.CommandLine -like "*Mitsuhide-CostManagement*" -or $_.CommandLine -like "*run-frontend*" -or $_.CommandLine -like "*run-backend*") -and
     $_.ProcessId -ne $currentPid -and
-    $_.Name -notin @('powershell.exe', 'pwsh.exe', 'cmd.exe', 'conhost.exe')
+    $_.Name -notin @('cmd.exe', 'conhost.exe')
 }
 
 if ($mitsuhideProcesses) {
