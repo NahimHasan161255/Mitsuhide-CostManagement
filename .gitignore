@@ -21,6 +21,7 @@ pnpm-debug.log*
 appsettings.Production.json
 .env
 .env.production
+logs/
 
 # OS files
 Thumbs.db
