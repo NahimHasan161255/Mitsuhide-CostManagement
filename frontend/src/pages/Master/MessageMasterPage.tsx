@@ -781,12 +781,12 @@ export const MessageMasterPage: React.FC = () => {
                           ]}
                         />
                         <Input
-                          placeholder="メッセージ本文 / CD..."
+                          placeholder="メッセージ本文 / CD... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           allowClear
-                          style={{ width: 220 }}
+                          style={{ width: 280 }}
                         />
                       </Space>
                     </Col>

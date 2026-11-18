@@ -804,12 +804,12 @@ export const ProgramMasterPage: React.FC = () => {
                           ]}
                         />
                         <Input
-                          placeholder="プログラム名 / ID..."
+                          placeholder="プログラム名 / ID... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           allowClear
-                          style={{ width: 220 }}
+                          style={{ width: 280 }}
                         />
                       </Space>
                     </Col>

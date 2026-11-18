@@ -769,12 +769,12 @@ export const UserGrpMasterPage: React.FC = () => {
                     <Col xs={24} sm={16} md={12}>
                       <Space size={10} style={{ width: '100%' }}>
                         <Input
-                          placeholder="グループCD / グループ名称..."
+                          placeholder="グループCD / グループ名称... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={keyword}
                           onChange={(e) => setKeyword(e.target.value)}
                           allowClear
-                          style={{ width: 260 }}
+                          style={{ width: 300 }}
                         />
                       </Space>
                     </Col>
