@@ -18,4 +18,7 @@ export interface LoginResponse {
   message: string;
   user?: AuthUser;
   token?: string;
+  passwordExpired?: boolean;
+  passwordExpiredMessage?: string;
+  monthlyClosingWarning?: string;
 }

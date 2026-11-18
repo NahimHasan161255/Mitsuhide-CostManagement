@@ -30,6 +30,7 @@ import { SysNameMasterPage } from './pages/Master/SysNameMasterPage';
 import { ControlMasterPage } from './pages/Master/ControlMasterPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/Auth/LoginPage';
+import { SessionTimeoutWatcher } from './components/Auth/SessionTimeoutWatcher';
 
 const { Paragraph, Title, Text } = Typography;
 
@@ -485,6 +486,7 @@ export const App: React.FC = () => {
     >
       <AntdApp>
         <AuthProvider>
+          <SessionTimeoutWatcher />
           <MainApp />
         </AuthProvider>
       </AntdApp>

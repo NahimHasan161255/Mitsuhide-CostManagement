@@ -15,10 +15,33 @@ export const apiClient = axios.create({
   },
 });
 
+// Request interceptor: attach bearer session token if present
+apiClient.interceptors.request.use((config) => {
+  try {
+    const token = sessionStorage.getItem('mitsuhide_auth_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Ignore storage errors in non-browser environments
+  }
+  return config;
+});
+
 // Response interceptor for unified error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Auto logout on 401 Unauthorized
+    if (error.response?.status === 401) {
+      try {
+        sessionStorage.removeItem('mitsuhide_auth_user');
+        sessionStorage.removeItem('mitsuhide_auth_token');
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      } catch {
+        // Ignore
+      }
+    }
     const message = error.response?.data?.message || error.message || '通信エラーが発生しました。';
     console.error('API Error:', message);
     return Promise.reject(error);

@@ -35,4 +35,7 @@ public class LoginResponseDto
     public string Message { get; set; } = string.Empty;
     public AuthUserDto? User { get; set; }
     public string? Token { get; set; }
+    public bool PasswordExpired { get; set; }
+    public string? PasswordExpiredMessage { get; set; }
+    public string? MonthlyClosingWarning { get; set; }
 }

@@ -5,7 +5,7 @@ import type { AuthUser, LoginResponse } from '../types/auth';
 interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (userCd: string, password: string) => Promise<{ success: boolean; message: string }>;
+  login: (userCd: string, password: string) => Promise<LoginResponse>;
   logout: () => void;
   changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
 }
@@ -18,7 +18,11 @@ const TOKEN_STORAGE_KEY = 'mitsuhide_auth_token';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(() => {
     try {
-      const saved = localStorage.getItem(AUTH_STORAGE_KEY);
+      // Clean up legacy localStorage if present to ensure strict tab/window lifecycle
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+
+      const saved = sessionStorage.getItem(AUTH_STORAGE_KEY);
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -27,14 +31,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
     } else {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
     }
   }, [user]);
 
-  const login = async (userCd: string, password: string): Promise<{ success: boolean; message: string }> => {
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
+  const login = async (userCd: string, password: string): Promise<LoginResponse> => {
     try {
       const res = await apiClient.post<LoginResponse>('/auth/login', {
         userCd,
@@ -44,9 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
         if (res.data.token) {
-          localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
+          sessionStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
         }
-        return { success: true, message: res.data.message || 'ログインしました。' };
+        return res.data;
       }
 
       return { success: false, message: res.data.message || 'ログインに失敗しました。' };
@@ -58,8 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(TOKEN_STORAGE_KEY);
   };
 
   const changePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
