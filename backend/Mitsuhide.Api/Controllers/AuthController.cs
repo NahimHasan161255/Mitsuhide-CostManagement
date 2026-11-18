@@ -38,13 +38,22 @@ public class AuthController : ControllerBase
             userCd = parsedNum.ToString("D6");
         }
 
-        var user = await _context.UserMaster.FirstOrDefaultAsync(u => u.UserCd == userCd && u.DelFg == 0);
+        var user = await _context.UserMaster.FirstOrDefaultAsync(u => u.UserCd == userCd);
         if (user == null)
         {
             return NotFound(new LoginResponseDto
             {
                 Success = false,
                 Message = "指定された社員コードが見つかりません。"
+            });
+        }
+
+        if (user.DelFg == 1)
+        {
+            return Unauthorized(new LoginResponseDto
+            {
+                Success = false,
+                Message = "このユーザーアカウントは無効化（削除フラグ設定）されているため、ログオンできません。(AD1010C)"
             });
         }
 
@@ -159,13 +168,22 @@ public class AuthController : ControllerBase
             userCd = parsedNum.ToString("D6");
         }
 
-        var user = await _context.UserMaster.FirstOrDefaultAsync(u => u.UserCd == userCd && u.DelFg == 0);
+        var user = await _context.UserMaster.FirstOrDefaultAsync(u => u.UserCd == userCd);
         if (user == null)
         {
             return NotFound(new LoginResponseDto
             {
                 Success = false,
                 Message = "指定された社員コードが見つかりません。"
+            });
+        }
+
+        if (user.DelFg == 1)
+        {
+            return Unauthorized(new LoginResponseDto
+            {
+                Success = false,
+                Message = "このユーザーアカウントは無効化（削除フラグ設定）されているため、ログオンできません。(AD1010C)"
             });
         }
 

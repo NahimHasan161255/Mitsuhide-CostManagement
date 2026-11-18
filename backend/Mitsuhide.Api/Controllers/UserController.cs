@@ -28,7 +28,7 @@ public class UserController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? userGrpCd = null)
     {
-        var query = from u in _context.UserMaster.AsNoTracking().Where(x => x.DelFg == 0)
+        var query = from u in _context.UserMaster.AsNoTracking()
                     join g in _context.UserGrpMaster.AsNoTracking() on u.UserGrpCd equals g.UserGrpCd into gGroup
                     from g in gGroup.DefaultIfEmpty()
                     select new { u, g };
@@ -62,6 +62,7 @@ public class UserController : ControllerBase
                 UserGrpNm = x.g != null ? x.g.UserGrpName : null,
                 Syubetu = x.u.Syubetu,
                 Biko = x.u.Biko,
+                DeleteFlg = x.u.DelFg == 1,
                 LoginDate = x.u.LoginDate,
                 PassUpdDate = x.u.PassUpdDate
             })
@@ -82,7 +83,7 @@ public class UserController : ControllerBase
     [HttpGet("{userCd}")]
     public async Task<ActionResult<UserDto>> GetByUserCd(string userCd)
     {
-        var item = await (from u in _context.UserMaster.AsNoTracking().Where(x => x.UserCd == userCd && x.DelFg == 0)
+        var item = await (from u in _context.UserMaster.AsNoTracking().Where(x => x.UserCd == userCd)
                           join g in _context.UserGrpMaster.AsNoTracking() on u.UserGrpCd equals g.UserGrpCd into gGroup
                           from g in gGroup.DefaultIfEmpty()
                           select new UserDto
@@ -96,6 +97,7 @@ public class UserController : ControllerBase
                               UserGrpNm = g != null ? g.UserGrpName : null,
                               Syubetu = u.Syubetu,
                               Biko = u.Biko,
+                              DeleteFlg = u.DelFg == 1,
                               LoginDate = u.LoginDate,
                               PassUpdDate = u.PassUpdDate
                           }).FirstOrDefaultAsync();
@@ -128,7 +130,7 @@ public class UserController : ControllerBase
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
             NewApid = "AD1730C",
-            DelFg = 0
+            DelFg = req.DeleteFlg ? 1 : 0
         };
 
         _context.UserMaster.Add(entity);
@@ -143,7 +145,8 @@ public class UserController : ControllerBase
             TantoKbn = entity.TantoKbn,
             UserGrpCd = entity.UserGrpCd,
             Syubetu = entity.Syubetu,
-            Biko = entity.Biko
+            Biko = entity.Biko,
+            DeleteFlg = entity.DelFg == 1
         });
     }
 
@@ -153,7 +156,7 @@ public class UserController : ControllerBase
     [HttpPut("{userCd}")]
     public async Task<IActionResult> Update(string userCd, [FromBody] UpdateUserRequest req)
     {
-        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd && x.DelFg == 0);
+        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
         if (entity == null) return NotFound();
 
         entity.UserName = req.UserName;
@@ -163,6 +166,11 @@ public class UserController : ControllerBase
         entity.UserGrpCd = req.UserGrpCd;
         entity.Syubetu = req.Syubetu;
         entity.Biko = req.Biko;
+
+        if (req.DeleteFlg.HasValue)
+        {
+            entity.DelFg = req.DeleteFlg.Value ? 1 : 0;
+        }
 
         if (!string.IsNullOrWhiteSpace(req.NewPassword))
         {
@@ -184,7 +192,7 @@ public class UserController : ControllerBase
     [HttpDelete("{userCd}")]
     public async Task<IActionResult> Delete(string userCd)
     {
-        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd && x.DelFg == 0);
+        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
         if (entity == null) return NotFound();
 
         entity.DelFg = 1;

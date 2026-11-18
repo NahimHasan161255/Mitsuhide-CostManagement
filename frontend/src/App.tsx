@@ -9,6 +9,9 @@ import {
   Space,
   Tag,
   Typography,
+  Result,
+  Button,
+  Alert,
 } from 'antd';
 import jaJP from 'antd/locale/ja_JP';
 import {
@@ -21,6 +24,8 @@ import {
   SafetyCertificateOutlined,
   AppstoreOutlined,
   MessageOutlined,
+  LockOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { MainLayout } from './components/Layout/MainLayout';
 import { apiClient } from './api/client';
@@ -39,8 +44,12 @@ import { SessionTimeoutWatcher } from './components/Auth/SessionTimeoutWatcher';
 const { Title, Text } = Typography;
 
 const MainApp: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
+
+  // Check role permission per Document (01_基本設計書/02_プログラム一覧.xls):
+  // syubetu === 9 (経理) or userGrpCd === '9' (システム管理者)
+  const isAdminOrAccounting = user?.syubetu === 9 || user?.userGrpCd === '9';
 
   // Real-time Master Counts loaded from backend
   const [counts, setCounts] = useState({
@@ -55,6 +64,9 @@ const MainApp: React.FC = () => {
   });
 
   useEffect(() => {
+    // Only load counts if admin/accounting has master access
+    if (!isAdminOrAccounting) return;
+
     // Fetch live counts from API if available
     const loadCounts = async () => {
       try {
@@ -82,9 +94,41 @@ const MainApp: React.FC = () => {
       }
     };
     loadCounts();
-  }, []);
+  }, [isAdminOrAccounting]);
 
   const renderContent = () => {
+    // Access Control Guard per Document (01_基本設計書/02_プログラム一覧.xls):
+    // If user is 営業 (1) or 工務 (5), all Master Screens (AD17xxC) are forbidden (403)
+    if (!isAdminOrAccounting && activeMenu.startsWith('ad17')) {
+      return (
+        <Card style={{ borderRadius: 12, padding: '40px 20px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
+          <Result
+            status="403"
+            title="403 権限エラー (アクセス制限)"
+            subTitle={
+              <div>
+                <p style={{ margin: '8px 0', fontSize: 15, color: '#334155' }}>
+                  現在のアカウント「<strong>{user?.userName}</strong>」の権限種別（<strong>{user?.syubetuNm || '一般担当者'}</strong>）では、マスタ管理画面へのアクセスは許可されていません。
+                </p>
+                <p style={{ color: '#64748b', fontSize: 13 }}>
+                  ※ 業務基本設計書（プログラム一覧）の規定により、マスタ保守は経理・管理者権限のアカウントのみ利用可能です。
+                </p>
+              </div>
+            }
+            extra={
+              <Button
+                type="primary"
+                onClick={() => setActiveMenu('dashboard')}
+                style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+              >
+                ホーム / 概況へ戻る
+              </Button>
+            }
+          />
+        </Card>
+      );
+    }
+
     switch (activeMenu) {
       // 05_マスタ (Master Data Management)
       case 'ad1780c':
@@ -113,6 +157,64 @@ const MainApp: React.FC = () => {
 
       case 'dashboard':
       default:
+        if (!isAdminOrAccounting) {
+          return (
+            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+              <Card style={{ borderRadius: 12, border: '1px solid #e2e8f0', background: '#ffffff', padding: '24px 20px' }}>
+                <Row gutter={[24, 24]} align="middle">
+                  <Col xs={24} md={16}>
+                    <Space direction="vertical" size={12}>
+                      <Space align="center" size={12}>
+                        <div
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 12,
+                            background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 10px rgba(37, 99, 235, 0.2)',
+                          }}
+                        >
+                          <UserOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+                        </div>
+                        <div>
+                          <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
+                            ようこそ、{user?.userName} 様
+                          </Title>
+                          <Text type="secondary" style={{ fontSize: 13 }}>
+                            社員コード: {user?.userCd} ｜ 部署・種別: <strong>{user?.syubetuNm || '一般担当者'}</strong> ｜ グループ: {user?.userGrpNm || '一般'}
+                          </Text>
+                        </div>
+                      </Space>
+                      <Alert
+                        message="マスタ管理および月次更新へのアクセス制限について"
+                        description="業務基本設計書（プログラム一覧）のセキュリティ規定により、受注先・仕入先・ユーザー等のマスタ保守機能および月次更新は経理・管理者専用となっております。日常の原価・工事登録業務は各機能メニューよりご利用ください。"
+                        type="info"
+                        showIcon
+                        icon={<LockOutlined />}
+                        style={{ borderRadius: 8, marginTop: 8 }}
+                      />
+                    </Space>
+                  </Col>
+                  <Col xs={24} md={8} style={{ textAlign: 'center' }}>
+                    <Statistic
+                      title="アカウント権限ステータス"
+                      value={user?.syubetuNm || '一般担当者'}
+                      valueStyle={{ color: '#2563eb', fontWeight: 700, fontSize: 24 }}
+                      prefix={<SafetyCertificateOutlined />}
+                    />
+                    <Tag color="cyan" style={{ marginTop: 8, borderRadius: 6, fontWeight: 600 }}>
+                      業務担当者アカウント (閲覧・通常登録)
+                    </Tag>
+                  </Col>
+                </Row>
+              </Card>
+            </Space>
+          );
+        }
+
         return (
           <Space direction="vertical" size={16} style={{ width: '100%' }}>
             {/* ==============================================================

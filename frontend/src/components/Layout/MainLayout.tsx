@@ -100,7 +100,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
     }
   };
 
-  // Structured Enterprise Menu Items
+  // Structured Enterprise Menu Items filtered by Access Control Role (プログラム一覧.xls)
+  // Master Management (AD17xxC) and Monthly Closing (VM0010) are restricted to syubetu: 9 (経理) or userGrpCd: '9' (管理者)
+  const isAdminOrAccounting = user?.syubetu === 9 || user?.userGrpCd === '9';
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'dashboard',
@@ -111,114 +114,118 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         </span>
       ),
     },
-    {
-      type: 'divider',
-      style: { borderColor: 'rgba(255, 255, 255, 0.08)', margin: '8px 12px' },
-    },
-    {
-      key: 'master',
-      icon: <DatabaseOutlined style={{ fontSize: 16, color: '#38bdf8' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>マスタ</span>
-          {!collapsed && (
-            <Tag color="#0284c7" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
-              3
-            </Tag>
-          )}
-        </div>
-      ),
-      children: [
-        {
-          key: 'ad1780c',
-          icon: <ShopOutlined style={{ color: '#3b82f6' }} />,
-          label: (
-            <span>
-              受注先マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1780C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1790c',
-          icon: <SolutionOutlined style={{ color: '#10b981' }} />,
-          label: (
-            <span>
-              仕入先マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1790C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1730c',
-          icon: <TeamOutlined style={{ color: '#a855f7' }} />,
-          label: (
-            <span>
-              ユーザマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1730C)</span>
-            </span>
-          ),
-        },
-      ],
-    },
-    {
-      key: 'system',
-      icon: <SettingOutlined style={{ fontSize: 16, color: '#a78bfa' }} />,
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>システム</span>
-          {!collapsed && (
-            <Tag color="#7c3aed" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
-              5
-            </Tag>
-          )}
-        </div>
-      ),
-      children: [
-        {
-          key: 'ad1720c',
-          icon: <TeamOutlined style={{ color: '#06b6d4' }} />,
-          label: (
-            <span>
-              ユーザーグループマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1720C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1740c',
-          icon: <AppstoreOutlined style={{ color: '#38bdf8' }} />,
-          label: (
-            <span>
-              プログラムマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1740C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1750c',
-          icon: <MessageOutlined style={{ color: '#c026d3' }} />,
-          label: (
-            <span>
-              メッセージマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1750C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1760c',
-          icon: <TagsOutlined style={{ color: '#f59e0b' }} />,
-          label: (
-            <span>
-              システム名称マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1760C)</span>
-            </span>
-          ),
-        },
-        {
-          key: 'ad1770c',
-          icon: <ControlOutlined style={{ color: '#ec4899' }} />,
-          label: (
-            <span>
-              処理基準管理マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1770C)</span>
-            </span>
-          ),
-        },
-      ],
-    },
+    ...(isAdminOrAccounting
+      ? [
+          {
+            type: 'divider' as const,
+            style: { borderColor: 'rgba(255, 255, 255, 0.08)', margin: '8px 12px' },
+          },
+          {
+            key: 'master',
+            icon: <DatabaseOutlined style={{ fontSize: 16, color: '#38bdf8' }} />,
+            label: (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600 }}>マスタ</span>
+                {!collapsed && (
+                  <Tag color="#0284c7" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
+                    3
+                  </Tag>
+                )}
+              </div>
+            ),
+            children: [
+              {
+                key: 'ad1780c',
+                icon: <ShopOutlined style={{ color: '#3b82f6' }} />,
+                label: (
+                  <span>
+                    受注先マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1780C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1790c',
+                icon: <SolutionOutlined style={{ color: '#10b981' }} />,
+                label: (
+                  <span>
+                    仕入先マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1790C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1730c',
+                icon: <TeamOutlined style={{ color: '#a855f7' }} />,
+                label: (
+                  <span>
+                    ユーザマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1730C)</span>
+                  </span>
+                ),
+              },
+            ],
+          },
+          {
+            key: 'system',
+            icon: <SettingOutlined style={{ fontSize: 16, color: '#a78bfa' }} />,
+            label: (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600 }}>システム</span>
+                {!collapsed && (
+                  <Tag color="#7c3aed" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
+                    5
+                  </Tag>
+                )}
+              </div>
+            ),
+            children: [
+              {
+                key: 'ad1720c',
+                icon: <TeamOutlined style={{ color: '#06b6d4' }} />,
+                label: (
+                  <span>
+                    ユーザーグループマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1720C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1740c',
+                icon: <AppstoreOutlined style={{ color: '#38bdf8' }} />,
+                label: (
+                  <span>
+                    プログラムマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1740C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1750c',
+                icon: <MessageOutlined style={{ color: '#c026d3' }} />,
+                label: (
+                  <span>
+                    メッセージマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1750C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1760c',
+                icon: <TagsOutlined style={{ color: '#f59e0b' }} />,
+                label: (
+                  <span>
+                    システム名称マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1760C)</span>
+                  </span>
+                ),
+              },
+              {
+                key: 'ad1770c',
+                icon: <ControlOutlined style={{ color: '#ec4899' }} />,
+                label: (
+                  <span>
+                    処理基準管理マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1770C)</span>
+                  </span>
+                ),
+              },
+            ],
+          },
+        ]
+      : []),
   ];
 
   // User Profile Menu

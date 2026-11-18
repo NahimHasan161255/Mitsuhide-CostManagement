@@ -223,6 +223,7 @@ export const UserMasterPage: React.FC = () => {
       setMode(targetMode);
       form.setFieldsValue({
         ...item,
+        deleteFlg: !!item.deleteFlg,
         passExpireDate: item.passExpireDate ? dayjs(item.passExpireDate) : undefined,
         userIdExpireDate: item.userIdExpireDate ? dayjs(item.userIdExpireDate) : undefined,
       });
@@ -303,33 +304,40 @@ export const UserMasterPage: React.FC = () => {
       const payload = {
         ...values,
         userCd: String(values.userCd).padStart(6, '0'),
+        deleteFlg: !!values.deleteFlg,
         passExpireDate: values.passExpireDate ? values.passExpireDate.format('YYYY/MM/DD') : undefined,
         userIdExpireDate: values.userIdExpireDate ? values.userIdExpireDate.format('YYYY/MM/DD') : undefined,
       };
 
       if (mode === 'edit' && currentRecord) {
-        await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
+        const res = await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          throw new Error('更新処理に失敗しました。');
+        }
         message.success(`ユーザーコード ${currentRecord.userCd} を更新しました。`);
         setData((prev) => prev.map((item) => (item.userCd === currentRecord.userCd ? { ...item, ...payload } : item)));
         setCurrentRecord({ ...currentRecord, ...payload });
       } else {
-        await fetch(`${API_BASE_URL}/api/user`, {
+        const res = await fetch(`${API_BASE_URL}/api/user`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          throw new Error('新規登録処理に失敗しました。');
+        }
         message.success(`ユーザーコード ${payload.userCd} を新規登録しました。`);
         setData((prev) => [...prev, payload]);
         setCurrentRecord(payload);
         setMode('edit');
       }
       fetchUsers();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      message.error(err.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }
