@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -9,20 +9,31 @@ import {
   Input,
   Select,
   Tag,
-  Modal,
   Form,
   message,
   Popconfirm,
   Typography,
+  Tabs,
+  Badge,
+  Tooltip,
+  Modal,
 } from 'antd';
 import {
-  PlusOutlined,
+  FormOutlined,
+  TableOutlined,
+  SaveOutlined,
+  ClearOutlined,
   SearchOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  MessageOutlined,
   DownloadOutlined,
+  DeleteOutlined,
+  LeftOutlined,
+  RightOutlined,
+  UndoOutlined,
+  EditOutlined,
+  EyeOutlined,
+  MessageOutlined,
+  ReloadOutlined,
+  PrinterOutlined,
   CheckCircleOutlined,
   QuestionCircleOutlined,
   WarningOutlined,
@@ -73,14 +84,14 @@ const getMsgCategoryTag = (msgNo: string) => {
     );
   } else if (num < 2000) {
     return (
-      <Tag color="blue" icon={<QuestionCircleOutlined />} style={{ borderRadius: 6 }}>
-        確認 (01000)
+      <Tag color="processing" icon={<QuestionCircleOutlined />} style={{ borderRadius: 6 }}>
+        確認メッセージ (01000)
       </Tag>
     );
   } else if (num < 3000) {
     return (
       <Tag color="warning" icon={<WarningOutlined />} style={{ borderRadius: 6 }}>
-        警告 (02000)
+        警告メッセージ (02000)
       </Tag>
     );
   } else {
@@ -92,167 +103,288 @@ const getMsgCategoryTag = (msgNo: string) => {
   }
 };
 
+const INITIAL_FORM_VALUES: Partial<MessageMasterItem> = {
+  subSysCd: '共通',
+  botanKbn: 1,
+};
+
 export const MessageMasterPage: React.FC = () => {
+  // Navigation & Tab state: default 'form' (Tab 1: 登録・編集フォーム)
+  const [activeTab, setActiveTab] = useState<'form' | 'list'>('form');
+
+  // Mode: 'new' (1: 新規登録), 'edit' (2: 修正), 'inquiry' (4: 照会)
+  const [mode, setMode] = useState<'new' | 'edit' | 'inquiry'>('new');
+
+  // Master Data & Search
   const [data, setData] = useState<MessageMasterItem[]>(SEED_MESSAGES);
-  const [filteredData, setFilteredData] = useState<MessageMasterItem[]>(SEED_MESSAGES);
-  const [loading, setLoading] = useState(false);
-  const [selectedSubSys, setSelectedSubSys] = useState<string | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchText, setSearchText] = useState('');
 
-  // Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<MessageMasterItem | null>(null);
+  // Form State
   const [form] = Form.useForm();
+  const [currentRecord, setCurrentRecord] = useState<MessageMasterItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Filter
-  useEffect(() => {
-    let result = [...data];
-    if (selectedSubSys) {
-      result = result.filter((x) => x.subSysCd === selectedSubSys);
-    }
-    if (searchText.trim()) {
-      const q = searchText.trim().toLowerCase();
-      result = result.filter(
-        (x) =>
-          x.msgNo.toLowerCase().includes(q) ||
-          x.msg1.toLowerCase().includes(q) ||
-          (x.msg2 && x.msg2.toLowerCase().includes(q))
-      );
-    }
-    setFilteredData(result);
-  }, [data, selectedSubSys, searchText]);
+  // Print Modal State (F8)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
-  const handleOpenAdd = () => {
-    setEditingItem(null);
+  // Initial Form Reset
+  const handleClearForm = useCallback(() => {
     form.resetFields();
-    form.setFieldsValue({
-      subSysCd: '共通',
-      botanKbn: 1,
-    });
-    setIsModalOpen(true);
-  };
+    form.setFieldsValue(INITIAL_FORM_VALUES);
+    setCurrentRecord(null);
+    setMode('new');
+    message.info('入力フォームをクリアしました。(新規登録モード)');
+  }, [form]);
 
-  const handleOpenEdit = (record: MessageMasterItem) => {
-    setEditingItem(record);
-    form.setFieldsValue(record);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = (msgNo: string) => {
-    setData((prev) => prev.filter((x) => x.msgNo !== msgNo));
-    message.success(`メッセージ番号 ${msgNo} を削除しました。`);
-  };
-
-  const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-      if (editingItem) {
-        setData((prev) =>
-          prev.map((item) => (item.msgNo === editingItem.msgNo ? { ...item, ...values } : item))
-        );
-        message.success(`メッセージ ${values.msgNo} を更新しました。`);
+  // Load Record into Form
+  const handleLoadRecord = useCallback(
+    (item: MessageMasterItem, targetMode: 'edit' | 'inquiry' = 'edit') => {
+      setCurrentRecord(item);
+      setMode(targetMode);
+      form.setFieldsValue(item);
+      setActiveTab('form');
+      if (targetMode === 'edit') {
+        message.success(`メッセージ「No.${item.msgNo}」を修正モードで読み込みました。`);
       } else {
-        if (data.some((x) => x.msgNo === values.msgNo)) {
-          message.error(`メッセージ番号 ${values.msgNo} は既に存在します。`);
-          return;
-        }
-        setData((prev) => [...prev, values]);
-        message.success(`メッセージ ${values.msgNo} を新規登録しました。`);
+        message.info(`メッセージ「No.${item.msgNo}」を照会モードで表示しています。`);
       }
-      setIsModalOpen(false);
-    } catch {
-      // Form validation failed
+    },
+    [form]
+  );
+
+  // Check code on blur
+  const handleCheckCode = async (msgNoVal: string | undefined) => {
+    if (!msgNoVal) return;
+    const padded = msgNoVal.padStart(5, '0');
+    form.setFieldsValue({ msgNo: padded });
+    const existing = data.find((x) => x.msgNo === padded);
+    if (existing && mode === 'new') {
+      message.warning(`メッセージ番号 ${padded} は既に登録されています。修正モードに切り替えます。`);
+      handleLoadRecord(existing, 'edit');
     }
   };
 
-  const handleExportCsv = () => {
-    const columns = [
-      { header: 'メッセージ番号', key: 'msgNo' as const },
-      { header: 'サブシステム', key: 'subSysCd' as const },
-      { header: 'メッセージ１', key: 'msg1' as const },
-      { header: 'メッセージ２', key: 'msg2' as const },
-      { header: 'デフォルトボタン区分', key: 'botanKbn' as const },
-    ];
-    exportToCsv(`メッセージマスタ_AD1750C_${new Date().toISOString().slice(0, 10)}.csv`, columns, filteredData);
+  // Previous Record (F9)
+  const handlePrevRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[data.length - 1], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.msgNo === currentRecord.msgNo);
+    if (idx > 0) {
+      handleLoadRecord(data[idx - 1], 'edit');
+    } else {
+      message.info('これより前のデータはありません。(最初のデータです)');
+    }
   };
 
+  // Next Record (F10)
+  const handleNextRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[0], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.msgNo === currentRecord.msgNo);
+    if (idx >= 0 && idx < data.length - 1) {
+      handleLoadRecord(data[idx + 1], 'edit');
+    } else {
+      message.info('これより後のデータはありません。(最後のデータです)');
+    }
+  };
+
+  // Save Record (F1)
+  const handleSave = async () => {
+    if (mode === 'inquiry') {
+      message.warning('照会モードのため保存できません。「修正」モードに切り替えてください。');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const values = await form.validateFields();
+      const paddedNo = String(values.msgNo).padStart(5, '0');
+      const itemToSave = { ...values, msgNo: paddedNo };
+
+      if (mode === 'edit' && currentRecord) {
+        setData((prev) =>
+          prev.map((item) => (item.msgNo === currentRecord.msgNo ? { ...item, ...itemToSave } : item))
+        );
+        setCurrentRecord({ ...currentRecord, ...itemToSave });
+        message.success(`メッセージ [${paddedNo}] を更新しました。`);
+      } else {
+        setData((prev) => [...prev, itemToSave]);
+        setCurrentRecord(itemToSave);
+        setMode('edit');
+        message.success(`新規メッセージ [${paddedNo}] を登録しました。`);
+      }
+    } catch {
+      message.error('入力必須項目またはフォーマットを確認してください。');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Delete Record (F7)
+  const handleDeleteCurrent = async () => {
+    if (!currentRecord) {
+      message.warning('削除対象のデータが読み込まれていません。');
+      return;
+    }
+    setData((prev) => prev.filter((x) => x.msgNo !== currentRecord.msgNo));
+    message.success(`メッセージ [${currentRecord.msgNo}] を削除しました。`);
+    handleClearForm();
+  };
+
+  // Export CSV (F6)
+  const handleExportCsv = () => {
+    if (!data || data.length === 0) {
+      message.warning('出力対象のデータがありません。');
+      return;
+    }
+    exportToCsv(
+      `メッセージマスタ_AD1750C_${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { header: 'メッセージCD', key: 'msgNo' },
+        { header: 'メッセージ1', key: 'msg1' },
+        { header: 'メッセージ2', key: 'msg2' },
+        { header: '基本使用サブシステム', key: 'subSysCd' },
+        { header: 'ボタン区分', key: 'botanKbn' },
+      ],
+      data
+    );
+  };
+
+  // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        handleSave();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleClearForm();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setMode('new');
+        form.setFieldsValue({ msgNo: undefined });
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab((prev) => (prev === 'form' ? 'list' : 'form'));
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        handleExportCsv();
+      } else if (e.key === 'F7' && mode === 'edit') {
+        e.preventDefault();
+        handleDeleteCurrent();
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        setIsPrintModalOpen(true);
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handlePrevRecord();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        handleNextRecord();
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        if (currentRecord) form.setFieldsValue(currentRecord);
+        else handleClearForm();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+
+  // Filter Data for Tab 2
+  const filteredData = data.filter((item) => {
+    const num = parseInt(item.msgNo, 10);
+    let matchesCategory = true;
+    if (selectedCategory === 'INFO') matchesCategory = num < 1000;
+    else if (selectedCategory === 'CONFIRM') matchesCategory = num >= 1000 && num < 2000;
+    else if (selectedCategory === 'WARN') matchesCategory = num >= 2000 && num < 3000;
+    else if (selectedCategory === 'ERROR') matchesCategory = num >= 3000;
+
+    const matchesSearch =
+      !searchText ||
+      item.msg1.includes(searchText) ||
+      (item.msg2 && item.msg2.includes(searchText)) ||
+      item.msgNo.includes(searchText);
+
+    return matchesCategory && matchesSearch;
+  });
+
+  // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<MessageMasterItem> = [
     {
-      title: 'メッセージ番号',
+      title: '分類',
+      key: 'category',
+      width: 140,
+      render: (_: any, r: MessageMasterItem) => getMsgCategoryTag(r.msgNo),
+    },
+    {
+      title: 'メッセージCD',
       dataIndex: 'msgNo',
       key: 'msgNo',
-      width: 140,
+      width: 110,
       render: (val: string) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e293b' }}>{val}</span>
+        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e293b' }}>
+          {val}
+        </span>
       ),
     },
     {
-      title: '分類区分',
-      dataIndex: 'msgNo',
-      key: 'category',
-      width: 150,
-      render: (val: string) => getMsgCategoryTag(val),
+      title: 'メッセージ1 (本文)',
+      dataIndex: 'msg1',
+      key: 'msg1',
+      render: (text: string, record: MessageMasterItem) => (
+        <a
+          onClick={() => handleLoadRecord(record, 'edit')}
+          style={{ fontWeight: 600, color: '#2563eb', cursor: 'pointer' }}
+        >
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: 'メッセージ2 (補足・ガイダンス)',
+      dataIndex: 'msg2',
+      key: 'msg2',
+      render: (val?: string) => <span style={{ fontSize: 12, color: '#64748b' }}>{val || '-'}</span>,
     },
     {
       title: 'サブシステム',
       dataIndex: 'subSysCd',
       key: 'subSysCd',
       width: 110,
-      render: (val: string) => (
-        <Tag color={val === '共通' ? 'blue' : 'purple'} style={{ borderRadius: 6, fontWeight: 600 }}>
-          {val}
-        </Tag>
-      ),
-    },
-    {
-      title: 'メッセージ１ (上段表示)',
-      dataIndex: 'msg1',
-      key: 'msg1',
-      render: (val: string) => <span style={{ fontWeight: 600, color: '#0f172a' }}>{val}</span>,
-    },
-    {
-      title: 'メッセージ２ (下段・説明)',
-      dataIndex: 'msg2',
-      key: 'msg2',
-      render: (val?: string) => <span style={{ color: '#64748b' }}>{val || '-'}</span>,
-    },
-    {
-      title: '標準ボタン',
-      dataIndex: 'botanKbn',
-      key: 'botanKbn',
-      width: 110,
-      align: 'center',
-      render: (val: number) => (
-        <Tag color={val === 1 ? 'cyan' : 'default'} style={{ borderRadius: 6 }}>
-          {val === 1 ? '1: はい/OK' : '2: いいえ'}
-        </Tag>
-      ),
+      render: (val: string) => <Tag color="geekblue">{val}</Tag>,
     },
     {
       title: '操作',
-      key: 'actions',
-      width: 130,
+      key: 'action',
+      width: 140,
       align: 'center',
       render: (_: any, record: MessageMasterItem) => (
         <Space size="small">
           <Button
-            type="text"
-            icon={<EditOutlined style={{ color: '#2563eb' }} />}
-            onClick={() => handleOpenEdit(record)}
+            type="primary"
             size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleLoadRecord(record, 'edit')}
+            style={{ background: '#2563eb', borderColor: '#2563eb' }}
           >
             編集
           </Button>
-          <Popconfirm
-            title="削除確認"
-            description={`メッセージ「${record.msgNo}」を削除しますか？`}
-            onConfirm={() => handleDelete(record.msgNo)}
-            okText="削除"
-            cancelText="キャンセル"
-            okButtonProps={{ danger: true }}
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => handleLoadRecord(record, 'inquiry')}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-          </Popconfirm>
+            照会
+          </Button>
         </Space>
       ),
     },
@@ -260,182 +392,488 @@ export const MessageMasterPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Header Bar */}
+      {/* ==============================================================
+          SCREEN TITLE & HIGH-LEVEL ERP METADATA BAR (CARD 1)
+          ============================================================== */}
       <Card bodyStyle={{ padding: '16px 24px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col>
-            <Space align="center" size={12}>
+            <Space align="center" size={14}>
               <div
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   borderRadius: 10,
-                  background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(14, 165, 233, 0.15)',
                 }}
               >
-                <MessageOutlined style={{ fontSize: 22, color: '#c026d3' }} />
+                <MessageOutlined style={{ fontSize: 24, color: '#0ea5e9' }} />
               </div>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
-                    メッセージマスタ (AD1750C)
+                    メッセージマスタメンテナンス (AD1750C)
                   </Title>
-                  <Tag color="purple" style={{ borderRadius: 6, fontWeight: 600 }}>
+                  <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
                     システム保守用
                   </Tag>
+                  {activeTab === 'form' && (
+                    <Tag
+                      color={mode === 'new' ? 'success' : mode === 'edit' ? 'warning' : 'processing'}
+                      style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}
+                    >
+                      {mode === 'new' ? '【新規登録モード】' : mode === 'edit' ? '【修正モード】' : '【照会モード】'}
+                    </Tag>
+                  )}
                 </div>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  全業務プログラムで表示するダイアログメッセージ、確認ダイアログ、月次警告等の登録保守を行います。
+                  全サブシステム共通の確認・警告・エラー・案内ダイアログメッセージ辞書を一括管理します。
                 </Text>
               </div>
             </Space>
           </Col>
 
+          {/* Quick Stats / Header Actions */}
           <Col>
-            <Space size={8} wrap>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleOpenAdd}
-                style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
-              >
-                (F1) 新規メッセージ登録
+            <Space size={10} wrap>
+              <Tooltip title="F8キーでも実行できます">
+                <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
+                  (F8) 印刷
+                </Button>
+              </Tooltip>
+              <Tooltip title="F6キーでも実行できます">
+                <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
+                  (F6) CSV出力
+                </Button>
+              </Tooltip>
+              <Button icon={<ReloadOutlined />} onClick={() => setData(SEED_MESSAGES)}>
+                初期化
               </Button>
-              <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                (F6) CSV出力
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  setLoading(true);
-                  setTimeout(() => {
-                    setData(SEED_MESSAGES);
-                    setLoading(false);
-                    message.success('メッセージマスタを最新情報に更新しました。');
-                  }, 400);
-                }}
-              />
             </Space>
           </Col>
         </Row>
       </Card>
 
-      {/* Main Table Card */}
-      <Card bodyStyle={{ padding: '16px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        {/* Filter Toolbar */}
-        <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-          <Col xs={24} sm={16} md={12}>
-            <Space size={10} style={{ width: '100%' }}>
-              <Select
-                placeholder="サブシステム区分"
-                allowClear
-                value={selectedSubSys}
-                onChange={setSelectedSubSys}
-                style={{ width: 140 }}
-                options={[
-                  { value: '共通', label: '共通メッセージ' },
-                  { value: 'MS', label: 'MS: マスタ・月次' },
-                  { value: 'GK', label: 'GK: 原価管理' },
-                  { value: 'UR', label: 'UR: 売上管理' },
-                  { value: 'SR', label: 'SR: 仕入管理' },
-                ]}
-              />
-              <Input
-                placeholder="MsgNo / メッセージ内容検索..."
-                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                allowClear
-                style={{ width: 240 }}
-              />
-            </Space>
-          </Col>
-          <Col>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              該当件数: <strong style={{ color: '#0f172a' }}>{filteredData.length}</strong> 件
-            </Text>
-          </Col>
-        </Row>
+      {/* ==============================================================
+          TWO-TAB ARCHITECTURE: Tab 1 (登録・編集) & Tab 2 (データ一覧) (CARD 2)
+          ============================================================== */}
+      <Card bodyStyle={{ padding: '8px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as 'form' | 'list')}
+          size="large"
+          items={[
+            {
+              key: 'form',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <FormOutlined style={{ marginRight: 6 }} />
+                  登録・編集フォーム (AD1750C)
+                  {mode === 'new' && <Tag color="green" style={{ marginLeft: 8 }}>新規</Tag>}
+                  {mode === 'edit' && <Tag color="blue" style={{ marginLeft: 8 }}>修正: #{currentRecord?.msgNo}</Tag>}
+                  {mode === 'inquiry' && <Tag color="orange" style={{ marginLeft: 8 }}>照会</Tag>}
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 1: COMPLETE FULL-PAGE FORM (AD1750C SPECIFICATION)
+                   ======================================================== */
+                <Form
+                  form={form}
+                  layout="vertical"
+                  initialValues={INITIAL_FORM_VALUES}
+                  disabled={mode === 'inquiry'}
+                  style={{ marginTop: 8 }}
+                >
+                  {/* Top Form Navigation & Mode Selector Bar */}
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      padding: '12px 18px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      marginBottom: 20,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={14} align="center">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          処理区分:
+                        </Text>
+                        <Select
+                          value={mode}
+                          onChange={(val) => {
+                            setMode(val);
+                            if (val === 'new') handleClearForm();
+                          }}
+                          style={{ width: 140 }}
+                          options={[
+                            { value: 'new', label: '1: 新規登録' },
+                            { value: 'edit', label: '2: データ修正' },
+                            { value: 'inquiry', label: '4: 照会 (閲覧)' },
+                          ]}
+                        />
+                      </div>
 
-        <Table
-          rowKey="msgNo"
-          columns={columns}
-          dataSource={filteredData}
-          loading={loading}
-          pagination={{ pageSize: 10, showSizeChanger: true }}
-          bordered
-          size="middle"
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          メッセージCD:
+                        </Text>
+                        <Form.Item name="msgNo" noStyle rules={[{ required: true, message: 'CD必須' }]}>
+                          <Input
+                            placeholder="例: 01001"
+                            maxLength={5}
+                            disabled={mode !== 'new'}
+                            onBlur={(e) => handleCheckCode(e.target.value)}
+                            style={{ width: 110, fontFamily: 'monospace', fontWeight: 700 }}
+                          />
+                        </Form.Item>
+                        <Tooltip title="データ一覧からメッセージを選択 (F5)">
+                          <Button
+                            icon={<SearchOutlined />}
+                            onClick={() => setActiveTab('list')}
+                            style={{ fontWeight: 600 }}
+                          >
+                            一覧から選択
+                          </Button>
+                        </Tooltip>
+                      </div>
+
+                      <div>
+                        {mode === 'edit' && currentRecord && (
+                          <Tag color="processing" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【修正モード: No.{currentRecord.msgNo}】
+                          </Tag>
+                        )}
+                        {mode === 'new' && (
+                          <Tag color="success" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【新規登録モード】
+                          </Tag>
+                        )}
+                      </div>
+                    </Space>
+
+                    {/* Sequential Navigation Buttons (F9, F10) */}
+                    <Space size={8}>
+                      <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
+                        (F9) 前データ
+                      </Button>
+                      <Button icon={<RightOutlined />} onClick={handleNextRecord} disabled={data.length === 0}>
+                        (F10) 次データ
+                      </Button>
+                    </Space>
+                  </div>
+
+                  {/* 1. メッセージ定義情報 */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>1. メッセージ文言定義</span>}
+                    style={{ marginBottom: 16, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <Form.Item
+                          name="msg1"
+                          label="メッセージ1 (本文・ダイアログ主文 - 全角50文字以内)"
+                          rules={[{ required: true, message: 'メッセージ本文を入力してください' }]}
+                        >
+                          <Input placeholder="例: 登録しますか？" maxLength={50} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={24}>
+                        <Form.Item
+                          name="msg2"
+                          label="メッセージ2 (補足・ガイダンス文 - 全角50文字以内)"
+                        >
+                          <Input placeholder="例: 入力内容をデータベースに保存します。" maxLength={50} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* 2. 制御パラメータ */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>2. 関連サブシステムおよびボタン構成</span>}
+                    style={{ marginBottom: 20, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12}>
+                        <Form.Item name="subSysCd" label="基本使用サブシステムCD">
+                          <Select
+                            options={[
+                              { value: '共通', label: '共通 (全システム)' },
+                              { value: 'AD', label: 'AD (管理・マスタ)' },
+                              { value: 'GK', label: 'GK (原価管理)' },
+                              { value: 'UR', label: 'UR (売上管理)' },
+                              { value: 'SR', label: 'SR (仕入管理)' },
+                              { value: 'VM', label: 'VM (月次更新)' },
+                              { value: 'MS', label: 'MS (マスタ保守)' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item name="botanKbn" label="ボタン構成区分 (ダイアログ操作)">
+                          <Select
+                            options={[
+                              { value: 1, label: '1: [はい / OK] のみ' },
+                              { value: 2, label: '2: [はい / いいえ] (二者択一)' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* Audit Information Bar per AD1750C Specification */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 20,
+                      fontSize: 12,
+                      color: '#64748b',
+                      marginBottom: 10,
+                      paddingRight: 4,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      新規作成:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? '2024/04/01 09:00:00 (ADMIN / PC-MITSUHIDE)' : '未登録'}
+                      </span>
+                    </div>
+                    <div>
+                      最終更新:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? `${new Date().toLocaleDateString('ja-JP')} 11:00:00 (ADMIN / PC-MITSUHIDE)` : '未登録'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Action Bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: '#0f172a',
+                      padding: '12px 20px',
+                      borderRadius: 10,
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={10} wrap>
+                      <Button
+                        type="primary"
+                        size="large"
+                        icon={<SaveOutlined />}
+                        loading={isSaving}
+                        onClick={handleSave}
+                        disabled={mode === 'inquiry'}
+                        style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
+                      >
+                        (F1) 登録・保存
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<ClearOutlined />}
+                        onClick={handleClearForm}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F2) クリア
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<UndoOutlined />}
+                        onClick={() => {
+                          if (currentRecord) form.setFieldsValue(currentRecord);
+                          else handleClearForm();
+                        }}
+                      >
+                        (F11) 取消
+                      </Button>
+                    </Space>
+
+                    <Space size={10} wrap>
+                      <Button
+                        size="large"
+                        icon={<PrinterOutlined />}
+                        onClick={() => setIsPrintModalOpen(true)}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F8) 印刷
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<DownloadOutlined />}
+                        onClick={handleExportCsv}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F6) CSV
+                      </Button>
+                      {mode === 'edit' && currentRecord && (
+                        <Popconfirm
+                          title="削除の確認"
+                          description={`メッセージ「No.${currentRecord.msgNo}」を削除しますか？`}
+                          onConfirm={handleDeleteCurrent}
+                          okText="削除"
+                          cancelText="キャンセル"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                            (F7) 削除
+                          </Button>
+                        </Popconfirm>
+                      )}
+                      <Button
+                        size="large"
+                        icon={<TableOutlined />}
+                        onClick={() => setActiveTab('list')}
+                        style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
+                      >
+                        (F5) 一覧照会へ
+                      </Button>
+                    </Space>
+                  </div>
+                </Form>
+              ),
+            },
+            {
+              key: 'list',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <TableOutlined style={{ marginRight: 6 }} />
+                  データ一覧・検索 (frm_sel_msg)
+                  <Badge count={filteredData.length} overflowCount={9999} style={{ backgroundColor: '#10b981', marginLeft: 8 }} />
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 2: DATABASE DATA TABLE & SEARCH (AD1750C LIST)
+                   ======================================================== */
+                <div style={{ marginTop: 8 }}>
+                  <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
+                    <Col xs={24} sm={16} md={14}>
+                      <Space size={10} style={{ width: '100%' }} wrap>
+                        <Select
+                          value={selectedCategory}
+                          onChange={(val) => setSelectedCategory(val)}
+                          style={{ width: 170 }}
+                          options={[
+                            { value: 'ALL', label: 'すべてのメッセージ' },
+                            { value: 'INFO', label: '正常終了 (00000)' },
+                            { value: 'CONFIRM', label: '確認 (01000)' },
+                            { value: 'WARN', label: '警告 (02000)' },
+                            { value: 'ERROR', label: 'エラー (03000)' },
+                          ]}
+                        />
+                        <Input
+                          placeholder="メッセージ本文 / CD..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          allowClear
+                          style={{ width: 220 }}
+                        />
+                      </Space>
+                    </Col>
+
+                    <Col>
+                      <Space size={10}>
+                        <Button
+                          type="primary"
+                          icon={<FormOutlined />}
+                          onClick={() => {
+                            handleClearForm();
+                            setActiveTab('form');
+                          }}
+                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                        >
+                          新規登録フォームへ
+                        </Button>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                          登録件数: <strong style={{ color: '#0f172a' }}>{filteredData.length}</strong> 件
+                        </Text>
+                      </Space>
+                    </Col>
+                  </Row>
+
+                  <Table
+                    rowKey="msgNo"
+                    columns={columns}
+                    dataSource={filteredData}
+                    pagination={{ pageSize: 15 }}
+                    bordered
+                    size="middle"
+                    onRow={(record) => ({
+                      onDoubleClick: () => handleLoadRecord(record, 'edit'),
+                    })}
+                  />
+                </div>
+              ),
+            },
+          ]}
         />
       </Card>
 
-      {/* Edit/Create Modal */}
+      {/* ========================================================
+          MODAL: PRINT SPECIFICATION (AD1750C 印刷指定 - F8)
+          ======================================================== */}
       <Modal
-        title={editingItem ? `メッセージ編集 (${editingItem.msgNo})` : '新規メッセージ登録 (AD1750C)'}
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={() => setIsModalOpen(false)}
-        okText="保存"
-        cancelText="キャンセル"
-        centered
-        width={560}
-      >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="msgNo"
-                label="メッセージ番号 (5桁)"
-                rules={[
-                  { required: true, message: 'メッセージ番号を入力してください' },
-                  { len: 5, message: '5桁で入力してください (例: 01001)' },
-                ]}
-              >
-                <Input placeholder="例: 01001" disabled={!!editingItem} style={{ fontFamily: 'monospace' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="subSysCd"
-                label="基本使用サブシステムCD"
-                rules={[{ required: true, message: 'サブシステムを選択してください' }]}
-              >
-                <Select
-                  options={[
-                    { value: '共通', label: '共通' },
-                    { value: 'MS', label: 'MS: マスタ・月次' },
-                    { value: 'GK', label: 'GK: 原価管理' },
-                    { value: 'UR', label: 'UR: 売上管理' },
-                    { value: 'SR', label: 'SR: 仕入管理' },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="msg1"
-            label="メッセージ１ (ダイアログ上段表示)"
-            rules={[{ required: true, message: 'メッセージ１を入力してください' }]}
+        title={
+          <Space>
+            <PrinterOutlined style={{ color: '#0ea5e9' }} />
+            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1750C メッセージマスタ一覧表)</span>
+          </Space>
+        }
+        open={isPrintModalOpen}
+        onCancel={() => setIsPrintModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
+            キャンセル
+          </Button>,
+          <Button
+            key="csv"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              handleExportCsv();
+              setIsPrintModalOpen(false);
+            }}
           >
-            <Input placeholder="例: 登録しますか？" />
-          </Form.Item>
-
-          <Form.Item name="msg2" label="メッセージ２ (ダイアログ下段・補足説明)">
-            <Input.TextArea rows={2} placeholder="補足説明がある場合に入力" />
-          </Form.Item>
-
-          <Form.Item name="botanKbn" label="デフォルトボタン区分" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 1, label: '1: はい / OK (肯定)' },
-                { value: 2, label: '2: いいえ / キャンセル (慎重)' },
-              ]}
-            />
-          </Form.Item>
-        </Form>
+            CSVダウンロード
+          </Button>,
+          <Button
+            key="print"
+            type="primary"
+            icon={<PrinterOutlined />}
+            onClick={() => {
+              setIsPrintModalOpen(false);
+              window.print();
+            }}
+            style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
+          >
+            印刷プレビュー (F8)
+          </Button>,
+        ]}
+      >
+        <div style={{ padding: '12px 0' }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+            登録されている全メッセージマスタ（案内・確認・警告・エラー）一覧を印刷プレビューで表示します。
+          </p>
+        </div>
       </Modal>
     </div>
   );

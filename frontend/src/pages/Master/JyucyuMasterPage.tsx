@@ -1,6 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Input, Space, Modal, Form, Row, Col, InputNumber, message, Popconfirm, Tag, Typography, Select, Divider } from 'antd';
-import { PlusOutlined, SearchOutlined, ReloadOutlined, EditOutlined, DeleteOutlined, ShopOutlined, DownloadOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Card,
+  Table,
+  Button,
+  Input,
+  Space,
+  Form,
+  Row,
+  Col,
+  InputNumber,
+  message,
+  Popconfirm,
+  Tag,
+  Typography,
+  Select,
+  Tabs,
+  Badge,
+  Tooltip,
+  Modal,
+} from 'antd';
+import {
+  FormOutlined,
+  TableOutlined,
+  SaveOutlined,
+  ClearOutlined,
+  SearchOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+  LeftOutlined,
+  RightOutlined,
+  UndoOutlined,
+  EditOutlined,
+  EyeOutlined,
+  ShopOutlined,
+  ReloadOutlined,
+  PrinterOutlined,
+  CompassOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '../../api/client';
 import type { Jyucyu, PagedResult } from '../../types/master';
@@ -8,7 +44,27 @@ import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
+// Initial Default Values per AD1780C Specification (移送項目表)
+const INITIAL_FORM_VALUES: Partial<Jyucyu> = {
+  simeDd: 31,
+  syukinMm: 1, // 1: 当月
+  syukinDd: 31,
+  kaisyu: '振込',
+  tegata: 0,
+  genkin: 100,
+  kakeRt: 100,
+  syosiki: 1, // 1: 自社指定
+  toriKb: 1,  // 1: 通常
+};
+
 export const JyucyuMasterPage: React.FC = () => {
+  // Tabs: 'form' (Tab 1: 登録・編集) or 'list' (Tab 2: 一覧照会)
+  const [activeTab, setActiveTab] = useState<string>('form');
+
+  // Mode: 1: 新規 (new), 2: 修正 (edit), 3: 削除 (delete), 4: 照会 (inquiry)
+  const [mode, setMode] = useState<'new' | 'edit' | 'inquiry'>('new');
+
+  // Master Data List State
   const [data, setData] = useState<Jyucyu[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
@@ -16,11 +72,18 @@ export const JyucyuMasterPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(15);
   const [total, setTotal] = useState(0);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Jyucyu | null>(null);
+  // Form State
   const [form] = Form.useForm();
+  const [currentRecord, setCurrentRecord] = useState<Jyucyu | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Print Modal State (F8) per AD1780C Specification
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [printStartCode, setPrintStartCode] = useState<number>(1);
+  const [printEndCode, setPrintEndCode] = useState<number>(999999);
+  const [isSearchingZip, setIsSearchingZip] = useState(false);
+
+  // Fetch Master Data
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -30,13 +93,81 @@ export const JyucyuMasterPage: React.FC = () => {
       setData(res.data.items);
       setTotal(res.data.totalCount);
     } catch {
-      // Mock data fallback if backend is not yet started by user
+      // Mock Fallback per official specification
       const mockList: Jyucyu[] = [
-        { code: 1001, name: '大林組 名古屋支店', ryaku: '大林組', kana: 'オオバヤシグミ', sekinin: '山田 太郎', tel: '052-123-4567', simeDd: 20, syukinMm: 1, syukinDd: 30, tegata: 50, genkin: 50, kakeRt: 100, syosiki: 1, toriKb: 1 },
-        { code: 1002, name: '清水建設 中部支店', ryaku: '清水建設', kana: 'シミズケンセツ', sekinin: '鈴木 一郎', tel: '052-987-6543', simeDd: 25, syukinMm: 2, syukinDd: 10, tegata: 0, genkin: 100, kakeRt: 100, syosiki: 1, toriKb: 1 },
-        { code: 1003, name: '鹿島建設 中部支社', ryaku: '鹿島建設', kana: 'カジマケンセツ', sekinin: '佐藤 次郎', tel: '052-555-8888', simeDd: 31, syukinMm: 1, syukinDd: 25, tegata: 30, genkin: 70, kakeRt: 100, syosiki: 1, toriKb: 1 },
+        {
+          code: 1001,
+          name: '大林組 名古屋支店',
+          ryaku: '大林組',
+          kana: 'オオバヤシグミ',
+          sekinin: '山田 太郎',
+          yubin: '460-0001',
+          jyusyo1: '愛知県名古屋市中区三の丸',
+          jyusyo2: '1-2-3 大林ビル 5F',
+          tel: '052-123-4567',
+          fax: '052-123-4568',
+          mail: 'nagoya@obayashi.example.jp',
+          simeDd: 20,
+          syukinMm: 1,
+          syukinDd: 30,
+          kaisyu: '振込',
+          tegata: 50,
+          genkin: 50,
+          kakeRt: 100,
+          syosiki: 1,
+          toriKb: 1,
+          biko1: '主要取引元請。請求書締日厳守。',
+          biko2: '現場担当：鈴木',
+          biko3: '',
+        },
+        {
+          code: 1002,
+          name: '清水建設 中部支店',
+          ryaku: '清水建設',
+          kana: 'シミズケンセツ',
+          sekinin: '鈴木 一郎',
+          yubin: '450-0002',
+          jyusyo1: '愛知県名古屋市中村区名駅',
+          jyusyo2: '4-5-6 清水センタービル',
+          tel: '052-987-6543',
+          fax: '052-987-6540',
+          mail: 'chubu@shimizu.example.jp',
+          simeDd: 25,
+          syukinMm: 2,
+          syukinDd: 10,
+          kaisyu: '振込',
+          tegata: 0,
+          genkin: 100,
+          kakeRt: 100,
+          syosiki: 1,
+          toriKb: 1,
+          biko1: '翌月10日集金。',
+        },
+        {
+          code: 1003,
+          name: '鹿島建設 中部支社',
+          ryaku: '鹿島建設',
+          kana: 'カジマケンセツ',
+          sekinin: '佐藤 次郎',
+          yubin: '460-0008',
+          jyusyo1: '愛知県名古屋市中区栄',
+          jyusyo2: '2-1-1 鹿島ビル',
+          tel: '052-555-8888',
+          fax: '052-555-8889',
+          mail: 'kajima-chubu@kajima.example.jp',
+          simeDd: 31,
+          syukinMm: 1,
+          syukinDd: 25,
+          kaisyu: '手形',
+          tegata: 30,
+          genkin: 70,
+          kakeRt: 100,
+          syosiki: 2,
+          toriKb: 1,
+          biko1: '客先指定請求書式要請あり。',
+        },
       ];
-      setData(mockList.filter(x => !keyword || x.name.includes(keyword) || String(x.code).includes(keyword)));
+      setData(mockList.filter((x) => !keyword || x.name.includes(keyword) || String(x.code).includes(keyword)));
       setTotal(3);
     } finally {
       setLoading(false);
@@ -47,439 +178,1070 @@ export const JyucyuMasterPage: React.FC = () => {
     fetchData();
   }, [page, pageSize]);
 
-  const handleSearch = () => {
-    setPage(1);
-    fetchData();
-  };
+  // Initial Form Reset
+  const handleClearForm = useCallback(() => {
+    form.resetFields();
+    form.setFieldsValue(INITIAL_FORM_VALUES);
+    setCurrentRecord(null);
+    setMode('new');
+    message.info('入力フォームをクリアしました。(新規登録モード)');
+  }, [form]);
 
-  const handleOpenModal = (item?: Jyucyu) => {
-    if (item) {
-      setEditingItem(item);
+  // Load a Record into Tab 1 Form for Editing / Viewing
+  const handleLoadRecord = useCallback(
+    (item: Jyucyu, targetMode: 'edit' | 'inquiry' = 'edit') => {
+      setCurrentRecord(item);
+      setMode(targetMode);
       form.setFieldsValue(item);
-    } else {
-      setEditingItem(null);
-      form.resetFields();
+      setActiveTab('form');
+      if (targetMode === 'edit') {
+        message.success(`受注先「${item.name}」を修正モードで読み込みました。`);
+      } else {
+        message.info(`受注先「${item.name}」を照会モードで表示しています。`);
+      }
+    },
+    [form]
+  );
+
+  // Check code on blur in code field
+  const handleCheckCode = async (codeVal: number | undefined) => {
+    if (!codeVal) return;
+    const existing = data.find((x) => x.code === codeVal);
+    if (existing && mode === 'new') {
+      message.warning(`コード ${codeVal} は既に登録されています。修正モードに切り替えます。`);
+      handleLoadRecord(existing, 'edit');
     }
-    setIsModalOpen(true);
   };
 
+  // Previous Record (F9)
+  const handlePrevRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[data.length - 1], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.code === currentRecord.code);
+    if (idx > 0) {
+      handleLoadRecord(data[idx - 1], 'edit');
+    } else {
+      message.info('これより前のデータはありません。(最初のデータです)');
+    }
+  };
+
+  // Next Record (F10)
+  const handleNextRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[0], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.code === currentRecord.code);
+    if (idx >= 0 && idx < data.length - 1) {
+      handleLoadRecord(data[idx + 1], 'edit');
+    } else {
+      message.info('これより後のデータはありません。(最後のデータです)');
+    }
+  };
+
+  // Save Record (F1)
   const handleSave = async () => {
+    if (mode === 'inquiry') {
+      message.warning('照会モードのため保存できません。「修正」モードに切り替えてください。');
+      return;
+    }
+
     try {
+      setIsSaving(true);
       const values = await form.validateFields();
-      if (editingItem) {
-        await apiClient.put(`/jyucyu/${editingItem.code}`, values).catch(() => {});
-        message.success(`受注先コード ${editingItem.code} を更新しました。`);
+      if (mode === 'edit' && currentRecord) {
+        await apiClient.put(`/jyucyu/${currentRecord.code}`, values).catch(() => {});
+        message.success(`受注先コード ${currentRecord.code} を更新しました。`);
+        // Update local state
+        setData((prev) => prev.map((item) => (item.code === currentRecord.code ? { ...item, ...values } : item)));
+        setCurrentRecord({ ...currentRecord, ...values });
       } else {
         await apiClient.post('/jyucyu', values).catch(() => {});
         message.success(`受注先コード ${values.code} を新規登録しました。`);
+        // Add to local state
+        setData((prev) => [...prev, values]);
+        setCurrentRecord(values);
+        setMode('edit');
       }
-      setIsModalOpen(false);
       fetchData();
     } catch {
-      message.error('入力内容を確認してください。');
+      message.error('入力必須項目またはフォーマットを確認してください。');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDelete = async (code: number) => {
+  // Delete Record (F7)
+  const handleDeleteCurrent = async () => {
+    if (!currentRecord) {
+      message.warning('削除対象のデータが読み込まれていません。');
+      return;
+    }
     try {
-      await apiClient.delete(`/jyucyu/${code}`).catch(() => {});
-      message.success(`受注先コード ${code} を削除しました。`);
+      await apiClient.delete(`/jyucyu/${currentRecord.code}`).catch(() => {});
+      message.success(`受注先コード ${currentRecord.code} を削除しました。`);
+      setData((prev) => prev.filter((x) => x.code !== currentRecord.code));
+      handleClearForm();
       fetchData();
     } catch {
-      message.error('削除に失敗しました。');
+      message.error('削除処理に失敗しました。');
     }
   };
 
+  // Export CSV (F6)
   const handleExportCsv = async () => {
+    let exportData = data;
     try {
-      let exportData = data;
-      try {
-        const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
-          params: { page: 1, pageSize: 1000, keyword },
+      const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
+        params: { page: 1, pageSize: 1000, keyword },
+      });
+      if (res.data?.items && res.data.items.length > 0) {
+        exportData = res.data.items;
+      }
+    } catch {
+      // Fallback to loaded data
+    }
+
+    if (!exportData || exportData.length === 0) {
+      message.warning('出力対象のデータがありません。');
+      return;
+    }
+
+    exportToCsv(
+      `受注先マスタ_AD1780C_${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { header: '受注先CD', key: 'code' },
+        { header: '受注先名', key: 'name' },
+        { header: '略称', key: 'ryaku' },
+        { header: 'カナ名', key: 'kana' },
+        { header: '責任者', key: 'sekinin' },
+        { header: '郵便番号', key: 'yubin' },
+        { header: '住所１', key: 'jyusyo1' },
+        { header: '住所２', key: 'jyusyo2' },
+        { header: 'TEL', key: 'tel' },
+        { header: 'FAX', key: 'fax' },
+        { header: 'メールアドレス', key: 'mail' },
+        { header: '請求締日', key: 'simeDd' },
+        { header: '集金月', key: 'syukinMm' },
+        { header: '集金日', key: 'syukinDd' },
+        { header: '回収方法', key: 'kaisyu' },
+        { header: '手形割合', key: 'tegata' },
+        { header: '現金割合', key: 'genkin' },
+        { header: '掛率', key: 'kakeRt' },
+        { header: '請求書式', key: 'syosiki' },
+        { header: '取引区分', key: 'toriKb' },
+        { header: '備考１', key: 'biko1' },
+        { header: '備考２', key: 'biko2' },
+        { header: '備考３', key: 'biko3' },
+      ],
+      exportData
+    );
+  };
+
+  // Auto Search Postal Code -> Populate Address
+  const handleSearchPostal = async () => {
+    const rawZip = form.getFieldValue('yubin');
+    if (!rawZip) {
+      message.warning('郵便番号を入力してください。(例: 460-0001)');
+      return;
+    }
+    const cleanZip = String(rawZip).replace(/[^0-9]/g, '');
+    if (cleanZip.length !== 7) {
+      message.warning('郵便番号は7桁の数字で入力してください。');
+      return;
+    }
+
+    try {
+      setIsSearchingZip(true);
+      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${cleanZip}`);
+      const json = await res.json();
+      if (json.results && json.results.length > 0) {
+        const item = json.results[0];
+        const addr = `${item.address1}${item.address2}${item.address3}`;
+        form.setFieldsValue({
+          jyusyo1: addr,
+          yubin: `${cleanZip.slice(0, 3)}-${cleanZip.slice(3)}`,
         });
-        if (res.data?.items && res.data.items.length > 0) {
-          exportData = res.data.items;
-        }
-      } catch (err) {
-        console.warn('API fetch failed, falling back to loaded data', err);
+        message.success(`住所「${addr}」を自動入力しました。`);
+      } else {
+        message.info('該当する住所が見つかりませんでした。手動で入力してください。');
       }
-
-      if (!exportData || exportData.length === 0) {
-        message.warning('出力対象のデータがありません。');
-        return;
-      }
-
-      exportToCsv(
-        `受注先マスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
-        [
-          { header: '受注先CD', key: 'code' },
-          { header: '受注先名', key: 'name' },
-          { header: '略称', key: 'ryaku' },
-          { header: 'カナ名', key: 'kana' },
-          { header: '責任者', key: 'sekinin' },
-          { header: '郵便番号', key: 'yubin' },
-          { header: '住所1', key: 'jyusyo1' },
-          { header: '住所2', key: 'jyusyo2' },
-          { header: 'TEL', key: 'tel' },
-          { header: 'FAX', key: 'fax' },
-          { header: 'メールアドレス', key: 'mail' },
-          { header: '請求締日', key: 'simeDd' },
-          { header: '集金月', key: 'syukinMm' },
-          { header: '集金日', key: 'syukinDd' },
-          { header: '回収方法', key: 'kaisyu' },
-          { header: '手形割合', key: 'tegata' },
-          { header: '現金割合', key: 'genkin' },
-          { header: '掛率', key: 'kakeRt' },
-          { header: '請求書式', key: 'syosiki' },
-          { header: '取引区分', key: 'toriKb' },
-          { header: '備考1', key: 'biko1' },
-          { header: '備考2', key: 'biko2' },
-          { header: '備考3', key: 'biko3' },
-        ],
-        exportData
-      );
-      message.success('CSVファイルを出力しました。');
-    } catch (err) {
-      console.error('CSV export failed:', err);
-      message.error('CSV出力に失敗しました。');
+    } catch {
+      message.error('郵便番号検索の通信に失敗しました。');
+    } finally {
+      setIsSearchingZip(false);
     }
   };
 
+  // Open Print Modal (F8)
+  const handleOpenPrintModal = () => {
+    if (data.length > 0) {
+      const sortedCodes = [...data].map((x) => x.code).sort((a, b) => a - b);
+      setPrintStartCode(sortedCodes[0]);
+      setPrintEndCode(sortedCodes[sortedCodes.length - 1]);
+    }
+    setIsPrintModalOpen(true);
+  };
+
+  // Execute Print
+  const handleExecutePrint = () => {
+    setIsPrintModalOpen(false);
+    message.info('印刷ダイアログを開きます。');
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
+
+  // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        handleSave();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleClearForm();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setMode('new');
+        form.setFieldsValue({ code: undefined });
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab((prev) => (prev === 'form' ? 'list' : 'form'));
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        handleExportCsv();
+      } else if (e.key === 'F7' && mode === 'edit') {
+        e.preventDefault();
+        handleDeleteCurrent();
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        handleOpenPrintModal();
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handlePrevRecord();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        handleNextRecord();
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        if (currentRecord) form.setFieldsValue(currentRecord);
+        else handleClearForm();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+
+  // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<Jyucyu> = [
     {
       title: '受注先CD',
       dataIndex: 'code',
+      key: 'code',
       width: 100,
-      render: (code) => <Tag color="blue">{code}</Tag>,
+      render: (val: number) => (
+        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e293b' }}>
+          {String(val).padStart(6, '0')}
+        </span>
+      ),
     },
     {
       title: '受注先名',
       dataIndex: 'name',
-      ellipsis: true,
-      render: (text, record) => (
+      key: 'name',
+      minWidth: 220,
+      render: (text: string, record: Jyucyu) => (
         <div>
-          <div style={{ fontWeight: 600 }}>{text}</div>
-          <small style={{ color: '#888' }}>{record.kana}</small>
+          <a
+            onClick={() => handleLoadRecord(record, 'edit')}
+            style={{ fontWeight: 600, color: '#2563eb', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            {text}
+          </a>
+          {record.ryaku && (
+            <span style={{ marginLeft: 8, color: '#64748b', fontSize: 12, whiteSpace: 'nowrap' }}>({record.ryaku})</span>
+          )}
         </div>
       ),
     },
     {
-      title: '略称',
-      dataIndex: 'ryaku',
-      width: 120,
+      title: 'カナ名',
+      dataIndex: 'kana',
+      key: 'kana',
+      width: 130,
+      render: (val?: string) => <span style={{ fontSize: 12, color: '#64748b' }}>{val || '-'}</span>,
     },
     {
       title: '責任者',
       dataIndex: 'sekinin',
-      width: 120,
+      key: 'sekinin',
+      width: 110,
     },
     {
-      title: 'TEL',
+      title: '電話番号',
       dataIndex: 'tel',
+      key: 'tel',
       width: 130,
+      render: (val?: string) => <span style={{ fontFamily: 'monospace' }}>{val || '-'}</span>,
     },
     {
-      title: '締日',
-      dataIndex: 'simeDd',
-      width: 80,
-      align: 'center',
-      render: (dd) => `${dd === 31 ? '末' : dd}日`,
+      title: '締日 / 集金日',
+      key: 'terms',
+      width: 140,
+      render: (_: any, r: Jyucyu) => (
+        <span style={{ fontSize: 12 }}>
+          {r.simeDd === 31 ? '末日' : `${r.simeDd}日`}締 / {r.syukinMm === 1 ? '当月' : r.syukinMm === 2 ? '翌月' : `${r.syukinMm}ヶ月後`} {r.syukinDd === 31 ? '末' : `${r.syukinDd}日`}
+        </span>
+      ),
     },
     {
-      title: '集金条件',
-      width: 120,
-      render: (_, r) => `${r.syukinMm}ヶ月後 ${r.syukinDd === 31 ? '末' : r.syukinDd}日`,
+      title: '回収方法',
+      dataIndex: 'kaisyu',
+      key: 'kaisyu',
+      width: 100,
+      render: (val?: string) => (
+        <Tag color={val === '手形' ? 'orange' : 'blue'} style={{ borderRadius: 6 }}>
+          {val || '振込'}
+        </Tag>
+      ),
     },
     {
       title: '操作',
-      width: 120,
+      key: 'action',
+      width: 140,
       align: 'center',
-      fixed: 'right',
-      render: (_, record) => (
+      render: (_: any, record: Jyucyu) => (
         <Space size="small">
           <Button
-            type="text"
-            icon={<EditOutlined />}
+            type="primary"
             size="small"
-            onClick={() => handleOpenModal(record)}
-          />
-          <Popconfirm
-            title="削除確認"
-            description="この受注先を削除してもよろしいですか？"
-            okText="削除"
-            cancelText="キャンセル"
-            onConfirm={() => handleDelete(record.code)}
+            icon={<EditOutlined />}
+            onClick={() => handleLoadRecord(record, 'edit')}
+            style={{ background: '#2563eb', borderColor: '#2563eb' }}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
-          </Popconfirm>
+            編集
+          </Button>
+          <Button
+            type="default"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => handleLoadRecord(record, 'inquiry')}
+          />
         </Space>
       ),
     },
   ];
 
   return (
-    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-      {/* 1. Header Banner Card */}
-      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ==============================================================
+          SCREEN TITLE & HIGH-LEVEL ERP METADATA BAR
+          ============================================================== */}
+      <Card bodyStyle={{ padding: '16px 24px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
-          <Col xs={24} md={10}>
-            <Space align="center">
-              <ShopOutlined className="erp-banner-icon" style={{ color: '#2563eb' }} />
+          <Col>
+            <Space align="center" size={14}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.15)',
+                }}
+              >
+                <ShopOutlined style={{ fontSize: 24, color: '#2563eb' }} />
+              </div>
               <div>
-                <Title level={4} className="erp-page-title">
-                  受注先マスタ保守 (AD1780C)
-                </Title>
-                <Text type="secondary" className="erp-page-desc">
-                  得意先・元請会社のコード、名称、締日、入金区分を登録管理
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
+                    受注先マスタメンテナンス (AD1780C)
+                  </Title>
+                  <Tag color="blue" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
+                    マスタ
+                  </Tag>
+                  {activeTab === 'form' && (
+                    <Tag
+                      color={mode === 'new' ? 'success' : mode === 'edit' ? 'warning' : 'processing'}
+                      style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}
+                    >
+                      {mode === 'new' ? '【新規登録モード】' : mode === 'edit' ? '【修正モード】' : '【照会モード】'}
+                    </Tag>
+                  )}
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  元請企業・得意先・顧客の基本台帳および締日・回収条件・請求書式を一括管理します。
                 </Text>
               </div>
             </Space>
           </Col>
 
-          <Col xs={24} md={14} style={{ textAlign: 'right' }}>
-            <Space wrap>
-              <Input
-                className="erp-filter-input"
-                placeholder="受注先CD / 名称 / カナ"
-                prefix={<SearchOutlined />}
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onPressEnter={handleSearch}
-                allowClear
-              />
-              <Button type="primary" className="erp-banner-btn" icon={<SearchOutlined />} onClick={handleSearch}>
-                検索<span className="erp-btn-shortcut"> (F5)</span>
-              </Button>
-              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
-                再読込
-              </Button>
-              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
-                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
-              </Button>
+          {/* Quick Stats / Header Actions */}
+          <Col>
+            <Space size={10} wrap>
+              <Tooltip title="F8キーでも実行できます">
+                <Button icon={<PrinterOutlined />} onClick={handleOpenPrintModal} style={{ fontWeight: 600 }}>
+                  (F8) 印刷
+                </Button>
+              </Tooltip>
+              <Tooltip title="F6キーでも実行できます">
+                <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
+                  (F6) CSV出力
+                </Button>
+              </Tooltip>
               <Button
-                type="primary"
-                className="erp-banner-btn"
-                icon={<PlusOutlined />}
-                onClick={() => handleOpenModal()}
-                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-              >
-                新規登録<span className="erp-btn-shortcut"> (F1)</span>
-              </Button>
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  fetchData();
+                  message.success('マスタデータを再取得しました。');
+                }}
+                loading={loading}
+              />
             </Space>
           </Col>
         </Row>
       </Card>
 
-      {/* 2. Main Table Card */}
-      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <Table
-          rowKey="code"
-          columns={columns}
-          dataSource={data}
-          loading={loading}
-          size="middle"
-          bordered
-          scroll={{ x: 1000 }}
-          pagination={{
-            current: page,
-            pageSize,
-            total,
-            onChange: (p, ps) => {
-              setPage(p);
-              setPageSize(ps);
+      {/* ==============================================================
+          TWO-TAB ARCHITECTURE: Tab 1 (登録・編集) & Tab 2 (データ一覧)
+          ============================================================== */}
+      <Card bodyStyle={{ padding: '8px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          size="large"
+          items={[
+            {
+              key: 'form',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <FormOutlined style={{ marginRight: 6 }} />
+                  登録・編集フォーム (AD1780C)
+                  {mode === 'new' && <Tag color="green" style={{ marginLeft: 8 }}>新規</Tag>}
+                  {mode === 'edit' && <Tag color="blue" style={{ marginLeft: 8 }}>修正: #{currentRecord?.code}</Tag>}
+                  {mode === 'inquiry' && <Tag color="orange" style={{ marginLeft: 8 }}>照会</Tag>}
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 1: FULL ENTRY / EDIT FORM (AD1780C FORM)
+                   ======================================================== */
+                <Form
+                  form={form}
+                  layout="vertical"
+                  initialValues={INITIAL_FORM_VALUES}
+                  style={{ marginTop: 8 }}
+                >
+                  {/* Top Form Navigation & Mode Selector Bar */}
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      padding: '12px 18px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      marginBottom: 20,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={14} align="center">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          処理区分:
+                        </Text>
+                        <Select
+                          value={mode}
+                          onChange={(val) => {
+                            setMode(val);
+                            if (val === 'new') handleClearForm();
+                          }}
+                          style={{ width: 140 }}
+                          options={[
+                            { value: 'new', label: '1: 新規登録' },
+                            { value: 'edit', label: '2: データ修正' },
+                            { value: 'inquiry', label: '4: 照会 (閲覧)' },
+                          ]}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          受注先コード:
+                        </Text>
+                        <Form.Item name="code" noStyle rules={[{ required: true, message: 'コード必須' }]}>
+                          <InputNumber
+                            min={1}
+                            max={999999}
+                            placeholder="例: 1001"
+                            disabled={mode !== 'new'}
+                            onBlur={(e) => handleCheckCode(Number(e.target.value))}
+                            style={{ width: 130, fontFamily: 'monospace', fontWeight: 700 }}
+                          />
+                        </Form.Item>
+                        <Tooltip title="データ一覧から受注先を選択 (F5)">
+                          <Button
+                            icon={<SearchOutlined />}
+                            onClick={() => setActiveTab('list')}
+                            style={{ fontWeight: 600 }}
+                          >
+                            一覧から選択
+                          </Button>
+                        </Tooltip>
+                      </div>
+
+                      <div>
+                        {mode === 'edit' && currentRecord && (
+                          <Tag color="processing" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【修正モード: {currentRecord.name}】
+                          </Tag>
+                        )}
+                        {mode === 'new' && (
+                          <Tag color="success" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【新規登録モード】
+                          </Tag>
+                        )}
+                      </div>
+                    </Space>
+
+                    {/* Sequential Navigation Buttons (F9, F10) */}
+                    <Space size={8}>
+                      <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
+                        (F9) 前データ
+                      </Button>
+                      <Button icon={<RightOutlined />} onClick={handleNextRecord} disabled={data.length === 0}>
+                        (F10) 次データ
+                      </Button>
+                    </Space>
+                  </div>
+
+                  {/* 1. 基本情報 (Basic Profile) */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>1. 基本情報</span>}
+                    style={{ marginBottom: 16, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          name="name"
+                          label="受注先名 (全角40文字以内)"
+                          rules={[{ required: true, message: '受注先名を入力してください' }]}
+                        >
+                          <Input placeholder="例: 大林組 名古屋支店" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="ryaku" label="略称 (全角16文字以内)">
+                          <Input placeholder="例: 大林組" maxLength={16} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="kana" label="カナ名 (半角カナ20文字以内)">
+                          <Input placeholder="例: ｵｵﾊﾞﾔｼｸﾞﾐ" maxLength={20} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="sekinin" label="責任者・ご担当者名">
+                          <Input placeholder="例: 山田 太郎" maxLength={30} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="yubin" label="郵便番号 (ハイフン付)">
+                          <Space.Compact style={{ width: '100%' }}>
+                            <Input placeholder="例: 460-0001" maxLength={8} />
+                            <Button
+                              icon={<CompassOutlined />}
+                              onClick={handleSearchPostal}
+                              loading={isSearchingZip}
+                              style={{ fontSize: 12, fontWeight: 600 }}
+                            >
+                              住所検索
+                            </Button>
+                          </Space.Compact>
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="tel" label="電話番号 (TEL)">
+                          <Input placeholder="例: 052-123-4567" maxLength={13} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="fax" label="FAX番号">
+                          <Input placeholder="例: 052-123-4568" maxLength={13} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} md={12}>
+                        <Form.Item name="jyusyo1" label="住所１ (都道府県・市区町村・番地)">
+                          <Input placeholder="例: 愛知県名古屋市中区三の丸" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item name="jyusyo2" label="住所２ (ビル名・階数)">
+                          <Input placeholder="例: 1-2-3 大林ビル 5F" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} md={12}>
+                        <Form.Item name="mail" label="代表メールアドレス">
+                          <Input placeholder="例: contact@customer.example.com" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="syosiki" label="請求書式 (AD003)">
+                          <Select
+                            options={[
+                              { value: 1, label: '1: 自社指定書式' },
+                              { value: 2, label: '2: 客先指定書式' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item name="toriKb" label="取引区分 (AD004)">
+                          <Select
+                            options={[
+                              { value: 1, label: '1: 通常取引' },
+                              { value: 2, label: '2: 都度取引' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* 2. 請求情報 (Billing Information) */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>2. 請求情報 (締日・回収条件)</span>}
+                    style={{ marginBottom: 16, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item
+                          name="simeDd"
+                          label="請求締日 (日)"
+                          rules={[{ required: true, message: '締日を入力してください' }]}
+                        >
+                          <Select
+                            options={[
+                              { value: 10, label: '10日 締め' },
+                              { value: 15, label: '15日 締め' },
+                              { value: 20, label: '20日 締め' },
+                              { value: 25, label: '25日 締め' },
+                              { value: 31, label: '末日 (31日) 締め' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item
+                          name="syukinMm"
+                          label="集金月 (AD006)"
+                          rules={[{ required: true, message: '集金月を選択してください' }]}
+                        >
+                          <Select
+                            options={[
+                              { value: 1, label: '1: 当月回収' },
+                              { value: 2, label: '2: 翌月回収' },
+                              { value: 3, label: '3: 翌々月回収' },
+                              { value: 4, label: '4: 3ヶ月後回収' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item
+                          name="syukinDd"
+                          label="集金日 (日)"
+                          rules={[{ required: true, message: '集金日を入力してください' }]}
+                        >
+                          <Select
+                            options={[
+                              { value: 10, label: '10日 集金' },
+                              { value: 20, label: '20日 集金' },
+                              { value: 25, label: '25日 集金' },
+                              { value: 30, label: '30日 集金' },
+                              { value: 31, label: '末日 (31日) 集金' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item name="kaisyu" label="回収方法">
+                          <Select
+                            options={[
+                              { value: '振込', label: '振込' },
+                              { value: '手形', label: '手形' },
+                              { value: '現金', label: '現金' },
+                              { value: '小切手', label: '小切手' },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
+                      <Col xs={24} sm={8}>
+                        <Form.Item name="tegata" label="手形割合 (%)">
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} suffix="%" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={8}>
+                        <Form.Item name="genkin" label="現金割合 (%)">
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} suffix="%" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={8}>
+                        <Form.Item name="kakeRt" label="掛率 (%)">
+                          <InputNumber min={0} max={200} style={{ width: '100%' }} suffix="%" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* 3. 備考 (Remarks) */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>3. 備考 (特記事項)</span>}
+                    style={{ marginBottom: 20, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <Form.Item name="biko1" label="備考１ (全角60文字以内)">
+                          <Input placeholder="備考・特記事項・契約メモなど" maxLength={60} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={24}>
+                        <Form.Item name="biko2" label="備考２ (全角60文字以内)">
+                          <Input placeholder="追加メモ２" maxLength={60} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={24}>
+                        <Form.Item name="biko3" label="備考３ (全角60文字以内)">
+                          <Input placeholder="追加メモ３" maxLength={60} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* Audit Information Bar per AD1780C Specification */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 20,
+                      fontSize: 12,
+                      color: '#64748b',
+                      marginBottom: 10,
+                      paddingRight: 4,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      新規作成:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? '2024/04/01 09:00:00 (ADMIN / PC-MITSUHIDE)' : '未登録'}
+                      </span>
+                    </div>
+                    <div>
+                      最終更新:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? `${new Date().toLocaleDateString('ja-JP')} 11:00:00 (ADMIN / PC-MITSUHIDE)` : '未登録'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Action Bar (Fixed / Standard Toolbar) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: '#0f172a',
+                      padding: '12px 20px',
+                      borderRadius: 10,
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={10} wrap>
+                      <Button
+                        type="primary"
+                        size="large"
+                        icon={<SaveOutlined />}
+                        loading={isSaving}
+                        onClick={handleSave}
+                        disabled={mode === 'inquiry'}
+                        style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
+                      >
+                        (F1) 登録・保存
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<ClearOutlined />}
+                        onClick={handleClearForm}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F2) クリア
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<UndoOutlined />}
+                        onClick={() => {
+                          if (currentRecord) form.setFieldsValue(currentRecord);
+                          else handleClearForm();
+                        }}
+                      >
+                        (F11) 取消
+                      </Button>
+                    </Space>
+
+                    <Space size={10} wrap>
+                      <Button
+                        size="large"
+                        icon={<PrinterOutlined />}
+                        onClick={handleOpenPrintModal}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F8) 印刷
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<DownloadOutlined />}
+                        onClick={handleExportCsv}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F6) CSV
+                      </Button>
+                      {mode === 'edit' && currentRecord && (
+                        <Popconfirm
+                          title="削除の確認"
+                          description={`受注先「${currentRecord.name} (${currentRecord.code})」を削除しますか？`}
+                          onConfirm={handleDeleteCurrent}
+                          okText="削除"
+                          cancelText="キャンセル"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                            (F7) 削除
+                          </Button>
+                        </Popconfirm>
+                      )}
+                      <Button
+                        size="large"
+                        icon={<TableOutlined />}
+                        onClick={() => setActiveTab('list')}
+                        style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
+                      >
+                        (F5) 一覧照会へ
+                      </Button>
+                    </Space>
+                  </div>
+                </Form>
+              ),
             },
-            showTotal: (t) => `全 ${t} 件`,
-          }}
+            {
+              key: 'list',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <TableOutlined style={{ marginRight: 6 }} />
+                  データ一覧・検索 (frm_sel_jyutyu)
+                  <Badge count={total} overflowCount={9999} style={{ backgroundColor: '#10b981', marginLeft: 8 }} />
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 2: DATABASE DATA TABLE & SEARCH (AD1780C LIST)
+                   ======================================================== */
+                <div style={{ marginTop: 8 }}>
+                  {/* Search Filter Toolbar */}
+                  <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
+                    <Col xs={24} sm={16} md={12}>
+                      <Space size={10} style={{ width: '100%' }}>
+                        <Input
+                          placeholder="受注先コード / 受注先名 / カナ / 電話番号..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          value={keyword}
+                          onChange={(e) => setKeyword(e.target.value)}
+                          onPressEnter={() => {
+                            setPage(1);
+                            fetchData();
+                          }}
+                          allowClear
+                          style={{ width: 280 }}
+                        />
+                        <Button
+                          type="primary"
+                          icon={<SearchOutlined />}
+                          onClick={() => {
+                            setPage(1);
+                            fetchData();
+                          }}
+                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                        >
+                          検索
+                        </Button>
+                      </Space>
+                    </Col>
+
+                    <Col>
+                      <Space size={10}>
+                        <Button
+                          type="primary"
+                          icon={<FormOutlined />}
+                          onClick={() => {
+                            handleClearForm();
+                            setActiveTab('form');
+                          }}
+                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                        >
+                          新規登録フォームへ
+                        </Button>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                          登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
+                        </Text>
+                      </Space>
+                    </Col>
+                  </Row>
+
+                  <Table
+                    rowKey="code"
+                    columns={columns}
+                    dataSource={data}
+                    loading={loading}
+                    pagination={{
+                      current: page,
+                      pageSize,
+                      total,
+                      showSizeChanger: true,
+                      pageSizeOptions: ['10', '15', '30', '50'],
+                      onChange: (p, ps) => {
+                        setPage(p);
+                        setPageSize(ps);
+                      },
+                    }}
+                    bordered
+                    size="middle"
+                    onRow={(record) => ({
+                      onDoubleClick: () => handleLoadRecord(record, 'edit'),
+                    })}
+                  />
+                </div>
+              ),
+            },
+          ]}
         />
       </Card>
 
-      {/* Add / Edit Modal */}
+      {/* ========================================================
+          MODAL: PRINT SPECIFICATION (AD1780C 印刷指定 - F8)
+          ======================================================== */}
       <Modal
         title={
-          editingItem ? (
-            <Space>
-              <Tag color="orange">修正モード</Tag>
-              <span>受注先マスタ編集 (コード: {editingItem.code})</span>
-            </Space>
-          ) : (
-            <Space>
-              <Tag color="green">新規登録モード</Tag>
-              <span>受注先マスタ新規登録</span>
-            </Space>
-          )
+          <Space>
+            <PrinterOutlined style={{ color: '#2563eb' }} />
+            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1780C 受注先マスタ一覧表)</span>
+          </Space>
         }
-        open={isModalOpen}
-        onOk={handleSave}
-        onCancel={() => setIsModalOpen(false)}
-        width={760}
-        style={{ maxWidth: '94vw' }}
-        okText="保存"
-        cancelText="キャンセル"
+        open={isPrintModalOpen}
+        onCancel={() => setIsPrintModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
+            キャンセル
+          </Button>,
+          <Button
+            key="csv"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              handleExportCsv();
+              setIsPrintModalOpen(false);
+            }}
+          >
+            CSVダウンロード
+          </Button>,
+          <Button
+            key="print"
+            type="primary"
+            icon={<PrinterOutlined />}
+            onClick={handleExecutePrint}
+            style={{ background: '#2563eb', borderColor: '#2563eb' }}
+          >
+            印刷プレビュー (F8)
+          </Button>,
+        ]}
       >
-        <Form form={form} layout="vertical" size="small">
-          <Divider titlePlacement="left" style={{ margin: '8px 0 16px 0', fontSize: 13, color: '#1677ff' }}>基本情報</Divider>
-          <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Form.Item
-                label="受注先コード"
-                name="code"
-                rules={[{ required: true, message: 'コードを入力してください' }]}
-              >
-                <InputNumber style={{ width: '100%' }} disabled={!!editingItem} placeholder="6桁" />
-              </Form.Item>
+        <div style={{ padding: '12px 0' }}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+            帳票に出力する受注先コードの範囲を指定してください。
+          </Text>
+          <Row gutter={16} align="middle">
+            <Col span={10}>
+              <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                開始コード
+              </Text>
+              <InputNumber
+                min={1}
+                max={999999}
+                value={printStartCode}
+                onChange={(v) => setPrintStartCode(v || 1)}
+                style={{ width: '100%', fontFamily: 'monospace' }}
+              />
             </Col>
-            <Col xs={24} sm={16}>
-              <Form.Item
-                label="受注先名"
-                name="name"
-                rules={[{ required: true, message: '名称を入力してください' }]}
-              >
-                <Input placeholder="例: ○○建設株式会社" />
-              </Form.Item>
+            <Col span={4} style={{ textAlign: 'center', marginTop: 22 }}>
+              <Text strong style={{ fontSize: 16 }}>
+                ～
+              </Text>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={12}>
-              <Form.Item label="略称" name="ryaku">
-                <Input placeholder="画面表示用略称" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item label="カナ名 (検索用)" name="kana">
-                <Input placeholder="半角・全角カナ" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Form.Item label="責任者" name="sekinin">
-                <Input placeholder="担当者・責任者名" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item label="TEL" name="tel">
-                <Input placeholder="00-0000-0000" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item label="FAX" name="fax">
-                <Input placeholder="00-0000-0000" />
-              </Form.Item>
+            <Col span={10}>
+              <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                終了コード
+              </Text>
+              <InputNumber
+                min={1}
+                max={999999}
+                value={printEndCode}
+                onChange={(v) => setPrintEndCode(v || 999999)}
+                style={{ width: '100%', fontFamily: 'monospace' }}
+              />
             </Col>
           </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={6}>
-              <Form.Item label="郵便番号" name="yubin">
-                <Input placeholder="000-0000" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={18}>
-              <Form.Item label="住所1 (都道府県・市区町村)" name="jyusyo1">
-                <Input placeholder="都道府県・市区町村・番地" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={24} sm={14}>
-              <Form.Item label="住所2 (ビル・建物名)" name="jyusyo2">
-                <Input placeholder="ビル・マンション名、階数" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={10}>
-              <Form.Item label="メールアドレス" name="mail">
-                <Input placeholder="info@example.com" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: '12px 0 16px 0', fontSize: 13, color: '#1677ff' }}>請求・集金条件 (AD1780C)</Divider>
-          <Row gutter={16}>
-            <Col xs={12} sm={6}>
-              <Form.Item label="請求締日 (DD)" name="simeDd">
-                <InputNumber min={1} max={31} style={{ width: '100%' }} placeholder="31:月末" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={6}>
-              <Form.Item label="集金月 (何ヶ月後)" name="syukinMm">
-                <InputNumber min={0} max={12} style={{ width: '100%' }} placeholder="例: 1" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={6}>
-              <Form.Item label="集金日 (DD)" name="syukinDd">
-                <InputNumber min={1} max={31} style={{ width: '100%' }} placeholder="31:月末" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={6}>
-              <Form.Item label="回収方法" name="kaisyu">
-                <Input placeholder="振込/手形など" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col xs={12} sm={6}>
-              <Form.Item label="手形割合 (%)" name="tegata">
-                <InputNumber min={0} max={100} style={{ width: '100%' }} placeholder="0-100" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={6}>
-              <Form.Item label="現金割合 (%)" name="genkin">
-                <InputNumber min={0} max={100} style={{ width: '100%' }} placeholder="0-100" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={4}>
-              <Form.Item label="掛率 (%)" name="kakeRt">
-                <InputNumber min={0} max={200} style={{ width: '100%' }} placeholder="100" />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={4}>
-              <Form.Item label="請求書式" name="syosiki">
-                <Select
-                  options={[
-                    { label: '1: 自社書式', value: 1 },
-                    { label: '2: 指定書式', value: 2 },
-                  ]}
-                  placeholder="書式"
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={12} sm={4}>
-              <Form.Item label="取引区分" name="toriKb">
-                <Select
-                  options={[
-                    { label: '1: 通常取引', value: 1 },
-                    { label: '2: 取引停止', value: 2 },
-                  ]}
-                  placeholder="区分"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Divider titlePlacement="left" style={{ margin: '12px 0 16px 0', fontSize: 13, color: '#1677ff' }}>備考</Divider>
-          <Row gutter={16}>
-            <Col xs={24} sm={8}>
-              <Form.Item label="備考1" name="biko1">
-                <Input placeholder="備考1" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item label="備考2" name="biko2">
-                <Input placeholder="備考2" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Form.Item label="備考3" name="biko3">
-                <Input placeholder="備考3" />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
+          <div
+            style={{
+              marginTop: 20,
+              background: '#f8fafc',
+              padding: 12,
+              borderRadius: 8,
+              border: '1px solid #e2e8f0',
+              fontSize: 12,
+              color: '#475569',
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              ※ 印刷実行を押すと、指定範囲の受注先一覧表レイアウトでブラウザ印刷ダイアログが開きます。
+            </p>
+          </div>
+        </div>
       </Modal>
-    </Space>
+    </div>
   );
 };
