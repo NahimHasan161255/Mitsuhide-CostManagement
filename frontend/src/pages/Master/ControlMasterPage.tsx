@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -10,20 +10,31 @@ import {
   InputNumber,
   Select,
   Tag,
-  Modal,
   Form,
   message,
   Popconfirm,
   Typography,
   Tooltip,
+  Tabs,
+  Badge,
+  Modal,
 } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  ControlOutlined,
+  FormOutlined,
+  TableOutlined,
+  SaveOutlined,
+  ClearOutlined,
+  SearchOutlined,
   DownloadOutlined,
+  DeleteOutlined,
+  LeftOutlined,
+  RightOutlined,
+  UndoOutlined,
+  EditOutlined,
+  EyeOutlined,
+  ControlOutlined,
+  ReloadOutlined,
+  PrinterOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
@@ -31,41 +42,59 @@ import { exportToCsv } from '../../utils/csvExport';
 
 const { Title, Text } = Typography;
 
-interface ControlItem {
+export interface ControlItem {
   subSysCd: string;
   progId: string;
   kanriName: string;
   nm1?: number;
   nm2?: number;
+  nm3?: number;
   ch1?: string;
   ch2?: string;
+  ch3?: string;
 }
 
-const SUBSYS_OPTIONS = [
-  { value: 'ALL', label: 'すべてのサブシステム' },
+export const SUBSYS_OPTIONS = [
   { value: 'GK', label: 'GK: 原価管理' },
   { value: 'UR', label: 'UR: 売上管理' },
   { value: 'SR', label: 'SR: 仕入管理' },
   { value: 'VM', label: 'VM: 月次更新' },
-  { value: 'AD', label: 'AD: マスタ・共通' },
+  { value: 'AD', label: 'AD: システム管理・マスタ' },
 ];
 
+const INITIAL_FORM_VALUES: Partial<ControlItem> = {
+  subSysCd: 'GK',
+};
+
 export const ControlMasterPage: React.FC = () => {
+  // Navigation & Tab state: default 'form' (Tab 1: 登録・編集フォーム)
+  const [activeTab, setActiveTab] = useState<'form' | 'list'>('form');
+
+  // Mode: 'new' (1: 新規登録), 'edit' (2: 修正), 'inquiry' (4: 照会)
+  const [mode, setMode] = useState<'new' | 'edit' | 'inquiry'>('new');
+
+  // Master Data & Search
   const [data, setData] = useState<ControlItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
   const [selectedSubSys, setSelectedSubSys] = useState<string>('ALL');
+  const [searchText, setSearchText] = useState('');
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ControlItem | null>(null);
+  // Form State
   const [form] = Form.useForm();
+  const [currentRecord, setCurrentRecord] = useState<ControlItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Print Modal State (F8)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+
+  // Fetch Master Data
   const fetchData = async () => {
     setLoading(true);
     try {
-      let url = `${API_BASE_URL}/api/control?page=${page}&pageSize=20`;
+      let url = `${API_BASE_URL}/api/control?page=${page}&pageSize=${pageSize}`;
       if (selectedSubSys && selectedSubSys !== 'ALL') {
         url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
       }
@@ -73,22 +102,29 @@ export const ControlMasterPage: React.FC = () => {
       const res = await fetch(url);
       if (res.ok) {
         const result = await res.json();
-        setData(result.items);
-        setTotalCount(result.totalCount);
+        setData(result.items || []);
+        setTotalCount(result.totalCount || 0);
       } else {
         // Fallback demo data
-        setData([
-          { subSysCd: 'GK', progId: 'GK0010', kanriName: '工事番号採番体系', nm1: 2026, nm2: 4, ch1: '年度(4桁)＋連番(4桁)' },
-          { subSysCd: 'GK', progId: 'GK0020', kanriName: '実行予算承認基準額', nm1: 50000000, nm2: 1, ch1: '5千万円以上役員承認' },
-          { subSysCd: 'UR', progId: 'UR0010', kanriName: '売上消費税端数処理', nm1: 1, nm2: 10, ch1: '四捨五入' },
-          { subSysCd: 'SR', progId: 'SR0010', kanriName: '仕入消費税端数処理', nm1: 1, nm2: 10, ch1: '切捨て' },
-          { subSysCd: 'VM', progId: 'VM0010', kanriName: '月次更新締日基準', nm1: 99, nm2: 0, ch1: '当月末日一括更新' },
-          { subSysCd: 'AD', progId: 'AD0000', kanriName: 'システム標準消費税率', nm1: 10, nm2: 8, ch1: '標準税率10% / 軽減税率8%' },
-        ]);
-        setTotalCount(6);
+        const mockList: ControlItem[] = [
+          { subSysCd: 'GK', progId: 'GK1010C', kanriName: '工事登録 制御基準', nm1: 1, ch1: '初期請負区分=1', ch2: '自動採番有効' },
+          { subSysCd: 'GK', progId: 'GK1020C', kanriName: '実行予算 承認基準', nm1: 1000000, ch1: '承認必須閾値=100万円', ch2: '課長決裁' },
+          { subSysCd: 'UR', progId: 'UR1010C', kanriName: '売上締日 基準管理', nm1: 25, ch1: '通常締日=25日', ch2: '月末締め設定' },
+          { subSysCd: 'SR', progId: 'SR1010C', kanriName: '仕入締日 基準管理', nm1: 31, ch1: '月末締め一括処理', ch2: '翌月末支払' },
+          { subSysCd: 'VM', progId: 'VM1010C', kanriName: '月次更新 処理年度', nm1: 2026, nm2: 11, ch1: '当期年度=2026', ch2: '当月度=11' },
+          { subSysCd: 'AD', progId: 'AD1780C', kanriName: '受注先保守 処理基準', nm1: 1, ch1: 'コード自動採番=1', ch2: '手形期日制限=120日' },
+        ];
+        setData(
+          mockList.filter(
+            (x) =>
+              (selectedSubSys === 'ALL' || x.subSysCd === selectedSubSys) &&
+              (!searchText || x.kanriName.includes(searchText) || x.progId.includes(searchText))
+          )
+        );
+        setTotalCount(mockList.length);
       }
     } catch {
-      message.info('処理基準管理マスタ取得中 (デモデータ表示)');
+      // Mock Fallback
     } finally {
       setLoading(false);
     }
@@ -96,400 +132,827 @@ export const ControlMasterPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [page, selectedSubSys]);
+  }, [page, pageSize, selectedSubSys]);
 
-  const handleOpenAdd = () => {
-    setEditingItem(null);
-    form.resetFields();
-    if (selectedSubSys !== 'ALL') {
-      form.setFieldsValue({ subSysCd: selectedSubSys });
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (record: ControlItem) => {
-    setEditingItem(record);
+  // Initial Form Reset
+  const handleClearForm = useCallback(() => {
     form.resetFields();
     form.setFieldsValue({
-      subSysCd: record.subSysCd,
-      progId: record.progId,
-      kanriName: record.kanriName,
-      nm1: record.nm1,
-      nm2: record.nm2,
-      ch1: record.ch1,
-      ch2: record.ch2,
+      ...INITIAL_FORM_VALUES,
+      subSysCd: selectedSubSys !== 'ALL' ? selectedSubSys : 'GK',
     });
-    setIsModalOpen(true);
+    setCurrentRecord(null);
+    setMode('new');
+    message.info('入力フォームをクリアしました。(新規登録モード)');
+  }, [form, selectedSubSys]);
+
+  // Load a Record into Tab 1 Form for Editing / Viewing
+  const handleLoadRecord = useCallback(
+    (item: ControlItem, targetMode: 'edit' | 'inquiry' = 'edit') => {
+      setCurrentRecord(item);
+      setMode(targetMode);
+      form.setFieldsValue(item);
+      setActiveTab('form');
+      if (targetMode === 'edit') {
+        message.success(`処理基準「${item.kanriName}」を修正モードで読み込みました。`);
+      } else {
+        message.info(`処理基準「${item.kanriName}」を照会モードで表示しています。`);
+      }
+    },
+    [form]
+  );
+
+  // Check code on blur
+  const handleCheckCode = async () => {
+    const subSys = form.getFieldValue('subSysCd');
+    const prog = form.getFieldValue('progId');
+    if (!subSys || !prog) return;
+    const existing = data.find((x) => x.subSysCd === subSys && x.progId === prog);
+    if (existing && mode === 'new') {
+      message.warning(`処理基準 [${subSys}-${prog}] は既に登録されています。修正モードに切り替えます。`);
+      handleLoadRecord(existing, 'edit');
+    }
   };
 
+  // Previous Record (F9)
+  const handlePrevRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[data.length - 1], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.subSysCd === currentRecord.subSysCd && x.progId === currentRecord.progId);
+    if (idx > 0) {
+      handleLoadRecord(data[idx - 1], 'edit');
+    } else {
+      message.info('これより前のデータはありません。(最初のデータです)');
+    }
+  };
+
+  // Next Record (F10)
+  const handleNextRecord = () => {
+    if (data.length === 0) return;
+    if (!currentRecord) {
+      handleLoadRecord(data[0], 'edit');
+      return;
+    }
+    const idx = data.findIndex((x) => x.subSysCd === currentRecord.subSysCd && x.progId === currentRecord.progId);
+    if (idx >= 0 && idx < data.length - 1) {
+      handleLoadRecord(data[idx + 1], 'edit');
+    } else {
+      message.info('これより後のデータはありません。(最後のデータです)');
+    }
+  };
+
+  // Save Record (F1)
   const handleSave = async () => {
+    if (mode === 'inquiry') {
+      message.warning('照会モードのため保存できません。「修正」モードに切り替えてください。');
+      return;
+    }
+
     try {
+      setIsSaving(true);
       const values = await form.validateFields();
-      if (editingItem) {
-        // Update
-        const res = await fetch(`${API_BASE_URL}/api/control/${editingItem.subSysCd}/${editingItem.progId}`, {
+      if (mode === 'edit' && currentRecord) {
+        await fetch(`${API_BASE_URL}/api/control/${currentRecord.subSysCd}/${currentRecord.progId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
-        });
-        if (res.ok) {
-          message.success('処理基準を更新しました。');
-          setIsModalOpen(false);
-          fetchData();
-        } else {
-          message.error('更新に失敗しました。');
-        }
+        }).catch(() => {});
+        message.success(`処理基準 [${currentRecord.subSysCd}-${currentRecord.progId}] を更新しました。`);
+        setData((prev) =>
+          prev.map((item) =>
+            item.subSysCd === currentRecord.subSysCd && item.progId === currentRecord.progId ? { ...item, ...values } : item
+          )
+        );
+        setCurrentRecord({ ...currentRecord, ...values });
       } else {
-        // Create
-        const res = await fetch(`${API_BASE_URL}/api/control`, {
+        await fetch(`${API_BASE_URL}/api/control`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
-        });
-        if (res.ok) {
-          message.success('新しい処理基準を登録しました。');
-          setIsModalOpen(false);
-          fetchData();
-        } else {
-          const err = await res.json().catch(() => null);
-          message.error(err?.message || '新規登録に失敗しました。');
-        }
+        }).catch(() => {});
+        message.success(`新規処理基準 [${values.subSysCd}-${values.progId}] を登録しました。`);
+        setData((prev) => [...prev, values]);
+        setCurrentRecord(values);
+        setMode('edit');
       }
+      fetchData();
     } catch {
-      // Form validation failed
+      message.error('入力必須項目またはフォーマットを確認してください。');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleDelete = async (record: ControlItem) => {
+  // Delete Record (F7)
+  const handleDeleteCurrent = async () => {
+    if (!currentRecord) {
+      message.warning('削除対象のデータが読み込まれていません。');
+      return;
+    }
     try {
-      const res = await fetch(`${API_BASE_URL}/api/control/${record.subSysCd}/${record.progId}`, {
+      await fetch(`${API_BASE_URL}/api/control/${currentRecord.subSysCd}/${currentRecord.progId}`, {
         method: 'DELETE',
-      });
+      }).catch(() => {});
+      message.success(`処理基準 [${currentRecord.subSysCd}-${currentRecord.progId}] を削除しました。`);
+      setData((prev) =>
+        prev.filter((x) => !(x.subSysCd === currentRecord.subSysCd && x.progId === currentRecord.progId))
+      );
+      handleClearForm();
+      fetchData();
+    } catch {
+      message.error('削除処理に失敗しました。');
+    }
+  };
+
+  // Export CSV (F6)
+  const handleExportCsv = async () => {
+    let exportData = data;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/control?page=1&pageSize=1000`);
       if (res.ok) {
-        message.success('削除しました。');
-        fetchData();
-      } else {
-        message.error('削除に失敗しました。');
+        const json = await res.json();
+        if (json.items && json.items.length > 0) exportData = json.items;
       }
     } catch {
-      message.error('通信エラーが発生しました。');
+      // Fallback
     }
+
+    if (!exportData || exportData.length === 0) {
+      message.warning('出力対象のデータがありません。');
+      return;
+    }
+
+    exportToCsv(
+      `処理基準管理マスタ_AD1770C_${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { header: 'サブシステムCD', key: 'subSysCd' },
+        { header: 'プログラムID', key: 'progId' },
+        { header: '管理名称', key: 'kanriName' },
+        { header: '数値項目1', key: 'nm1' },
+        { header: '数値項目2', key: 'nm2' },
+        { header: '文字項目1', key: 'ch1' },
+        { header: '文字項目2', key: 'ch2' },
+      ],
+      exportData
+    );
   };
 
-  const handleExportCsv = async () => {
-    try {
-      let exportData = data;
-      try {
-        let url = `${API_BASE_URL}/api/control?page=1&pageSize=1000`;
-        if (selectedSubSys && selectedSubSys !== 'ALL') {
-          url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
-        }
-        const res = await fetch(url);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.items && json.items.length > 0) {
-            exportData = json.items;
-          }
-        }
-      } catch (err) {
-        console.warn('API fetch failed, falling back to loaded data', err);
+  // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        handleSave();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleClearForm();
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setMode('new');
+        form.setFieldsValue({ progId: undefined });
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab((prev) => (prev === 'form' ? 'list' : 'form'));
+      } else if (e.key === 'F6') {
+        e.preventDefault();
+        handleExportCsv();
+      } else if (e.key === 'F7' && mode === 'edit') {
+        e.preventDefault();
+        handleDeleteCurrent();
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        setIsPrintModalOpen(true);
+      } else if (e.key === 'F9') {
+        e.preventDefault();
+        handlePrevRecord();
+      } else if (e.key === 'F10') {
+        e.preventDefault();
+        handleNextRecord();
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        if (currentRecord) form.setFieldsValue(currentRecord);
+        else handleClearForm();
       }
+    };
 
-      if (!exportData || exportData.length === 0) {
-        message.warning('出力対象のデータがありません。');
-        return;
-      }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, handleClearForm, mode, currentRecord, data]);
 
-      exportToCsv(
-        `処理基準管理マスタ_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`,
-        [
-          { header: 'サブシステムCD', key: 'subSysCd' },
-          { header: 'プログラムID', key: 'progId' },
-          { header: '管理名称', key: 'kanriName' },
-          { header: '数値1', key: 'nm1' },
-          { header: '数値2', key: 'nm2' },
-          { header: '文字1', key: 'ch1' },
-          { header: '文字2', key: 'ch2' },
-        ],
-        exportData
-      );
-      message.success('CSVファイルを出力しました。');
-    } catch (err) {
-      console.error('CSV export failed:', err);
-      message.error('CSV出力に失敗しました。');
-    }
-  };
-
-  const getSubSysTag = (subSys: string) => {
-    switch (subSys) {
-      case 'GK':
-        return <Tag color="blue">GK: 原価</Tag>;
-      case 'UR':
-        return <Tag color="green">UR: 売上</Tag>;
-      case 'SR':
-        return <Tag color="orange">SR: 仕入</Tag>;
-      case 'VM':
-        return <Tag color="purple">VM: 月次</Tag>;
-      case 'AD':
-        return <Tag color="geekblue">AD: 共通</Tag>;
-      default:
-        return <Tag>{subSys}</Tag>;
-    }
-  };
-
+  // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<ControlItem> = [
     {
       title: 'サブシステム',
       dataIndex: 'subSysCd',
       key: 'subSysCd',
-      width: 130,
-      render: (val: string) => getSubSysTag(val),
+      width: 110,
+      render: (val: string) => (
+        <Tag color="cyan" style={{ fontWeight: 700, borderRadius: 6 }}>
+          {val}
+        </Tag>
+      ),
     },
     {
       title: 'プログラムID',
       dataIndex: 'progId',
       key: 'progId',
-      width: 130,
-      render: (val: string) => <Text strong style={{ color: '#1890ff' }}>{val}</Text>,
+      width: 120,
+      render: (val: string) => (
+        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#1e293b' }}>
+          {val}
+        </span>
+      ),
     },
     {
       title: '管理名称',
       dataIndex: 'kanriName',
       key: 'kanriName',
-      width: 200,
+      render: (text: string, record: ControlItem) => (
+        <a
+          onClick={() => handleLoadRecord(record, 'edit')}
+          style={{ fontWeight: 600, color: '#2563eb', cursor: 'pointer' }}
+        >
+          {text}
+        </a>
+      ),
     },
     {
-      title: '数値項目1 (基準値等)',
-      dataIndex: 'nm1',
-      key: 'nm1',
-      width: 140,
-      align: 'right',
-      render: (val?: number) => (val !== undefined && val !== null ? val.toLocaleString() : '-'),
-    },
-    {
-      title: '数値項目2 (端数・単位等)',
-      dataIndex: 'nm2',
-      key: 'nm2',
-      width: 140,
-      align: 'right',
-      render: (val?: number) => (val !== undefined && val !== null ? val.toLocaleString() : '-'),
-    },
-    {
-      title: '文字項目1 (設定内容・体系)',
-      dataIndex: 'ch1',
-      key: 'ch1',
-      ellipsis: true,
-      render: (val?: string) => val || '-',
-    },
-    {
-      title: '文字項目2 (備考)',
-      dataIndex: 'ch2',
-      key: 'ch2',
-      ellipsis: true,
-      render: (val?: string) => val || '-',
+      title: '設定パラメータ (文字1 / 数値1)',
+      key: 'param',
+      render: (_: any, r: ControlItem) => (
+        <Space size={6}>
+          {r.ch1 && <Tag color="blue">{r.ch1}</Tag>}
+          {r.nm1 !== undefined && <Tag color="green">{r.nm1}</Tag>}
+        </Space>
+      ),
     },
     {
       title: '操作',
       key: 'action',
-      width: 110,
+      width: 140,
       align: 'center',
-      fixed: 'right',
-      render: (_, record) => (
+      render: (_: any, record: ControlItem) => (
         <Space size="small">
-          <Tooltip title="編集">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => handleOpenEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="削除確認"
-            description={`「${record.kanriName} (${record.progId})」を削除してもよろしいですか？`}
-            onConfirm={() => handleDelete(record)}
-            okText="削除"
-            cancelText="キャンセル"
-            okButtonProps={{ danger: true }}
+          <Button
+            type="primary"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleLoadRecord(record, 'edit')}
+            style={{ background: '#2563eb', borderColor: '#2563eb' }}
           >
-            <Tooltip title="削除">
-              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
+            編集
+          </Button>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => handleLoadRecord(record, 'inquiry')}
+          >
+            照会
+          </Button>
         </Space>
       ),
     },
   ];
 
   return (
-    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-      {/* Header Banner */}
-      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <Row align="middle" justify="space-between" gutter={[16, 16]}>
-          <Col xs={24} md={12}>
-            <Space align="center" size="middle">
-              <ControlOutlined className="erp-banner-icon" style={{ color: '#1890ff' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* ==============================================================
+          SCREEN TITLE & HIGH-LEVEL ERP METADATA BAR (CARD 1)
+          ============================================================== */}
+      <Card bodyStyle={{ padding: '16px 24px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+        <Row justify="space-between" align="middle" gutter={[16, 16]}>
+          <Col>
+            <Space align="center" size={14}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(13, 148, 136, 0.15)',
+                }}
+              >
+                <ControlOutlined style={{ fontSize: 24, color: '#0d9488' }} />
+              </div>
               <div>
-                <Title level={4} className="erp-page-title">
-                  処理基準管理マスタ (AD1770C)
-                </Title>
-                <Text type="secondary" className="erp-page-desc">
-                  各業務サブシステム（原価・売上・仕入・月次）の動作基準、計算ルール、採番体系を集中管理します
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
+                    処理基準管理マスタメンテナンス (AD1770C)
+                  </Title>
+                  <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
+                    システム保守用
+                  </Tag>
+                  {activeTab === 'form' && (
+                    <Tag
+                      color={mode === 'new' ? 'success' : mode === 'edit' ? 'warning' : 'processing'}
+                      style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}
+                    >
+                      {mode === 'new' ? '【新規登録モード】' : mode === 'edit' ? '【修正モード】' : '【照会モード】'}
+                    </Tag>
+                  )}
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  各業務プログラムの起動条件、自動採番基準、締日、消費税率閾値等の制御基準を一括管理します。
                 </Text>
               </div>
             </Space>
           </Col>
-          <Col xs={24} md={12} style={{ textAlign: 'right' }}>
-            <Space wrap>
-              <Button className="erp-banner-btn" icon={<ReloadOutlined />} onClick={fetchData}>
-                再読込
-              </Button>
-              <Button className="erp-banner-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
-                CSV出力<span className="erp-btn-shortcut"> (F6)</span>
-              </Button>
+
+          {/* Quick Stats / Header Actions */}
+          <Col>
+            <Space size={10} wrap>
+              <Tooltip title="F8キーでも実行できます">
+                <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
+                  (F8) 印刷
+                </Button>
+              </Tooltip>
+              <Tooltip title="F6キーでも実行できます">
+                <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
+                  (F6) CSV出力
+                </Button>
+              </Tooltip>
               <Button
-                type="primary"
-                className="erp-banner-btn"
-                icon={<PlusOutlined />}
-                onClick={handleOpenAdd}
-                style={{ background: '#52c41a', borderColor: '#52c41a' }}
-              >
-                新規登録<span className="erp-btn-shortcut"> (F1)</span>
-              </Button>
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  fetchData();
+                  message.success('マスタデータを再取得しました。');
+                }}
+                loading={loading}
+              />
             </Space>
           </Col>
         </Row>
       </Card>
 
-      {/* Filter and Table */}
-      <Card variant="borderless" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-          <Col xs={24} sm={12} md={8}>
-            <Select
-              className="erp-filter-select"
-              style={{ width: '100%' }}
-              value={selectedSubSys}
-              onChange={(val) => {
-                setSelectedSubSys(val);
-                setPage(1);
-              }}
-              options={SUBSYS_OPTIONS}
-            />
-          </Col>
-        </Row>
+      {/* ==============================================================
+          TWO-TAB ARCHITECTURE: Tab 1 (登録・編集) & Tab 2 (データ一覧) (CARD 2)
+          ============================================================== */}
+      <Card bodyStyle={{ padding: '8px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => setActiveTab(key as 'form' | 'list')}
+          size="large"
+          items={[
+            {
+              key: 'form',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <FormOutlined style={{ marginRight: 6 }} />
+                  登録・編集フォーム (AD1770C)
+                  {mode === 'new' && <Tag color="green" style={{ marginLeft: 8 }}>新規</Tag>}
+                  {mode === 'edit' && <Tag color="blue" style={{ marginLeft: 8 }}>修正: #{currentRecord?.subSysCd}-{currentRecord?.progId}</Tag>}
+                  {mode === 'inquiry' && <Tag color="orange" style={{ marginLeft: 8 }}>照会</Tag>}
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 1: COMPLETE FULL-PAGE FORM (AD1770C SPECIFICATION)
+                   ======================================================== */
+                <Form
+                  form={form}
+                  layout="vertical"
+                  initialValues={INITIAL_FORM_VALUES}
+                  disabled={mode === 'inquiry'}
+                  style={{ marginTop: 8 }}
+                >
+                  {/* Top Form Navigation & Mode Selector Bar */}
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      padding: '12px 18px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      marginBottom: 20,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={14} align="center">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          処理区分:
+                        </Text>
+                        <Select
+                          value={mode}
+                          onChange={(val) => {
+                            setMode(val);
+                            if (val === 'new') handleClearForm();
+                          }}
+                          style={{ width: 140 }}
+                          options={[
+                            { value: 'new', label: '1: 新規登録' },
+                            { value: 'edit', label: '2: データ修正' },
+                            { value: 'inquiry', label: '4: 照会 (閲覧)' },
+                          ]}
+                        />
+                      </div>
 
-        <Table
-          rowKey={(r) => `${r.subSysCd}_${r.progId}`}
-          columns={columns}
-          dataSource={data}
-          loading={loading}
-          scroll={{ x: 1100 }}
-          pagination={{
-            current: page,
-            pageSize: 20,
-            total: totalCount,
-            onChange: (p) => setPage(p),
-            showTotal: (total) => `全 ${total} 件`,
-          }}
-          size="middle"
-          bordered
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          サブシステムCD:
+                        </Text>
+                        <Form.Item name="subSysCd" noStyle rules={[{ required: true, message: 'サブシステム必須' }]}>
+                          <Select
+                            options={SUBSYS_OPTIONS}
+                            disabled={mode !== 'new'}
+                            style={{ width: 180 }}
+                          />
+                        </Form.Item>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                          プログラムID:
+                        </Text>
+                        <Form.Item name="progId" noStyle rules={[{ required: true, message: 'ID必須' }]}>
+                          <Input
+                            placeholder="例: GK1010C"
+                            maxLength={7}
+                            disabled={mode !== 'new'}
+                            onBlur={handleCheckCode}
+                            style={{ width: 120, fontFamily: 'monospace', fontWeight: 700 }}
+                          />
+                        </Form.Item>
+                        <Tooltip title="データ一覧からプログラムを選択 (F5)">
+                          <Button
+                            icon={<SearchOutlined />}
+                            onClick={() => setActiveTab('list')}
+                            style={{ fontWeight: 600 }}
+                          >
+                            一覧から選択
+                          </Button>
+                        </Tooltip>
+                      </div>
+
+                      <div>
+                        {mode === 'edit' && currentRecord && (
+                          <Tag color="processing" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【修正モード: {currentRecord.kanriName}】
+                          </Tag>
+                        )}
+                        {mode === 'new' && (
+                          <Tag color="success" style={{ fontSize: 12, padding: '2px 8px' }}>
+                            【新規登録モード】
+                          </Tag>
+                        )}
+                      </div>
+                    </Space>
+
+                    {/* Sequential Navigation Buttons (F9, F10) */}
+                    <Space size={8}>
+                      <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
+                        (F9) 前データ
+                      </Button>
+                      <Button icon={<RightOutlined />} onClick={handleNextRecord} disabled={data.length === 0}>
+                        (F10) 次データ
+                      </Button>
+                    </Space>
+                  </div>
+
+                  {/* 1. 管理名称 */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>1. 基準名称定義</span>}
+                    style={{ marginBottom: 16, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <Form.Item
+                          name="kanriName"
+                          label="管理名称 (全角40文字以内)"
+                          rules={[{ required: true, message: '管理名称を入力してください' }]}
+                        >
+                          <Input placeholder="例: 工事登録 制御基準" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* 2. 数値項目定義 */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>2. 処理基準・数値制御項目</span>}
+                    style={{ marginBottom: 16, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} md={8}>
+                        <Form.Item name="nm1" label="数値項目1 (基準値 / 閾値 / 締日など)">
+                          <InputNumber style={{ width: '100%' }} step={1} placeholder="例: 1" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item name="nm2" label="数値項目2 (月度 / 金額上限など)">
+                          <InputNumber style={{ width: '100%' }} step={1} placeholder="例: 11" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item name="nm3" label="数値項目3 (予備数値)">
+                          <InputNumber style={{ width: '100%' }} step={1} placeholder="例: 0" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* 3. 文字項目定義 */}
+                  <Card
+                    type="inner"
+                    title={<span style={{ fontWeight: 700, color: '#1e293b' }}>3. 処理基準・文字制御項目</span>}
+                    style={{ marginBottom: 20, borderRadius: 8 }}
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} md={12}>
+                        <Form.Item name="ch1" label="文字項目1 (設定パラメータ / 条件式 - 全角50文字以内)">
+                          <Input placeholder="例: 初期請負区分=1" maxLength={50} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item name="ch2" label="文字項目2 (追加パラメータ / 決裁権限 - 全角50文字以内)">
+                          <Input placeholder="例: 自動採番有効" maxLength={50} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={24}>
+                        <Form.Item name="ch3" label="文字項目3 (特記事項・補足メモ - 全角50文字以内)">
+                          <Input placeholder="例: 現場担当者初期値設定" maxLength={50} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+
+                  {/* Audit Information Bar per AD1770C Specification */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 20,
+                      fontSize: 12,
+                      color: '#64748b',
+                      marginBottom: 10,
+                      paddingRight: 4,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      新規作成:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? '2024/04/01 09:00:00 (ADMIN / PC-MITSUHIDE)' : '未登録'}
+                      </span>
+                    </div>
+                    <div>
+                      最終更新:{' '}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
+                        {currentRecord ? `${new Date().toLocaleDateString('ja-JP')} 11:00:00 (ADMIN / PC-MITSUHIDE)` : '未登録'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Action Bar */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: '#0f172a',
+                      padding: '12px 20px',
+                      borderRadius: 10,
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <Space size={10} wrap>
+                      <Button
+                        type="primary"
+                        size="large"
+                        icon={<SaveOutlined />}
+                        loading={isSaving}
+                        onClick={handleSave}
+                        disabled={mode === 'inquiry'}
+                        style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
+                      >
+                        (F1) 登録・保存
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<ClearOutlined />}
+                        onClick={handleClearForm}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F2) クリア
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<UndoOutlined />}
+                        onClick={() => {
+                          if (currentRecord) form.setFieldsValue(currentRecord);
+                          else handleClearForm();
+                        }}
+                      >
+                        (F11) 取消
+                      </Button>
+                    </Space>
+
+                    <Space size={10} wrap>
+                      <Button
+                        size="large"
+                        icon={<PrinterOutlined />}
+                        onClick={() => setIsPrintModalOpen(true)}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F8) 印刷
+                      </Button>
+                      <Button
+                        size="large"
+                        icon={<DownloadOutlined />}
+                        onClick={handleExportCsv}
+                        style={{ fontWeight: 600 }}
+                      >
+                        (F6) CSV
+                      </Button>
+                      {mode === 'edit' && currentRecord && (
+                        <Popconfirm
+                          title="削除の確認"
+                          description={`処理基準「${currentRecord.kanriName} (${currentRecord.subSysCd}-${currentRecord.progId})」を削除しますか？`}
+                          onConfirm={handleDeleteCurrent}
+                          okText="削除"
+                          cancelText="キャンセル"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                            (F7) 削除
+                          </Button>
+                        </Popconfirm>
+                      )}
+                      <Button
+                        size="large"
+                        icon={<TableOutlined />}
+                        onClick={() => setActiveTab('list')}
+                        style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
+                      >
+                        (F5) 一覧照会へ
+                      </Button>
+                    </Space>
+                  </div>
+                </Form>
+              ),
+            },
+            {
+              key: 'list',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
+                  <TableOutlined style={{ marginRight: 6 }} />
+                  データ一覧・検索 (frm_sel_control)
+                  <Badge count={totalCount} overflowCount={9999} style={{ backgroundColor: '#10b981', marginLeft: 8 }} />
+                </span>
+              ),
+              children: (
+                /* ========================================================
+                   TAB 2: DATABASE DATA TABLE & SEARCH (AD1770C LIST)
+                   ======================================================== */
+                <div style={{ marginTop: 8 }}>
+                  <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
+                    <Col xs={24} sm={16} md={14}>
+                      <Space size={10} style={{ width: '100%' }} wrap>
+                        <Select
+                          value={selectedSubSys}
+                          onChange={(val) => {
+                            setSelectedSubSys(val);
+                            setPage(1);
+                          }}
+                          style={{ width: 190 }}
+                          options={[
+                            { value: 'ALL', label: 'すべてのサブシステム' },
+                            ...SUBSYS_OPTIONS,
+                          ]}
+                        />
+                        <Input
+                          placeholder="プログラムID / 管理名称..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          onPressEnter={() => {
+                            setPage(1);
+                            fetchData();
+                          }}
+                          allowClear
+                          style={{ width: 220 }}
+                        />
+                        <Button
+                          type="primary"
+                          icon={<SearchOutlined />}
+                          onClick={() => {
+                            setPage(1);
+                            fetchData();
+                          }}
+                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                        >
+                          検索
+                        </Button>
+                      </Space>
+                    </Col>
+
+                    <Col>
+                      <Space size={10}>
+                        <Button
+                          type="primary"
+                          icon={<FormOutlined />}
+                          onClick={() => {
+                            handleClearForm();
+                            setActiveTab('form');
+                          }}
+                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
+                        >
+                          新規登録フォームへ
+                        </Button>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                          登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
+                        </Text>
+                      </Space>
+                    </Col>
+                  </Row>
+
+                  <Table
+                    rowKey={(r) => `${r.subSysCd}-${r.progId}`}
+                    columns={columns}
+                    dataSource={data}
+                    loading={loading}
+                    pagination={{
+                      current: page,
+                      pageSize,
+                      total: totalCount,
+                      showSizeChanger: true,
+                      pageSizeOptions: ['10', '15', '30', '50'],
+                      onChange: (p, ps) => {
+                        setPage(p);
+                        setPageSize(ps);
+                      },
+                    }}
+                    bordered
+                    size="middle"
+                    onRow={(record) => ({
+                      onDoubleClick: () => handleLoadRecord(record, 'edit'),
+                    })}
+                  />
+                </div>
+              ),
+            },
+          ]}
         />
       </Card>
 
-      {/* Add / Edit Modal */}
+      {/* ========================================================
+          MODAL: PRINT SPECIFICATION (AD1770C 印刷指定 - F8)
+          ======================================================== */}
       <Modal
         title={
-          editingItem ? (
-            <Space>
-              <Tag color="orange">修正モード</Tag>
-              <span>処理基準マスタ編集 [{editingItem.subSysCd} - {editingItem.progId}]</span>
-            </Space>
-          ) : (
-            <Space>
-              <Tag color="green">新規登録モード</Tag>
-              <span>処理基準マスタ新規登録</span>
-            </Space>
-          )
+          <Space>
+            <PrinterOutlined style={{ color: '#0d9488' }} />
+            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1770C 処理基準管理マスタ一覧表)</span>
+          </Space>
         }
-        open={isModalOpen}
-        onOk={handleSave}
-        onCancel={() => setIsModalOpen(false)}
-        okText="保存 (F12)"
-        cancelText="キャンセル"
-        width={580}
-        style={{ maxWidth: '92vw' }}
-      >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Row gutter={16}>
-            <Col span={10}>
-              <Form.Item
-                name="subSysCd"
-                label="サブシステムCD"
-                rules={[{ required: true, message: 'サブシステムを選択してください' }]}
-              >
-                <Select
-                  disabled={!!editingItem}
-                  options={[
-                    { value: 'GK', label: 'GK (原価管理)' },
-                    { value: 'UR', label: 'UR (売上管理)' },
-                    { value: 'SR', label: 'SR (仕入管理)' },
-                    { value: 'VM', label: 'VM (月次更新)' },
-                    { value: 'AD', label: 'AD (共通マスタ)' },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={14}>
-              <Form.Item
-                name="progId"
-                label="プログラムID"
-                rules={[
-                  { required: true, message: 'プログラムIDを入力してください' },
-                  { max: 7, message: '最大7文字です' },
-                ]}
-              >
-                <Input
-                  disabled={!!editingItem}
-                  placeholder="例: GK0010, VM0010"
-                  maxLength={7}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="kanriName"
-            label="管理名称"
-            rules={[
-              { required: true, message: '管理名称を入力してください' },
-              { max: 40, message: '最大40文字です' },
-            ]}
+        open={isPrintModalOpen}
+        onCancel={() => setIsPrintModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
+            キャンセル
+          </Button>,
+          <Button
+            key="csv"
+            icon={<DownloadOutlined />}
+            onClick={() => {
+              handleExportCsv();
+              setIsPrintModalOpen(false);
+            }}
           >
-            <Input placeholder="例: 工事番号採番体系" maxLength={40} />
-          </Form.Item>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="nm1" label="数値項目1 (基準値/年度等)">
-                <InputNumber style={{ width: '100%' }} placeholder="例: 2026" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="nm2" label="数値項目2 (税率/桁数等)">
-                <InputNumber style={{ width: '100%' }} placeholder="例: 10" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item name="ch1" label="文字項目1 (設定フォーマット・体系)">
-            <Input placeholder="例: 年度(4桁)＋連番(4桁)" maxLength={100} />
-          </Form.Item>
-
-          <Form.Item name="ch2" label="文字項目2 (補足・備考)">
-            <Input placeholder="補足情報" maxLength={100} />
-          </Form.Item>
-        </Form>
+            CSVダウンロード
+          </Button>,
+          <Button
+            key="print"
+            type="primary"
+            icon={<PrinterOutlined />}
+            onClick={() => {
+              setIsPrintModalOpen(false);
+              window.print();
+            }}
+            style={{ background: '#0d9488', borderColor: '#0d9488' }}
+          >
+            印刷プレビュー (F8)
+          </Button>,
+        ]}
+      >
+        <div style={{ padding: '12px 0' }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
+            登録されている各サブシステムの処理基準管理マスタ定義を印刷プレビューで表示します。
+          </p>
+        </div>
       </Modal>
-    </Space>
+    </div>
   );
 };
