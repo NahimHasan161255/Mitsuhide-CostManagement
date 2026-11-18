@@ -46,6 +46,12 @@ export const SessionTimeoutWatcher: React.FC = () => {
 
   // Setup event listeners for user activity
   useEffect(() => {
+    // Reset all activity tracking and modal states whenever auth state changes
+    lastActivityRef.current = Date.now();
+    isWarningOpenRef.current = false;
+    setIsWarningOpen(false);
+    setRemainingSeconds(120);
+
     if (!isAuthenticated) return;
 
     const events = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
@@ -71,7 +77,9 @@ export const SessionTimeoutWatcher: React.FC = () => {
       // 1. Time fully expired -> Auto Logout
       if (timeLeftMs <= 0) {
         clearInterval(interval);
+        lastActivityRef.current = Date.now();
         setIsWarningOpen(false);
+        isWarningOpenRef.current = false;
         Modal.destroyAll();
         logout();
         Modal.warning({
