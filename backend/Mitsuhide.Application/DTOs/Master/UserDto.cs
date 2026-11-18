@@ -19,6 +19,7 @@ public class UserDto
         _ => "その他"
     };
     public string? Biko { get; set; }
+    public bool DeleteFlg { get; set; }
     public DateTime? LoginDate { get; set; }
     public DateTime? PassUpdDate { get; set; }
 }
@@ -33,6 +34,7 @@ public class CreateUserRequest
     public string UserGrpCd { get; set; } = "1";
     public int Syubetu { get; set; } = 1;
     public string? Biko { get; set; }
+    public bool DeleteFlg { get; set; } = false;
     public string Password { get; set; } = "user123";
 }
 
@@ -45,5 +47,6 @@ public class UpdateUserRequest
     public string UserGrpCd { get; set; } = "1";
     public int Syubetu { get; set; }
     public string? Biko { get; set; }
+    public bool? DeleteFlg { get; set; }
     public string? NewPassword { get; set; }
 }

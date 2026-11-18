@@ -42,6 +42,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
+import { useAuth } from '../../context/AuthContext';
 
 const { Title, Text } = Typography;
 
@@ -93,6 +94,8 @@ export const UserMasterPage: React.FC = () => {
   const [form] = Form.useForm();
   const [currentRecord, setCurrentRecord] = useState<UserItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { user: currentUser } = useAuth();
+  const isSelf = !!(currentRecord && currentUser && currentRecord.userCd === currentUser.userCd);
 
   // Print Modal State (F8)
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -223,6 +226,7 @@ export const UserMasterPage: React.FC = () => {
       setMode(targetMode);
       form.setFieldsValue({
         ...item,
+        deleteFlg: !!item.deleteFlg,
         passExpireDate: item.passExpireDate ? dayjs(item.passExpireDate) : undefined,
         userIdExpireDate: item.userIdExpireDate ? dayjs(item.userIdExpireDate) : undefined,
       });
@@ -303,33 +307,53 @@ export const UserMasterPage: React.FC = () => {
       const payload = {
         ...values,
         userCd: String(values.userCd).padStart(6, '0'),
+        deleteFlg: !!values.deleteFlg,
         passExpireDate: values.passExpireDate ? values.passExpireDate.format('YYYY/MM/DD') : undefined,
         userIdExpireDate: values.userIdExpireDate ? values.userIdExpireDate.format('YYYY/MM/DD') : undefined,
       };
 
       if (mode === 'edit' && currentRecord) {
-        await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
+        if (isSelf && payload.deleteFlg) {
+          message.error('現在ログイン中の自身のアカウントを無効化（利用停止）することはできません。');
+          return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Cd': currentUser?.userCd || '',
+          },
           body: JSON.stringify(payload),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '更新処理に失敗しました。');
+        }
         message.success(`ユーザーコード ${currentRecord.userCd} を更新しました。`);
         setData((prev) => prev.map((item) => (item.userCd === currentRecord.userCd ? { ...item, ...payload } : item)));
         setCurrentRecord({ ...currentRecord, ...payload });
       } else {
-        await fetch(`${API_BASE_URL}/api/user`, {
+        const res = await fetch(`${API_BASE_URL}/api/user`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Cd': currentUser?.userCd || '',
+          },
           body: JSON.stringify(payload),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '新規登録処理に失敗しました。');
+        }
         message.success(`ユーザーコード ${payload.userCd} を新規登録しました。`);
         setData((prev) => [...prev, payload]);
         setCurrentRecord(payload);
         setMode('edit');
       }
       fetchUsers();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      message.error(err.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }
@@ -341,16 +365,27 @@ export const UserMasterPage: React.FC = () => {
       message.warning('削除対象のデータが読み込まれていません。');
       return;
     }
+    if (isSelf) {
+      message.error('現在ログイン中の自身のアカウントを削除することはできません。');
+      return;
+    }
     try {
-      await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
         method: 'DELETE',
-      }).catch(() => {});
+        headers: {
+          'X-User-Cd': currentUser?.userCd || '',
+        },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || '削除処理に失敗しました。');
+      }
       message.success(`ユーザーコード ${currentRecord.userCd} を削除しました。`);
       setData((prev) => prev.filter((x) => x.userCd !== currentRecord.userCd));
       handleClearForm();
       fetchUsers();
-    } catch {
-      message.error('削除処理に失敗しました。');
+    } catch (err: any) {
+      message.error(err.message || '削除処理に失敗しました。');
     }
   };
 
@@ -872,21 +907,30 @@ export const UserMasterPage: React.FC = () => {
 
                     <div
                       style={{
-                        background: '#fef2f2',
+                        background: isSelf ? '#fefce8' : '#fef2f2',
                         padding: '12px 16px',
                         borderRadius: 8,
-                        border: '1px solid #fecaca',
+                        border: isSelf ? '1px solid #fef08a' : '1px solid #fecaca',
                         marginTop: 8,
                       }}
                     >
                       <Form.Item name="deleteFlg" valuePropName="checked" noStyle>
-                        <Checkbox style={{ fontWeight: 700, color: '#dc2626' }}>
+                        <Checkbox
+                          disabled={isSelf}
+                          style={{ fontWeight: 700, color: isSelf ? '#a16207' : '#dc2626' }}
+                        >
                           削除フラグ (利用停止)
                         </Checkbox>
                       </Form.Item>
-                      <Text type="secondary" style={{ display: 'block', fontSize: 12, marginTop: 4, color: '#b91c1c' }}>
-                        ※ チェックオンの場合、システムのログインが出来ません。及び検索のリストボックスにも表示されません。
-                      </Text>
+                      {isSelf ? (
+                        <Text type="warning" style={{ display: 'block', fontSize: 12, marginTop: 4, color: '#b45309', fontWeight: 600 }}>
+                          ⚠️ ログイン中の自身のアカウント（{currentUser?.userName} / {currentUser?.userCd}）は無効化（利用停止）できません。
+                        </Text>
+                      ) : (
+                        <Text type="secondary" style={{ display: 'block', fontSize: 12, marginTop: 4, color: '#b91c1c' }}>
+                          ※ チェックオンの場合、システムのログインが出来ません。及び検索のリストボックスにも表示されません。
+                        </Text>
+                      )}
                     </div>
                   </Card>
 
@@ -980,18 +1024,28 @@ export const UserMasterPage: React.FC = () => {
                         (F6) CSV
                       </Button>
                       {mode === 'edit' && currentRecord && (
-                        <Popconfirm
-                          title="削除の確認"
-                          description={`ユーザー「${currentRecord.userName} (${currentRecord.userCd})」を削除しますか？`}
-                          onConfirm={handleDeleteCurrent}
-                          okText="削除"
-                          cancelText="キャンセル"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
-                            (F7) 削除
-                          </Button>
-                        </Popconfirm>
+                        isSelf ? (
+                          <Tooltip title="現在ログイン中の自身のアカウントは削除できません">
+                            <span>
+                              <Button danger size="large" icon={<DeleteOutlined />} disabled style={{ fontWeight: 600 }}>
+                                (F7) 削除
+                              </Button>
+                            </span>
+                          </Tooltip>
+                        ) : (
+                          <Popconfirm
+                            title="削除の確認"
+                            description={`ユーザー「${currentRecord.userName} (${currentRecord.userCd})」を削除しますか？`}
+                            onConfirm={handleDeleteCurrent}
+                            okText="削除"
+                            cancelText="キャンセル"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                              (F7) 削除
+                            </Button>
+                          </Popconfirm>
+                        )
                       )}
                       <Button
                         size="large"

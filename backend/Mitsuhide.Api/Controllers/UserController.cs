@@ -28,7 +28,7 @@ public class UserController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? userGrpCd = null)
     {
-        var query = from u in _context.UserMaster.AsNoTracking().Where(x => x.DelFg == 0)
+        var query = from u in _context.UserMaster.AsNoTracking()
                     join g in _context.UserGrpMaster.AsNoTracking() on u.UserGrpCd equals g.UserGrpCd into gGroup
                     from g in gGroup.DefaultIfEmpty()
                     select new { u, g };
@@ -62,6 +62,7 @@ public class UserController : ControllerBase
                 UserGrpNm = x.g != null ? x.g.UserGrpName : null,
                 Syubetu = x.u.Syubetu,
                 Biko = x.u.Biko,
+                DeleteFlg = x.u.DelFg == 1,
                 LoginDate = x.u.LoginDate,
                 PassUpdDate = x.u.PassUpdDate
             })
@@ -82,7 +83,7 @@ public class UserController : ControllerBase
     [HttpGet("{userCd}")]
     public async Task<ActionResult<UserDto>> GetByUserCd(string userCd)
     {
-        var item = await (from u in _context.UserMaster.AsNoTracking().Where(x => x.UserCd == userCd && x.DelFg == 0)
+        var item = await (from u in _context.UserMaster.AsNoTracking().Where(x => x.UserCd == userCd)
                           join g in _context.UserGrpMaster.AsNoTracking() on u.UserGrpCd equals g.UserGrpCd into gGroup
                           from g in gGroup.DefaultIfEmpty()
                           select new UserDto
@@ -96,6 +97,7 @@ public class UserController : ControllerBase
                               UserGrpNm = g != null ? g.UserGrpName : null,
                               Syubetu = u.Syubetu,
                               Biko = u.Biko,
+                              DeleteFlg = u.DelFg == 1,
                               LoginDate = u.LoginDate,
                               PassUpdDate = u.PassUpdDate
                           }).FirstOrDefaultAsync();
@@ -128,7 +130,7 @@ public class UserController : ControllerBase
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
             NewApid = "AD1730C",
-            DelFg = 0
+            DelFg = req.DeleteFlg ? 1 : 0
         };
 
         _context.UserMaster.Add(entity);
@@ -143,7 +145,8 @@ public class UserController : ControllerBase
             TantoKbn = entity.TantoKbn,
             UserGrpCd = entity.UserGrpCd,
             Syubetu = entity.Syubetu,
-            Biko = entity.Biko
+            Biko = entity.Biko,
+            DeleteFlg = entity.DelFg == 1
         });
     }
 
@@ -153,8 +156,29 @@ public class UserController : ControllerBase
     [HttpPut("{userCd}")]
     public async Task<IActionResult> Update(string userCd, [FromBody] UpdateUserRequest req)
     {
-        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd && x.DelFg == 0);
+        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
         if (entity == null) return NotFound();
+
+        // 1. セルフ無効化防止ガード (ログイン中の自身のアカウントは無効化不可)
+        string? requestingUserCd = Request.Headers["X-User-Cd"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(requestingUserCd) && requestingUserCd == userCd && req.DeleteFlg == true)
+        {
+            return BadRequest(new { message = "現在ログイン中の自身のアカウントを無効化（利用停止）することはできません。" });
+        }
+
+        // 2. 最終管理者保護ガード (最後の有効なシステム管理者は無効化不可)
+        if (req.DeleteFlg == true && entity.DelFg == 0)
+        {
+            bool isTargetAdmin = entity.UserGrpCd == "9";
+            if (isTargetAdmin)
+            {
+                var activeAdminCount = await _context.UserMaster.CountAsync(x => x.UserGrpCd == "9" && x.DelFg == 0);
+                if (activeAdminCount <= 1)
+                {
+                    return BadRequest(new { message = "システム内に有効なシステム管理者が1名しか存在しないため、この管理者を無効化することはできません。(最低1名の有効な管理者アカウントが必要です)" });
+                }
+            }
+        }
 
         entity.UserName = req.UserName;
         entity.UserNameR = req.UserNameR;
@@ -164,6 +188,11 @@ public class UserController : ControllerBase
         entity.Syubetu = req.Syubetu;
         entity.Biko = req.Biko;
 
+        if (req.DeleteFlg.HasValue)
+        {
+            entity.DelFg = req.DeleteFlg.Value ? 1 : 0;
+        }
+
         if (!string.IsNullOrWhiteSpace(req.NewPassword))
         {
             entity.PasswordHash = req.NewPassword;
@@ -171,7 +200,7 @@ public class UserController : ControllerBase
         }
 
         entity.UpdDate = DateTime.Now;
-        entity.UpdUser = "SYSTEM";
+        entity.UpdUser = !string.IsNullOrWhiteSpace(requestingUserCd) ? requestingUserCd : "SYSTEM";
         entity.UpdApid = "AD1730C";
 
         await _context.SaveChangesAsync();
@@ -184,12 +213,30 @@ public class UserController : ControllerBase
     [HttpDelete("{userCd}")]
     public async Task<IActionResult> Delete(string userCd)
     {
-        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd && x.DelFg == 0);
+        var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
         if (entity == null) return NotFound();
+
+        // 1. セルフ削除防止ガード
+        string? requestingUserCd = Request.Headers["X-User-Cd"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(requestingUserCd) && requestingUserCd == userCd)
+        {
+            return BadRequest(new { message = "現在ログイン中の自身のアカウントを削除することはできません。" });
+        }
+
+        // 2. 最終管理者保護ガード
+        bool isTargetAdmin = entity.UserGrpCd == "9";
+        if (isTargetAdmin)
+        {
+            var activeAdminCount = await _context.UserMaster.CountAsync(x => x.UserGrpCd == "9" && x.DelFg == 0);
+            if (activeAdminCount <= 1)
+            {
+                return BadRequest(new { message = "システム内に有効なシステム管理者が1名しか存在しないため、この管理者を削除することはできません。(最低1名の有効な管理者アカウントが必要です)" });
+            }
+        }
 
         entity.DelFg = 1;
         entity.UpdDate = DateTime.Now;
-        entity.UpdUser = "SYSTEM";
+        entity.UpdUser = !string.IsNullOrWhiteSpace(requestingUserCd) ? requestingUserCd : "SYSTEM";
         entity.UpdApid = "AD1730C";
 
         await _context.SaveChangesAsync();
