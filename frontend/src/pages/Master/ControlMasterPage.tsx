@@ -39,6 +39,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const { Title, Text } = Typography;
 
@@ -81,6 +82,7 @@ export const ControlMasterPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(15);
   const [selectedSubSys, setSelectedSubSys] = useState<string>('ALL');
   const [searchText, setSearchText] = useState('');
+  const debouncedSearchText = useDebounce(searchText, 300);
 
   // Form State
   const [form] = Form.useForm();
@@ -91,12 +93,16 @@ export const ControlMasterPage: React.FC = () => {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Fetch Master Data
-  const fetchData = async () => {
+  const fetchData = async (searchOverride?: string) => {
     setLoading(true);
     try {
+      const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
       let url = `${API_BASE_URL}/api/control?page=${page}&pageSize=${pageSize}`;
       if (selectedSubSys && selectedSubSys !== 'ALL') {
         url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
+      }
+      if (activeSearch) {
+        url += `&keyword=${encodeURIComponent(activeSearch)}`;
       }
 
       const res = await fetch(url);
@@ -114,11 +120,12 @@ export const ControlMasterPage: React.FC = () => {
           { subSysCd: 'VM', progId: 'VM1010C', kanriName: '月次更新 処理年度', nm1: 2026, nm2: 11, ch1: '当期年度=2026', ch2: '当月度=11' },
           { subSysCd: 'AD', progId: 'AD1780C', kanriName: '受注先保守 処理基準', nm1: 1, ch1: 'コード自動採番=1', ch2: '手形期日制限=120日' },
         ];
+        const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
         setData(
           mockList.filter(
             (x) =>
               (selectedSubSys === 'ALL' || x.subSysCd === selectedSubSys) &&
-              (!searchText || x.kanriName.includes(searchText) || x.progId.includes(searchText))
+              (!activeSearch || x.kanriName.includes(activeSearch) || x.progId.includes(activeSearch))
           )
         );
         setTotalCount(mockList.length);
@@ -131,8 +138,12 @@ export const ControlMasterPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchText, selectedSubSys]);
+
+  useEffect(() => {
     fetchData();
-  }, [page, pageSize, selectedSubSys]);
+  }, [page, pageSize, selectedSubSys, debouncedSearchText]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -833,23 +844,24 @@ export const ControlMasterPage: React.FC = () => {
                           ]}
                         />
                         <Input
-                          placeholder="プログラムID / 管理名称..."
+                          placeholder="プログラムID / 管理名称... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           onPressEnter={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(searchText);
                           }}
                           allowClear
-                          style={{ width: 220 }}
+                          style={{ width: 300 }}
                         />
                         <Button
                           type="primary"
                           icon={<SearchOutlined />}
+                          loading={loading}
                           onClick={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(searchText);
                           }}
                           style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
                         >

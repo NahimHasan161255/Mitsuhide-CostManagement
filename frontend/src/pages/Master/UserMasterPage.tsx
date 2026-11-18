@@ -43,6 +43,7 @@ import dayjs from 'dayjs';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
 import { useAuth } from '../../context/AuthContext';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const { Title, Text } = Typography;
 
@@ -85,6 +86,7 @@ export const UserMasterPage: React.FC = () => {
   const [data, setData] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const debouncedSearchText = useDebounce(searchText, 300);
   const [selectedGrp, setSelectedGrp] = useState<string | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
@@ -103,11 +105,12 @@ export const UserMasterPage: React.FC = () => {
   const [printEndCd, setPrintEndCd] = useState<string>('999999');
 
   // Fetch Master Data
-  const fetchUsers = async () => {
+  const fetchUsers = async (searchOverride?: string) => {
     setLoading(true);
     try {
+      const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
       let url = `${API_BASE_URL}/api/user?page=${page}&pageSize=${pageSize}`;
-      if (searchText) url += `&search=${encodeURIComponent(searchText)}`;
+      if (activeSearch) url += `&search=${encodeURIComponent(activeSearch)}`;
       if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
 
       const res = await fetch(url);
@@ -190,10 +193,10 @@ export const UserMasterPage: React.FC = () => {
         setData(
           mockList.filter(
             (x) =>
-              (!searchText ||
-                x.userName.includes(searchText) ||
-                x.userCd.includes(searchText) ||
-                (x.userNameK && x.userNameK.includes(searchText))) &&
+              (!activeSearch ||
+                x.userName.includes(activeSearch) ||
+                x.userCd.includes(activeSearch) ||
+                (x.userNameK && x.userNameK.includes(activeSearch))) &&
               (!selectedGrp || x.userGrpCd === selectedGrp)
           )
         );
@@ -207,8 +210,12 @@ export const UserMasterPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchText, selectedGrp]);
+
+  useEffect(() => {
     fetchUsers();
-  }, [page, pageSize, selectedGrp]);
+  }, [page, pageSize, debouncedSearchText, selectedGrp]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -1079,16 +1086,16 @@ export const UserMasterPage: React.FC = () => {
                     <Col xs={24} sm={16} md={14}>
                       <Space size={10} style={{ width: '100%' }} wrap>
                         <Input
-                          placeholder="ユーザCD / 氏名 / フリガナ..."
+                          placeholder="ユーザCD / 氏名 / フリガナ... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           onPressEnter={() => {
                             setPage(1);
-                            fetchUsers();
+                            fetchUsers(searchText);
                           }}
                           allowClear
-                          style={{ width: 240 }}
+                          style={{ width: 300 }}
                         />
                         <Select
                           placeholder="所属グループ絞込"
@@ -1110,9 +1117,10 @@ export const UserMasterPage: React.FC = () => {
                         <Button
                           type="primary"
                           icon={<SearchOutlined />}
+                          loading={loading}
                           onClick={() => {
                             setPage(1);
-                            fetchUsers();
+                            fetchUsers(searchText);
                           }}
                           style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
                         >

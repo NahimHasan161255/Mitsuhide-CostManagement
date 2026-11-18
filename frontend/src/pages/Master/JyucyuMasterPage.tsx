@@ -41,6 +41,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '../../api/client';
 import type { Jyucyu, PagedResult } from '../../types/master';
 import { exportToCsv } from '../../utils/csvExport';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const { Title, Text } = Typography;
 
@@ -68,6 +69,7 @@ export const JyucyuMasterPage: React.FC = () => {
   const [data, setData] = useState<Jyucyu[]>([]);
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const debouncedKeyword = useDebounce(keyword, 300);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [total, setTotal] = useState(0);
@@ -84,11 +86,12 @@ export const JyucyuMasterPage: React.FC = () => {
   const [isSearchingZip, setIsSearchingZip] = useState(false);
 
   // Fetch Master Data
-  const fetchData = async () => {
+  const fetchData = async (keywordOverride?: string) => {
     setLoading(true);
     try {
+      const activeKeyword = keywordOverride !== undefined ? keywordOverride : debouncedKeyword;
       const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
-        params: { page, pageSize, keyword },
+        params: { page, pageSize, keyword: activeKeyword },
       });
       setData(res.data.items);
       setTotal(res.data.totalCount);
@@ -167,7 +170,8 @@ export const JyucyuMasterPage: React.FC = () => {
           biko1: '客先指定請求書式要請あり。',
         },
       ];
-      setData(mockList.filter((x) => !keyword || x.name.includes(keyword) || String(x.code).includes(keyword)));
+      const activeKeyword = keywordOverride !== undefined ? keywordOverride : debouncedKeyword;
+      setData(mockList.filter((x) => !activeKeyword || x.name.includes(activeKeyword) || String(x.code).includes(activeKeyword)));
       setTotal(3);
     } finally {
       setLoading(false);
@@ -175,8 +179,12 @@ export const JyucyuMasterPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedKeyword]);
+
+  useEffect(() => {
     fetchData();
-  }, [page, pageSize]);
+  }, [page, pageSize, debouncedKeyword]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -1079,23 +1087,24 @@ export const JyucyuMasterPage: React.FC = () => {
                     <Col xs={24} sm={16} md={12}>
                       <Space size={10} style={{ width: '100%' }}>
                         <Input
-                          placeholder="受注先コード / 受注先名 / カナ / 電話番号..."
+                          placeholder="受注先コード / 受注先名 / カナ / 電話番号... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={keyword}
                           onChange={(e) => setKeyword(e.target.value)}
                           onPressEnter={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(keyword);
                           }}
                           allowClear
-                          style={{ width: 280 }}
+                          style={{ width: 340 }}
                         />
                         <Button
                           type="primary"
                           icon={<SearchOutlined />}
+                          loading={loading}
                           onClick={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(keyword);
                           }}
                           style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
                         >

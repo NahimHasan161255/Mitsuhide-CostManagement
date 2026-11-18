@@ -39,6 +39,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
+import { useDebounce } from '../../hooks/useDebounce';
 
 const { Title, Text } = Typography;
 
@@ -82,6 +83,7 @@ export const SysNameMasterPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(15);
   const [selectedKbn, setSelectedKbn] = useState<string | undefined>();
   const [searchText, setSearchText] = useState('');
+  const debouncedSearchText = useDebounce(searchText, 300);
 
   // Form State
   const [form] = Form.useForm();
@@ -92,12 +94,13 @@ export const SysNameMasterPage: React.FC = () => {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Fetch Master Data
-  const fetchData = async () => {
+  const fetchData = async (searchOverride?: string) => {
     setLoading(true);
     try {
+      const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
       let url = `${API_BASE_URL}/api/sysname?page=${page}&pageSize=${pageSize}`;
       if (selectedKbn) url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
-      if (searchText) url += `&keyword=${encodeURIComponent(searchText)}`;
+      if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -120,11 +123,12 @@ export const SysNameMasterPage: React.FC = () => {
           { nameKbn: 'AD004', nameCd: '1', ch1: '通常取引', ch2: '随時・継続取引先', nm1: 1 },
           { nameKbn: 'AD004', nameCd: '2', ch1: '取引停止', ch2: '一時休止', nm1: 2 },
         ];
+        const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
         setData(
           mockList.filter(
             (x) =>
               (!selectedKbn || x.nameKbn === selectedKbn) &&
-              (!searchText || x.ch1.includes(searchText) || x.nameCd.includes(searchText))
+              (!activeSearch || x.ch1.includes(activeSearch) || x.nameCd.includes(activeSearch))
           )
         );
         setTotalCount(mockList.length);
@@ -137,8 +141,12 @@ export const SysNameMasterPage: React.FC = () => {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchText, selectedKbn]);
+
+  useEffect(() => {
     fetchData();
-  }, [page, pageSize, selectedKbn]);
+  }, [page, pageSize, selectedKbn, debouncedSearchText]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -820,23 +828,24 @@ export const SysNameMasterPage: React.FC = () => {
                           options={NAME_KBN_OPTIONS}
                         />
                         <Input
-                          placeholder="名称 / 名称CD..."
+                          placeholder="名称 / 名称CD... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                           value={searchText}
                           onChange={(e) => setSearchText(e.target.value)}
                           onPressEnter={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(searchText);
                           }}
                           allowClear
-                          style={{ width: 220 }}
+                          style={{ width: 280 }}
                         />
                         <Button
                           type="primary"
                           icon={<SearchOutlined />}
+                          loading={loading}
                           onClick={() => {
                             setPage(1);
-                            fetchData();
+                            fetchData(searchText);
                           }}
                           style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
                         >
