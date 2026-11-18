@@ -109,6 +109,13 @@ html, body, #root {
   transition: all 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
+.mitsuhide-sider .ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
 /* Ant Design Menu Dark Theme Refinements */
 .mitsuhide-menu.ant-menu-dark {
   background: transparent !important;

@@ -255,7 +255,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh', width: '100vw', overflowX: 'hidden' }}>
+    <Layout style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
       {/* ==============================================================
           GORGEOUS SIDER (Desktop & Tablet)
           ============================================================== */}
@@ -270,11 +270,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           style={{
             boxShadow: '4px 0 24px rgba(0, 0, 0, 0.25)',
             zIndex: 20,
-            position: 'sticky',
-            top: 0,
             height: '100vh',
             display: 'flex',
             flexDirection: 'column',
+            flexShrink: 0,
           }}
         >
           {/* Brand Area */}
@@ -427,10 +426,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
       {/* ==============================================================
           MAIN CONTENT AREA & MODERN GLASS HEADER
           ============================================================== */}
-      <Layout style={{ background: '#f8fafc', flex: 1, minWidth: 0 }}>
+      <Layout style={{ background: '#f8fafc', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         {/* Modern Sticky Glass Header */}
         <Header
           style={{
+            flexShrink: 0,
             padding: isMobile ? '0 12px' : isTablet ? '0 16px' : '0 24px',
             background: 'rgba(255, 255, 255, 0.85)',
             backdropFilter: 'blur(16px)',
@@ -440,8 +440,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             justifyContent: 'space-between',
             borderBottom: '1px solid #e2e8f0',
             height: isMobile ? 56 : 64,
-            position: 'sticky',
-            top: 0,
             zIndex: 15,
             boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
           }}
@@ -618,31 +616,44 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           </Space>
         </Header>
 
-        {/* Dynamic Page Content */}
-        <Content
+        {/* Scrollable Container for Page Content & Footer */}
+        <div
+          id="main-scroll-container"
           style={{
-            margin: isMobile ? '12px 10px' : isTablet ? '16px 18px' : '24px 28px',
-            minHeight: 'calc(100vh - 150px)',
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          {children}
-        </Content>
+          {/* Dynamic Page Content */}
+          <Content
+            style={{
+              margin: isMobile ? '12px 10px' : isTablet ? '16px 18px' : '24px 28px',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {children}
+          </Content>
 
-        {/* Modern Elegant Footer */}
-        <Footer
-          style={{
-            textAlign: 'center',
-            color: '#94a3b8',
-            padding: '16px 28px',
-            fontSize: 12,
-            background: 'transparent',
-            borderTop: '1px solid #e2e8f0',
-          }}
-        >
-          株式会社ミツヒデ 原価管理システム Web版 ©{currentTime.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
-        </Footer>
+          {/* Modern Elegant Footer */}
+          <Footer
+            style={{
+              textAlign: 'center',
+              color: '#94a3b8',
+              padding: '16px 28px',
+              fontSize: 12,
+              background: 'transparent',
+              borderTop: '1px solid #e2e8f0',
+              flexShrink: 0,
+            }}
+          >
+            株式会社ミツヒデ 原価管理システム Web版 ©{currentTime.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
+          </Footer>
+        </div>
       </Layout>
     </Layout>
   );
