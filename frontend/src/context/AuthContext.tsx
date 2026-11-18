@@ -5,7 +5,7 @@ import type { AuthUser, LoginResponse } from '../types/auth';
 interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (userCd: string, password: string) => Promise<{ success: boolean; message: string }>;
+  login: (userCd: string, password: string) => Promise<LoginResponse>;
   logout: () => void;
   changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
 }
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const login = async (userCd: string, password: string): Promise<{ success: boolean; message: string }> => {
+  const login = async (userCd: string, password: string): Promise<LoginResponse> => {
     try {
       const res = await apiClient.post<LoginResponse>('/auth/login', {
         userCd,
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.data.token) {
           localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
         }
-        return { success: true, message: res.data.message || 'ログインしました。' };
+        return res.data;
       }
 
       return { success: false, message: res.data.message || 'ログインに失敗しました。' };

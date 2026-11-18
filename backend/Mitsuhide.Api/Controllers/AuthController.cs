@@ -98,12 +98,43 @@ public class AuthController : ControllerBase
             PassUpdDate = user.PassUpdDate
         };
 
+        // 1. パスワード有効期限チェック (AD1010C仕様 3: パスワード有効期限警告)
+        bool passwordExpired = false;
+        string? passwordExpiredMsg = null;
+        if (user.PassUpdDate == null || (DateTime.Now - user.PassUpdDate.Value).TotalDays > 90)
+        {
+            passwordExpired = true;
+            passwordExpiredMsg = "パスワードの有効期限(90日)が切れています。速やかにパスワードを変更してください。(AD1010C)";
+        }
+
+        // 2. 月次チェック (AD1010C仕様 5: メニュー起動時月次更新チェック)
+        string? monthlyWarning = null;
+        var latestGdate = await _context.GdateMaster.OrderByDescending(x => x.YyyyMm).FirstOrDefaultAsync();
+        if (latestGdate != null)
+        {
+            int currentYm = DateTime.Now.Year * 100 + DateTime.Now.Month;
+            if (latestGdate.YyyyMm < currentYm)
+            {
+                if (latestGdate.KosinFlg == 0)
+                {
+                    monthlyWarning = $"月次更新（仮締）が行われていません。(対象年月: {latestGdate.YyyyMm} / MsgNo: 02086)";
+                }
+                else
+                {
+                    monthlyWarning = $"月次更新（本締）が行われていません。(対象年月: {latestGdate.YyyyMm} / MsgNo: 02087)";
+                }
+            }
+        }
+
         return Ok(new LoginResponseDto
         {
             Success = true,
             Message = "ログインしました。",
             User = authUser,
-            Token = $"session_{user.UserCd}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}"
+            Token = $"session_{user.UserCd}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+            PasswordExpired = passwordExpired,
+            PasswordExpiredMessage = passwordExpiredMsg,
+            MonthlyClosingWarning = monthlyWarning
         });
     }
 

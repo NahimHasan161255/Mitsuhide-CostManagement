@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Typography, Alert, Modal, message, Space } from 'antd';
 import { UserOutlined, LockOutlined, LoginOutlined, KeyOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
+import { useDeviceType } from '../../hooks/useDeviceType';
 
 const { Title, Text } = Typography;
 
 export const LoginPage: React.FC = () => {
+  const { isMobile } = useDeviceType();
   const { login, changePassword } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -24,6 +26,28 @@ export const LoginPage: React.FC = () => {
       const res = await login(values.userCd, values.password);
       if (res.success) {
         message.success(res.message);
+
+        // 1. 月次更新チェック (AD1010C仕様 5)
+        if (res.monthlyClosingWarning) {
+          Modal.warning({
+            title: '月次更新確認 (AD1010C)',
+            content: res.monthlyClosingWarning,
+            okText: '確認',
+          });
+        }
+
+        // 2. パスワード有効期限チェック (AD1010C仕様 3)
+        if (res.passwordExpired) {
+          Modal.info({
+            title: 'パスワード有効期限警告 (AD1010C)',
+            content: res.passwordExpiredMessage || 'パスワードの有効期限が切れています。',
+            okText: 'パスワードを変更する',
+            cancelText: '後で',
+            onOk: () => {
+              setIsPwModalOpen(true);
+            },
+          });
+        }
       } else {
         setErrorMessage(res.message);
       }
@@ -91,7 +115,7 @@ export const LoginPage: React.FC = () => {
           borderRadius: 12,
           border: '1px solid rgba(255,255,255,0.1)',
         }}
-        styles={{ body: { padding: '36px 32px' } }}
+        styles={{ body: { padding: isMobile ? '24px 20px' : '36px 32px' } }}
       >
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -184,7 +208,7 @@ export const LoginPage: React.FC = () => {
                 borderColor: '#2563eb',
               }}
             >
-              ログイン (F1)
+              ログイン<span className="erp-btn-shortcut"> (F1)</span>
             </Button>
           </Form.Item>
         </Form>
@@ -198,7 +222,7 @@ export const LoginPage: React.FC = () => {
             onClick={() => setIsPwModalOpen(true)}
             style={{ color: '#64748b' }}
           >
-            パスワード変更 (F10)
+            パスワード変更<span className="erp-btn-shortcut"> (F10)</span>
           </Button>
         </div>
       </Card>
