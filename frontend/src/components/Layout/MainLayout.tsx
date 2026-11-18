@@ -33,6 +33,8 @@ import {
   CalendarOutlined,
   ClockCircleOutlined,
   LogoutOutlined,
+  AppstoreOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useDeviceType } from '../../hooks/useDeviceType';
@@ -115,13 +117,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
     },
     {
       key: 'master',
-      icon: <SettingOutlined style={{ fontSize: 16, color: '#60a5fa' }} />,
+      icon: <DatabaseOutlined style={{ fontSize: 16, color: '#38bdf8' }} />,
       label: (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600 }}>マスタ管理 (AD)</span>
+          <span style={{ fontWeight: 600 }}>マスタ</span>
           {!collapsed && (
-            <Tag color="#1d4ed8" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
-              6マスタ
+            <Tag color="#0284c7" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
+              3
             </Tag>
           )}
         </div>
@@ -150,16 +152,50 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           icon: <TeamOutlined style={{ color: '#a855f7' }} />,
           label: (
             <span>
-              ユーザーマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1730C)</span>
+              ユーザマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1730C)</span>
             </span>
           ),
         },
+      ],
+    },
+    {
+      key: 'system',
+      icon: <SettingOutlined style={{ fontSize: 16, color: '#a78bfa' }} />,
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 600 }}>システム</span>
+          {!collapsed && (
+            <Tag color="#7c3aed" style={{ border: 0, fontSize: 10, borderRadius: 10, margin: 0, padding: '0 6px' }}>
+              5
+            </Tag>
+          )}
+        </div>
+      ),
+      children: [
         {
           key: 'ad1720c',
           icon: <TeamOutlined style={{ color: '#06b6d4' }} />,
           label: (
             <span>
-              ユーザーグループ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1720C)</span>
+              ユーザーグループマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1720C)</span>
+            </span>
+          ),
+        },
+        {
+          key: 'ad1740c',
+          icon: <AppstoreOutlined style={{ color: '#38bdf8' }} />,
+          label: (
+            <span>
+              プログラムマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1740C)</span>
+            </span>
+          ),
+        },
+        {
+          key: 'ad1750c',
+          icon: <MessageOutlined style={{ color: '#c026d3' }} />,
+          label: (
+            <span>
+              メッセージマスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1750C)</span>
             </span>
           ),
         },
@@ -168,7 +204,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           icon: <TagsOutlined style={{ color: '#f59e0b' }} />,
           label: (
             <span>
-              システム名称 <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1760C)</span>
+              システム名称マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1760C)</span>
             </span>
           ),
         },
@@ -177,7 +213,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           icon: <ControlOutlined style={{ color: '#ec4899' }} />,
           label: (
             <span>
-              処理基準管理 <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1770C)</span>
+              処理基準管理マスタ <span style={{ opacity: 0.6, fontSize: 11 }}>(AD1770C)</span>
             </span>
           ),
         },
@@ -292,7 +328,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             <Menu
               theme="dark"
               selectedKeys={[activeMenu]}
-              defaultOpenKeys={['master']}
+              defaultOpenKeys={['master', 'system']}
               mode="inline"
               items={menuItems}
               onClick={({ key }) => handleSelectMenu(key)}
@@ -378,7 +414,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             <Menu
               theme="dark"
               selectedKeys={[activeMenu]}
-              defaultOpenKeys={['master']}
+              defaultOpenKeys={['master', 'system']}
               mode="inline"
               items={menuItems}
               onClick={({ key }) => handleSelectMenu(key)}
@@ -395,7 +431,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
         {/* Modern Sticky Glass Header */}
         <Header
           style={{
-            padding: '0 24px',
+            padding: isMobile ? '0 12px' : isTablet ? '0 16px' : '0 24px',
             background: 'rgba(255, 255, 255, 0.85)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
@@ -403,15 +439,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             alignItems: 'center',
             justifyContent: 'space-between',
             borderBottom: '1px solid #e2e8f0',
-            height: 68,
+            height: isMobile ? 56 : 64,
             position: 'sticky',
             top: 0,
             zIndex: 15,
             boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
           }}
         >
-          {/* Left: Collapse Toggle & Breadcrumb Title */}
-          <Space size="middle" align="center">
+          {/* Left: Collapse Toggle & Adaptive Brand Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1, marginRight: 12 }}>
             <Tooltip title={isMobile ? 'メニューを開く' : collapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}>
               <Button
                 type="text"
@@ -425,21 +461,23 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                 }}
                 style={{
                   fontSize: 18,
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
+                  minWidth: 38,
                   borderRadius: 8,
                   color: '#1e293b',
                   background: '#f1f5f9',
+                  flexShrink: 0,
                 }}
               />
             </Tooltip>
 
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span
                   className="erp-header-title"
                   style={{
-                    fontSize: 16,
+                    fontSize: isMobile ? 14 : isTablet ? 15 : 16,
                     fontWeight: 700,
                     color: '#0f172a',
                     letterSpacing: '-0.01em',
@@ -447,47 +485,55 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                   }}
+                  title="株式会社ミツヒデ 原価管理システム"
                 >
-                  工事原価・受注・売上・仕入管理システム
+                  {isMobile ? 'ミツヒデ 原価管理' : isTablet ? '株式会社ミツヒデ 原価管理' : '株式会社ミツヒデ 原価管理システム'}
                 </span>
-                <Tag
-                  color="blue"
-                  style={{
-                    borderRadius: 12,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    border: '1px solid #bfdbfe',
-                    background: '#eff6ff',
-                    color: '#1d4ed8',
-                    flexShrink: 0,
-                  }}
-                >
-                  <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
-                  稼働中 (R8)
-                </Tag>
+                {!isMobile && (
+                  <Tag
+                    color="blue"
+                    className="erp-header-status-tag"
+                    style={{
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      border: '1px solid #bfdbfe',
+                      background: '#eff6ff',
+                      color: '#1d4ed8',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
+                    稼働中 (R8)
+                  </Tag>
+                )}
               </div>
             </div>
-          </Space>
+          </div>
 
           {/* Right: Quick Search, Date, Notifications & User Profile */}
-          <Space size="middle" align="center" style={{ flexShrink: 0 }}>
+          <Space size={isMobile ? 8 : 12} align="center" style={{ flexShrink: 0 }}>
             {/* Quick Master Filter / Navigation Search */}
-            <Input
-              className="erp-header-search"
-              placeholder="画面CD / 検索..."
-              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onPressEnter={() => {
-                const kw = searchKeyword.trim().toLowerCase();
-                if (kw.includes('1780') || kw.includes('受注')) onSelectMenu('ad1780c');
-                else if (kw.includes('1790') || kw.includes('仕入先')) onSelectMenu('ad1790c');
-                else if (kw.includes('1730') || kw.includes('ユーザー') || kw.includes('社員')) onSelectMenu('ad1730c');
-                else if (kw.includes('1720') || kw.includes('グループ') || kw.includes('権限')) onSelectMenu('ad1720c');
-                else if (kw.includes('1760') || kw.includes('名称') || kw.includes('コード')) onSelectMenu('ad1760c');
-                else if (kw.includes('1770') || kw.includes('基準') || kw.includes('採番')) onSelectMenu('ad1770c');
-              }}
-            />
+            {!isMobile && (
+              <Input
+                className="erp-header-search"
+                placeholder="画面CD / 検索..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                onPressEnter={() => {
+                  const kw = searchKeyword.trim().toLowerCase();
+                  if (kw.includes('1780') || kw.includes('受注')) onSelectMenu('ad1780c');
+                  else if (kw.includes('1790') || kw.includes('仕入先')) onSelectMenu('ad1790c');
+                  else if (kw.includes('1730') || kw.includes('ユーザー') || kw.includes('社員')) onSelectMenu('ad1730c');
+                  else if (kw.includes('1720') || kw.includes('グループ') || kw.includes('権限')) onSelectMenu('ad1720c');
+                  else if (kw.includes('1740') || kw.includes('プログラム') || kw.includes('メニュー')) onSelectMenu('ad1740c');
+                  else if (kw.includes('1750') || kw.includes('メッセージ') || kw.includes('msg')) onSelectMenu('ad1750c');
+                  else if (kw.includes('1760') || kw.includes('名称') || kw.includes('コード')) onSelectMenu('ad1760c');
+                  else if (kw.includes('1770') || kw.includes('基準') || kw.includes('採番')) onSelectMenu('ad1770c');
+                }}
+              />
+            )}
 
             {/* Live Japanese Calendar Date & Real-time Clock Pill */}
             <div
@@ -527,7 +573,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                   type="text"
                   shape="circle"
                   icon={<BellOutlined style={{ fontSize: 17, color: '#475569' }} />}
-                  style={{ background: '#f1f5f9', width: 38, height: 38 }}
+                  style={{ background: '#f1f5f9', width: 36, height: 36 }}
                 />
               </Badge>
             </Tooltip>
@@ -538,14 +584,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 8,
                   cursor: 'pointer',
-                  padding: '4px 12px 4px 6px',
+                  padding: isMobile || isTablet ? '3px' : '4px 12px 4px 6px',
                   borderRadius: 24,
                   background: '#f1f5f9',
                   border: '1px solid #e2e8f0',
                   transition: 'all 0.2s',
                 }}
+                title={user ? `${user.userName} (${user.syubetuNm})` : 'ユーザーメニュー'}
               >
                 <Avatar
                   size={32}
@@ -553,16 +600,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
                   style={{
                     backgroundColor: user?.userGrpCd === '9' ? '#722ed1' : '#2563eb',
                     boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
+                    flexShrink: 0,
                   }}
                 />
-                <div style={{ lineHeight: 1.25, textAlign: 'left' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>
-                    {user?.userName || '未ログイン'}
+                {!isMobile && !isTablet && (
+                  <div style={{ lineHeight: 1.25, textAlign: 'left' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>
+                      {user?.userName || '未ログイン'}
+                    </div>
+                    <div style={{ fontSize: 10.5, color: '#64748b' }}>
+                      {user ? `${user.syubetuNm} / ${user.userGrpNm || '一般'}` : 'ログオン待ち'}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10.5, color: '#64748b' }}>
-                    {user ? `${user.syubetuNm} / ${user.userGrpNm || '一般'}` : 'ログオン待ち'}
-                  </div>
-                </div>
+                )}
               </div>
             </Dropdown>
           </Space>

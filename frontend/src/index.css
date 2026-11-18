@@ -207,12 +207,12 @@ html, body, #root {
 
 @media (max-width: 1200px) {
   .erp-header-search {
-    width: 150px !important;
+    width: 140px !important;
   }
   .erp-header-datetime {
-    padding: 4px 10px;
-    gap: 6px;
-    font-size: 12px;
+    padding: 3px 8px;
+    gap: 4px;
+    font-size: 11.5px;
   }
   .erp-header-time-divider {
     display: none !important;
@@ -223,13 +223,22 @@ html, body, #root {
   .erp-header-date-text {
     display: none !important;
   }
-  .erp-header-title {
-    max-width: 240px;
+  .erp-header-status-tag {
+    display: none !important;
+  }
+  .erp-header-search {
+    width: 120px !important;
   }
 }
 
 @media (max-width: 768px) {
   .erp-header-datetime {
+    display: none !important;
+  }
+  .erp-header-search {
+    display: none !important;
+  }
+  .erp-header-status-tag {
     display: none !important;
   }
 }

@@ -6,8 +6,8 @@ import {
   Row,
   Col,
   Statistic,
-  Button,
   Space,
+  Tag,
   Typography,
 } from 'antd';
 import jaJP from 'antd/locale/ja_JP';
@@ -19,6 +19,8 @@ import {
   ControlOutlined,
   ArrowRightOutlined,
   SafetyCertificateOutlined,
+  AppstoreOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
 import { MainLayout } from './components/Layout/MainLayout';
 import { apiClient } from './api/client';
@@ -26,13 +28,15 @@ import { JyucyuMasterPage } from './pages/Master/JyucyuMasterPage';
 import { SiireMasterPage } from './pages/Master/SiireMasterPage';
 import { UserMasterPage } from './pages/Master/UserMasterPage';
 import { UserGrpMasterPage } from './pages/Master/UserGrpMasterPage';
+import { ProgramMasterPage } from './pages/Master/ProgramMasterPage';
+import { MessageMasterPage } from './pages/Master/MessageMasterPage';
 import { SysNameMasterPage } from './pages/Master/SysNameMasterPage';
 import { ControlMasterPage } from './pages/Master/ControlMasterPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { SessionTimeoutWatcher } from './components/Auth/SessionTimeoutWatcher';
 
-const { Paragraph, Title, Text } = Typography;
+const { Title, Text } = Typography;
 
 const MainApp: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -44,6 +48,8 @@ const MainApp: React.FC = () => {
     siire: 6,
     user: 3,
     userGrp: 2,
+    prog: 22,
+    msg: 18,
     sysName: 13,
     control: 6,
   });
@@ -66,6 +72,8 @@ const MainApp: React.FC = () => {
           siire: sRes.status === 'fulfilled' ? sRes.value.data.totalCount || 6 : 6,
           user: uRes.status === 'fulfilled' ? uRes.value.data.totalCount || 3 : 3,
           userGrp: gRes.status === 'fulfilled' ? gRes.value.data.totalCount || 2 : 2,
+          prog: 22,
+          msg: 18,
           sysName: nRes.status === 'fulfilled' ? nRes.value.data.totalCount || 13 : 13,
           control: cRes.status === 'fulfilled' ? cRes.value.data.totalCount || 6 : 6,
         });
@@ -91,6 +99,12 @@ const MainApp: React.FC = () => {
       case 'ad1720c':
         return <UserGrpMasterPage />;
 
+      case 'ad1740c':
+        return <ProgramMasterPage />;
+
+      case 'ad1750c':
+        return <MessageMasterPage />;
+
       case 'ad1760c':
         return <SysNameMasterPage />;
 
@@ -100,56 +114,37 @@ const MainApp: React.FC = () => {
       case 'dashboard':
       default:
         return (
-          <Space orientation="vertical" size={24} style={{ width: '100%' }}>
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
             {/* ==============================================================
-                HERO BANNER: Clean, Professional Welcome Header
-                ============================================================== */}
-            <div className="erp-hero-banner">
-              <Row justify="space-between" align="middle" gutter={[16, 16]}>
-                <Col xs={24} md={15}>
-                  <Title level={2} className="erp-hero-title">
-                    株式会社ミツヒデ 原価管理システム
-                  </Title>
-
-                  <Paragraph className="erp-hero-desc">
-                    得意先、仕入先、社内ユーザーおよび各種共通コードの登録・照会・編集を行います。各マスタカードをクリックして管理画面へ移動してください。
-                  </Paragraph>
-                </Col>
-
-                <Col xs={24} md={9} className="erp-hero-actions">
-                  <Space size={10} wrap>
-                    <Button
-                      type="primary"
-                      className="erp-hero-btn primary"
-                      icon={<ShopOutlined />}
-                      onClick={() => setActiveMenu('ad1780c')}
-                    >
-                      受注先マスタ
-                    </Button>
-
-                    <Button
-                      className="erp-hero-btn secondary"
-                      icon={<SolutionOutlined />}
-                      onClick={() => setActiveMenu('ad1790c')}
-                    >
-                      仕入先マスタ
-                    </Button>
-                  </Space>
-                </Col>
-              </Row>
-            </div>
-
-            {/* ==============================================================
-                6 CLEAN MASTER DATA CARDS
+                DOCUMENT 2.0: 業務マスタ (Business Master Data)
                 ============================================================== */}
             <div>
-              <div style={{ marginBottom: 16 }}>
-                <Title level={4} className="erp-section-title">
-                  マスタ一覧
-                </Title>
-                <Text type="secondary" className="erp-page-desc">
-                  管理したいマスタをクリックすると、登録・照会・編集画面が開きます。
-                </Text>
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: '14px 20px',
+                  background: '#ffffff',
+                  borderRadius: 12,
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <Title level={4} className="erp-section-title" style={{ margin: 0, fontSize: 16, color: '#0f172a' }}>
+                    マスタ
+                  </Title>
+                  <Text type="secondary" className="erp-page-desc" style={{ fontSize: 13 }}>
+                    日常業務に使用する主要得意先・外注仕入先および社内ユーザーの基本台帳です。
+                  </Text>
+                </div>
+                <Tag color="blue" style={{ borderRadius: 8, padding: '3px 12px', fontSize: 12, fontWeight: 600 }}>
+                  3マスタ
+                </Tag>
               </div>
 
               <Row gutter={[16, 16]}>
@@ -259,7 +254,7 @@ const MainApp: React.FC = () => {
                       <div>
                         <span className="erp-card-category">全社員・担当者アカウント</span>
                         <div className="erp-card-title">
-                          ユーザーマスタ (AD1730C)
+                          ユーザマスタ (AD1730C)
                         </div>
                       </div>
                       <div
@@ -293,7 +288,43 @@ const MainApp: React.FC = () => {
                     </div>
                   </Card>
                 </Col>
+              </Row>
+            </div>
 
+            {/* ==============================================================
+                DOCUMENT 7.0: システム管理マスタ (System Administration & Maintenance)
+                ============================================================== */}
+            <div>
+              <div
+                style={{
+                  marginTop: 8,
+                  marginBottom: 16,
+                  padding: '14px 20px',
+                  background: '#ffffff',
+                  borderRadius: 12,
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <Title level={4} className="erp-section-title" style={{ margin: 0, fontSize: 16, color: '#0f172a' }}>
+                    システム
+                  </Title>
+                  <Text type="secondary" className="erp-page-desc" style={{ fontSize: 13 }}>
+                    ユーザー権限グループ、各種共通コード区分、工事番号自動採番ルール等のシステム基盤を管理します。
+                  </Text>
+                </div>
+                <Tag color="purple" style={{ borderRadius: 8, padding: '3px 12px', fontSize: 12, fontWeight: 600 }}>
+                  5マスタ
+                </Tag>
+              </div>
+
+              <Row gutter={[16, 16]}>
                 {/* 4. ユーザーグループ */}
                 <Col xs={24} sm={12} lg={8}>
                   <Card
@@ -306,7 +337,7 @@ const MainApp: React.FC = () => {
                       <div>
                         <span className="erp-card-category">権限グループ・同時実行数</span>
                         <div className="erp-card-title">
-                          ユーザーグループ (AD1720C)
+                          ユーザーグループマスタ (AD1720C)
                         </div>
                       </div>
                       <div
@@ -341,7 +372,101 @@ const MainApp: React.FC = () => {
                   </Card>
                 </Col>
 
-                {/* 5. システム名称マスタ */}
+                {/* 5. プログラムマスタ */}
+                <Col xs={24} sm={12} lg={8}>
+                  <Card
+                    hoverable
+                    className="erp-hover-card erp-master-card"
+                    onClick={() => setActiveMenu('ad1740c')}
+                    style={{ borderRadius: 12, cursor: 'pointer', overflow: 'hidden' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <div>
+                        <span className="erp-card-category">メニュー構成・起動可否制御</span>
+                        <div className="erp-card-title">
+                          プログラムマスタ (AD1740C)
+                        </div>
+                      </div>
+                      <div
+                        className="erp-card-icon-box"
+                        style={{
+                          borderRadius: 12,
+                          background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AppstoreOutlined style={{ color: '#0284c7' }} />
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Statistic
+                        value={counts.prog}
+                        suffix="本"
+                        className="erp-stat-value"
+                        styles={{ content: { color: '#0284c7' } }}
+                      />
+                    </div>
+
+                    <div className="erp-card-footer">
+                      <span className="erp-card-footer-desc">メニュー表示行・最大件数管理</span>
+                      <span className="erp-card-footer-action" style={{ color: '#0284c7' }}>
+                        画面を開く <ArrowRightOutlined />
+                      </span>
+                    </div>
+                  </Card>
+                </Col>
+
+                {/* 6. メッセージマスタ */}
+                <Col xs={24} sm={12} lg={8}>
+                  <Card
+                    hoverable
+                    className="erp-hover-card erp-master-card"
+                    onClick={() => setActiveMenu('ad1750c')}
+                    style={{ borderRadius: 12, cursor: 'pointer', overflow: 'hidden' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <div>
+                        <span className="erp-card-category">ダイアログ・警告エラー定義</span>
+                        <div className="erp-card-title">
+                          メッセージマスタ (AD1750C)
+                        </div>
+                      </div>
+                      <div
+                        className="erp-card-icon-box"
+                        style={{
+                          borderRadius: 12,
+                          background: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <MessageOutlined style={{ color: '#c026d3' }} />
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Statistic
+                        value={counts.msg}
+                        suffix="件"
+                        className="erp-stat-value"
+                        styles={{ content: { color: '#c026d3' } }}
+                      />
+                    </div>
+
+                    <div className="erp-card-footer">
+                      <span className="erp-card-footer-desc">月次警告・確認メッセージ保守</span>
+                      <span className="erp-card-footer-action" style={{ color: '#c026d3' }}>
+                        画面を開く <ArrowRightOutlined />
+                      </span>
+                    </div>
+                  </Card>
+                </Col>
+
+                {/* 7. システム名称マスタ */}
                 <Col xs={24} sm={12} lg={8}>
                   <Card
                     hoverable
@@ -353,7 +478,7 @@ const MainApp: React.FC = () => {
                       <div>
                         <span className="erp-card-category">汎用区分・コード定義</span>
                         <div className="erp-card-title">
-                          システム名称 (AD1760C)
+                          システム名称マスタ (AD1760C)
                         </div>
                       </div>
                       <div
@@ -400,7 +525,7 @@ const MainApp: React.FC = () => {
                       <div>
                         <span className="erp-card-category">採番・消費税・端数基準</span>
                         <div className="erp-card-title">
-                          処理基準管理 (AD1770C)
+                          処理基準管理マスタ (AD1770C)
                         </div>
                       </div>
                       <div
