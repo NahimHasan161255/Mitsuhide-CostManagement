@@ -652,47 +652,36 @@ export const ProgramMasterPage: React.FC = () => {
                   </div>
 
                   {/* Bottom Action Bar */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: '#0f172a',
-                      padding: '12px 20px',
-                      borderRadius: 10,
-                      flexWrap: 'wrap',
-                      gap: 12,
-                    }}
-                  >
+                  <div className="erp-bottom-action-bar">
                     <Space size={10} wrap>
                       <Button
                         type="primary"
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<SaveOutlined />}
                         loading={isSaving}
                         onClick={handleSave}
                         disabled={mode === 'inquiry'}
                         style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
                       >
-                        (F1) 登録・保存
+                        <span className="erp-btn-shortcut">(F1) </span>登録・保存
                       </Button>
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<ClearOutlined />}
                         onClick={handleClearForm}
                         style={{ fontWeight: 600 }}
                       >
-                        (F2) クリア
+                        <span className="erp-btn-shortcut">(F2) </span>クリア
                       </Button>
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<UndoOutlined />}
                         onClick={() => {
                           if (currentRecord) form.setFieldsValue(currentRecord);
                           else handleClearForm();
                         }}
                       >
-                        (F11) 取消
+                        <span className="erp-btn-shortcut">(F11) </span>取消
                       </Button>
                     </Space>
 
@@ -706,18 +695,18 @@ export const ProgramMasterPage: React.FC = () => {
                           cancelText="キャンセル"
                           okButtonProps={{ danger: true }}
                         >
-                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
-                            (F7) 削除
+                          <Button danger className="erp-bottom-action-btn" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                            <span className="erp-btn-shortcut">(F7) </span>削除
                           </Button>
                         </Popconfirm>
                       )}
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<TableOutlined />}
                         onClick={() => setActiveTab('list')}
                         style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
                       >
-                        (F5) 一覧照会へ
+                        <span className="erp-btn-shortcut">(F5) </span>一覧照会へ
                       </Button>
                     </Space>
                   </div>

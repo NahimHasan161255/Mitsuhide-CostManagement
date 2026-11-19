@@ -957,22 +957,11 @@ export const SiireMasterPage: React.FC = () => {
                   </div>
 
                   {/* Bottom Action Bar (Fixed / Standard Toolbar) */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: '#0f172a',
-                      padding: '12px 20px',
-                      borderRadius: 10,
-                      flexWrap: 'wrap',
-                      gap: 12,
-                    }}
-                  >
+                  <div className="erp-bottom-action-bar">
                     <Space size={10} wrap>
                       <Button
                         type="primary"
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<SaveOutlined />}
                         loading={isSaving}
                         onClick={handleSave}
@@ -982,7 +971,7 @@ export const SiireMasterPage: React.FC = () => {
                         <span className="erp-btn-shortcut">(F1) </span>登録・保存
                       </Button>
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<ClearOutlined />}
                         onClick={handleClearForm}
                         style={{ fontWeight: 600 }}
@@ -990,7 +979,7 @@ export const SiireMasterPage: React.FC = () => {
                         <span className="erp-btn-shortcut">(F2) </span>クリア
                       </Button>
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<UndoOutlined />}
                         onClick={() => {
                           if (currentRecord) form.setFieldsValue(currentRecord);
@@ -1011,13 +1000,13 @@ export const SiireMasterPage: React.FC = () => {
                           cancelText="キャンセル"
                           okButtonProps={{ danger: true }}
                         >
-                          <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
+                          <Button danger className="erp-bottom-action-btn" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
                             <span className="erp-btn-shortcut">(F7) </span>削除
                           </Button>
                         </Popconfirm>
                       )}
                       <Button
-                        size="large"
+                        className="erp-bottom-action-btn"
                         icon={<TableOutlined />}
                         onClick={() => setActiveTab('list')}
                         style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
