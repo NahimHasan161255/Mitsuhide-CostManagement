@@ -15,7 +15,6 @@ import {
   Select,
   Tabs,
   Tooltip,
-  Modal,
   Checkbox,
   DatePicker,
 } from 'antd';
@@ -97,10 +96,9 @@ export const UserMasterPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const isSelf = !!(currentRecord && currentUser && currentRecord.userCd === currentUser.userCd);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [printStartCd, setPrintStartCd] = useState<string>('000001');
-  const [printEndCd, setPrintEndCd] = useState<string>('999999');
+  // Code Range Filter State (Tab 2 & Print)
+  const [startUserCd, setStartUserCd] = useState<string>('');
+  const [endUserCd, setEndUserCd] = useState<string>('');
 
   // Fetch Master Data
   const fetchUsers = async (searchOverride?: string) => {
@@ -110,6 +108,8 @@ export const UserMasterPage: React.FC = () => {
       let url = `${API_BASE_URL}/api/user?page=${page}&pageSize=${pageSize}`;
       if (activeSearch) url += `&search=${encodeURIComponent(activeSearch)}`;
       if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
+      if (startUserCd) url += `&startUserCd=${encodeURIComponent(startUserCd)}`;
+      if (endUserCd) url += `&endUserCd=${encodeURIComponent(endUserCd)}`;
 
       const res = await fetch(url);
       if (res.ok) {
@@ -195,7 +195,9 @@ export const UserMasterPage: React.FC = () => {
                 x.userName.includes(activeSearch) ||
                 x.userCd.includes(activeSearch) ||
                 (x.userNameK && x.userNameK.includes(activeSearch))) &&
-              (!selectedGrp || x.userGrpCd === selectedGrp)
+              (!selectedGrp || x.userGrpCd === selectedGrp) &&
+              (!startUserCd || x.userCd >= startUserCd.padStart(6, '0')) &&
+              (!endUserCd || x.userCd <= endUserCd.padStart(6, '0'))
           )
         );
         setTotalCount(mockList.length);
@@ -209,11 +211,11 @@ export const UserMasterPage: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchText, selectedGrp]);
+  }, [debouncedSearchText, selectedGrp, startUserCd, endUserCd]);
 
   useEffect(() => {
     fetchUsers();
-  }, [page, pageSize, debouncedSearchText, selectedGrp]);
+  }, [page, pageSize, debouncedSearchText, selectedGrp, startUserCd, endUserCd]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -430,23 +432,12 @@ export const UserMasterPage: React.FC = () => {
     );
   };
 
-  // Open Print Modal (F8)
-  const handleOpenPrintModal = () => {
-    if (data.length > 0) {
-      const sortedCds = [...data].map((x) => x.userCd).sort();
-      setPrintStartCd(sortedCds[0]);
-      setPrintEndCd(sortedCds[sortedCds.length - 1]);
-    }
-    setIsPrintModalOpen(true);
-  };
-
-  // Execute Print
-  const handleExecutePrint = () => {
-    setIsPrintModalOpen(false);
+  // Direct Print (F8) - Directly triggers browser print without modal
+  const handleDirectPrint = () => {
     message.info('印刷ダイアログを開きます。');
     setTimeout(() => {
       window.print();
-    }, 300);
+    }, 200);
   };
 
   // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
@@ -473,7 +464,7 @@ export const UserMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        handleOpenPrintModal();
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -612,7 +603,7 @@ export const UserMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleOpenPrintModal}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -1023,22 +1014,62 @@ export const UserMasterPage: React.FC = () => {
                    TAB 2: DATABASE DATA TABLE & SEARCH (AD1730C LIST)
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
-                  {/* Search Filter Toolbar */}
+                  {/* Search and Code Range Filter Toolbar */}
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={14}>
-                      <Space size={10} style={{ width: '100%' }} wrap>
-                        <Input
-                          placeholder="ユーザCD / 氏名 / フリガナ... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          onPressEnter={() => {
-                            setPage(1);
-                            fetchUsers(searchText);
-                          }}
-                          allowClear
-                          style={{ width: 300 }}
-                        />
+                    <Col xs={24} lg={17}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Code Range Filter (on the LEFT) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={6}
+                            value={startUserCd}
+                            onChange={(e) => setStartUserCd(e.target.value)}
+                            style={{ width: 105, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={6}
+                            value={endUserCd}
+                            onChange={(e) => setEndUserCd(e.target.value)}
+                            style={{ width: 105, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 2. Keyword Search (moved to the RIGHT of Code Range) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="ユーザCD / 氏名 / フリガナ..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            onPressEnter={() => {
+                              setPage(1);
+                              fetchUsers(searchText);
+                            }}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            loading={loading}
+                            onClick={() => {
+                              setPage(1);
+                              fetchUsers(searchText);
+                            }}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* 3. Group filter */}
                         <Select
                           placeholder="所属グループ絞込"
                           allowClear
@@ -1047,7 +1078,7 @@ export const UserMasterPage: React.FC = () => {
                             setSelectedGrp(val);
                             setPage(1);
                           }}
-                          style={{ width: 170 }}
+                          style={{ width: 160 }}
                           options={[
                             { value: '1', label: '一般グループ' },
                             { value: '2', label: '営業部' },
@@ -1056,38 +1087,30 @@ export const UserMasterPage: React.FC = () => {
                             { value: '9', label: '管理者グループ' },
                           ]}
                         />
-                        <Button
-                          type="primary"
-                          icon={<SearchOutlined />}
-                          loading={loading}
-                          onClick={() => {
-                            setPage(1);
-                            fetchUsers(searchText);
-                          }}
-                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
-                        >
-                          検索
-                        </Button>
+
+                        {/* Reset Filter Button if any filter is active */}
+                        {(startUserCd || endUserCd || searchText || selectedGrp) && (
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              setStartUserCd('');
+                              setEndUserCd('');
+                              setSearchText('');
+                              setSelectedGrp(undefined);
+                              setPage(1);
+                            }}
+                            style={{ fontSize: 12 }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col>
-                      <Space size={10}>
-                        <Button
-                          type="primary"
-                          icon={<FormOutlined />}
-                          onClick={() => {
-                            handleClearForm();
-                            setActiveTab('form');
-                          }}
-                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
-                        >
-                          新規登録フォームへ
-                        </Button>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
-                          登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
-                        </Text>
-                      </Space>
+                    <Col xs={24} lg={7} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                        登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
+                      </Text>
                     </Col>
                   </Row>
 
@@ -1119,94 +1142,6 @@ export const UserMasterPage: React.FC = () => {
             },
           ]}
         />
-
-      {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1730C 印刷指定 - F8)
-          ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#1d4ed8' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1730C ユーザマスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={handleExecutePrint}
-            style={{ background: '#1d4ed8', borderColor: '#1d4ed8' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            帳票に出力するユーザコードの範囲を指定してください。
-          </Text>
-          <Row gutter={16} align="middle">
-            <Col span={10}>
-              <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                開始コード
-              </Text>
-              <Input
-                maxLength={6}
-                value={printStartCd}
-                onChange={(e) => setPrintStartCd(e.target.value)}
-                style={{ width: '100%', fontFamily: 'monospace' }}
-              />
-            </Col>
-            <Col span={4} style={{ textAlign: 'center', marginTop: 22 }}>
-              <Text strong style={{ fontSize: 16 }}>
-                ～
-              </Text>
-            </Col>
-            <Col span={10}>
-              <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                終了コード
-              </Text>
-              <Input
-                maxLength={6}
-                value={printEndCd}
-                onChange={(e) => setPrintEndCd(e.target.value)}
-                style={{ width: '100%', fontFamily: 'monospace' }}
-              />
-            </Col>
-          </Row>
-          <div
-            style={{
-              marginTop: 20,
-              background: '#f8fafc',
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid #e2e8f0',
-              fontSize: 12,
-              color: '#475569',
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              ※ 印刷実行を押すと、指定範囲のユーザマスタ一覧表レイアウトでブラウザ印刷ダイアログが開きます。
-            </p>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

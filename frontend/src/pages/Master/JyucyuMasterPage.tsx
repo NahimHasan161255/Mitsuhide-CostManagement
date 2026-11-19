@@ -1100,22 +1100,9 @@ export const JyucyuMasterPage: React.FC = () => {
                     </Col>
 
                     <Col xs={24} lg={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                      <Space size={12} wrap align="center">
-                        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                          登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
-                        </Text>
-                        <Button
-                          type="primary"
-                          icon={<FormOutlined />}
-                          onClick={() => {
-                            handleClearForm();
-                            setActiveTab('form');
-                          }}
-                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
-                        >
-                          新規登録フォームへ
-                        </Button>
-                      </Space>
+                      <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                        登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
+                      </Text>
                     </Col>
                   </Row>
 

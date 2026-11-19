@@ -26,12 +26,24 @@ public class UserController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
-        [FromQuery] string? userGrpCd = null)
+        [FromQuery] string? userGrpCd = null,
+        [FromQuery] string? startUserCd = null,
+        [FromQuery] string? endUserCd = null)
     {
         var query = from u in _context.UserMaster.AsNoTracking()
                     join g in _context.UserGrpMaster.AsNoTracking() on u.UserGrpCd equals g.UserGrpCd into gGroup
                     from g in gGroup.DefaultIfEmpty()
                     select new { u, g };
+
+        if (!string.IsNullOrWhiteSpace(startUserCd))
+        {
+            query = query.Where(x => string.Compare(x.u.UserCd, startUserCd) >= 0);
+        }
+
+        if (!string.IsNullOrWhiteSpace(endUserCd))
+        {
+            query = query.Where(x => string.Compare(x.u.UserCd, endUserCd) <= 0);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
