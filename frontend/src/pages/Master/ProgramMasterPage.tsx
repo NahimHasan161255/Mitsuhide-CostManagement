@@ -15,7 +15,6 @@ import {
   Popconfirm,
   Typography,
   Tabs,
-  Badge,
   Tooltip,
   Modal,
 } from 'antd';
@@ -32,7 +31,6 @@ import {
   UndoOutlined,
   EditOutlined,
   EyeOutlined,
-  AppstoreOutlined,
   ReloadOutlined,
   PrinterOutlined,
   CheckCircleOutlined,
@@ -41,7 +39,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { exportToCsv } from '../../utils/csvExport';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export interface ProgramMasterItem {
   subSysCd: string;
@@ -407,89 +405,63 @@ export const ProgramMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          SCREEN TITLE & HIGH-LEVEL ERP METADATA BAR (CARD 1)
+          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
           ============================================================== */}
-      <Card bodyStyle={{ padding: '16px 24px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Row justify="space-between" align="middle" gutter={[16, 16]}>
-          <Col>
-            <Space align="center" size={14}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.15)',
-                }}
-              >
-                <AppstoreOutlined style={{ fontSize: 24, color: '#0284c7' }} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
-                    プログラムマスタメンテナンス (AD1740C)
-                  </Title>
-                  <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
-                    システム保守用
-                  </Tag>
-                  {activeTab === 'form' && (
-                    <Tag
-                      color={mode === 'new' ? 'success' : mode === 'edit' ? 'warning' : 'processing'}
-                      style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}
-                    >
-                      {mode === 'new' ? '【新規登録モード】' : mode === 'edit' ? '【修正モード】' : '【照会モード】'}
-                    </Tag>
-                  )}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  全サブシステム（AD/GK/UR/SR/VM）の画面プログラム定義、メニュー配置行、稼働制御を一括管理します。
-                </Text>
-              </div>
-            </Space>
-          </Col>
-
-          {/* Quick Stats / Header Actions */}
-          <Col>
-            <Space size={10} wrap>
-              <Tooltip title="F8キーでも実行できます">
-                <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
-                  (F8) 印刷
-                </Button>
-              </Tooltip>
-              <Tooltip title="F6キーでも実行できます">
-                <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                  (F6) CSV出力
-                </Button>
-              </Tooltip>
-              <Button icon={<ReloadOutlined />} onClick={() => setData(SEED_PROGRAMS)}>
-                初期化
-              </Button>
-            </Space>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* ==============================================================
-          TWO-TAB ARCHITECTURE: Tab 1 (登録・編集) & Tab 2 (データ一覧) (CARD 2)
-          ============================================================== */}
-      <Card bodyStyle={{ padding: '8px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
         <Tabs
+          className="erp-modern-pill-tabs"
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key as 'form' | 'list')}
           size="large"
+          tabBarExtraContent={
+            activeTab === 'list' ? (
+              <Space size={10} wrap>
+                <Tooltip title="F8キーでも実行できます">
+                  <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
+                    (F8) 印刷
+                  </Button>
+                </Tooltip>
+                <Tooltip title="F6キーでも実行できます">
+                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
+                    (F6) CSV出力
+                  </Button>
+                </Tooltip>
+                <Tooltip title="マスタデータを再取得">
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      setData(SEED_PROGRAMS);
+                      message.success('マスタデータを再取得しました。');
+                    }}
+                  />
+                </Tooltip>
+              </Space>
+            ) : null
+          }
           items={[
             {
               key: 'form',
               label: (
-                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
-                  <FormOutlined style={{ marginRight: 6 }} />
-                  登録・編集フォーム (AD1740C)
-                  {mode === 'new' && <Tag color="green" style={{ marginLeft: 8 }}>新規</Tag>}
-                  {mode === 'edit' && <Tag color="blue" style={{ marginLeft: 8 }}>修正: #{currentRecord?.subSysCd}-{currentRecord?.progId}</Tag>}
-                  {mode === 'inquiry' && <Tag color="orange" style={{ marginLeft: 8 }}>照会</Tag>}
+                <span className="erp-tab-label-wrap">
+                  <span className="erp-tab-icon-badge form-icon">
+                    <FormOutlined />
+                  </span>
+                  <span>登録・編集フォーム (AD1740C)</span>
+                  {mode === 'new' && (
+                    <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      新規
+                    </Tag>
+                  )}
+                  {mode === 'edit' && (
+                    <Tag color="blue" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      修正: #{currentRecord?.subSysCd}-{currentRecord?.progId}
+                    </Tag>
+                  )}
+                  {mode === 'inquiry' && (
+                    <Tag color="orange" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      照会
+                    </Tag>
+                  )}
                 </span>
               ),
               children: (
@@ -505,6 +477,7 @@ export const ProgramMasterPage: React.FC = () => {
                 >
                   {/* Top Form Navigation & Mode Selector Bar */}
                   <div
+                    className="master-top-control-bar"
                     style={{
                       background: '#f8fafc',
                       padding: '12px 18px',
@@ -520,7 +493,7 @@ export const ProgramMasterPage: React.FC = () => {
                   >
                     <Space size={14} align="center">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                        <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           処理区分:
                         </Text>
                         <Select
@@ -529,22 +502,22 @@ export const ProgramMasterPage: React.FC = () => {
                             setMode(val);
                             if (val === 'new') handleClearForm();
                           }}
-                          style={{ width: 140 }}
+                          style={{ width: 145, fontWeight: 700 }}
                           options={[
-                            { value: 'new', label: '1: 新規登録' },
-                            { value: 'edit', label: '2: データ修正' },
-                            { value: 'inquiry', label: '4: 照会 (閲覧)' },
+                            { value: 'new', label: '新規登録' },
+                            { value: 'edit', label: 'データ修正' },
+                            { value: 'inquiry', label: '照会 (閲覧)' },
                           ]}
                         />
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                        <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           サブシステム:
                         </Text>
                         <Form.Item name="subSysCd" noStyle rules={[{ required: true, message: 'サブシステム必須' }]}>
                           <Select
-                            style={{ width: 160 }}
+                            style={{ width: 160, fontWeight: 700 }}
                             disabled={mode !== 'new'}
                             options={[
                               { value: 'AD', label: 'AD: 管理・マスタ' },
@@ -558,7 +531,7 @@ export const ProgramMasterPage: React.FC = () => {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                        <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           プログラムID:
                         </Text>
                         <Form.Item name="progId" noStyle rules={[{ required: true, message: 'ID必須' }]}>
@@ -567,18 +540,9 @@ export const ProgramMasterPage: React.FC = () => {
                             maxLength={7}
                             disabled={mode !== 'new'}
                             onBlur={handleCheckCode}
-                            style={{ width: 120, fontFamily: 'monospace', fontWeight: 700 }}
+                            style={{ width: 120, fontFamily: 'monospace', fontWeight: 700, color: '#0f172a' }}
                           />
                         </Form.Item>
-                        <Tooltip title="データ一覧からプログラムを選択 (F5)">
-                          <Button
-                            icon={<SearchOutlined />}
-                            onClick={() => setActiveTab('list')}
-                            style={{ fontWeight: 600 }}
-                          >
-                            一覧から選択
-                          </Button>
-                        </Tooltip>
                       </div>
 
                       <div>
@@ -600,8 +564,8 @@ export const ProgramMasterPage: React.FC = () => {
                       <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
                         (F9) 前データ
                       </Button>
-                      <Button icon={<RightOutlined />} onClick={handleNextRecord} disabled={data.length === 0}>
-                        (F10) 次データ
+                      <Button onClick={handleNextRecord} disabled={data.length === 0}>
+                        (F10) 次データ <RightOutlined />
                       </Button>
                     </Space>
                   </div>
@@ -730,22 +694,6 @@ export const ProgramMasterPage: React.FC = () => {
                     </Space>
 
                     <Space size={10} wrap>
-                      <Button
-                        size="large"
-                        icon={<PrinterOutlined />}
-                        onClick={() => setIsPrintModalOpen(true)}
-                        style={{ fontWeight: 600 }}
-                      >
-                        (F8) 印刷
-                      </Button>
-                      <Button
-                        size="large"
-                        icon={<DownloadOutlined />}
-                        onClick={handleExportCsv}
-                        style={{ fontWeight: 600 }}
-                      >
-                        (F6) CSV
-                      </Button>
                       {mode === 'edit' && currentRecord && (
                         <Popconfirm
                           title="削除の確認"
@@ -776,10 +724,12 @@ export const ProgramMasterPage: React.FC = () => {
             {
               key: 'list',
               label: (
-                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
-                  <TableOutlined style={{ marginRight: 6 }} />
-                  データ一覧・検索 (frm_sel_prog)
-                  <Badge count={filteredData.length} overflowCount={9999} style={{ backgroundColor: '#10b981', marginLeft: 8 }} />
+                <span className="erp-tab-label-wrap">
+                  <span className="erp-tab-icon-badge list-icon">
+                    <TableOutlined />
+                  </span>
+                  <span>データ一覧・検索 (frm_sel_prog)</span>
+                  <span className="erp-tab-count-pill">{filteredData.length} 件</span>
                 </span>
               ),
               children: (
