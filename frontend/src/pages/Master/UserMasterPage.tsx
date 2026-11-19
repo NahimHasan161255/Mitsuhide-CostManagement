@@ -1107,23 +1107,10 @@ export const UserMasterPage: React.FC = () => {
                       </Space>
                     </Col>
 
-                    <Col>
-                      <Space size={10}>
-                        <Button
-                          type="primary"
-                          icon={<FormOutlined />}
-                          onClick={() => {
-                            handleClearForm();
-                            setActiveTab('form');
-                          }}
-                          style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 700 }}
-                        >
-                          新規登録フォームへ
-                        </Button>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
-                          登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
-                        </Text>
-                      </Space>
+                    <Col xs={24} lg={7} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                        登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
+                      </Text>
                     </Col>
                   </Row>
 
