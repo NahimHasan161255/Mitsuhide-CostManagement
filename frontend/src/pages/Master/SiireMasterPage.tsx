@@ -581,29 +581,32 @@ export const SiireMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
+          UNIFIED WORKSPACE: True Folder Index Tabs & Content Container
           ============================================================== */}
-      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Tabs
-          className="erp-modern-pill-tabs"
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as 'form' | 'list')}
-          size="large"
+      <Tabs
+        className="erp-folder-tabs"
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as 'form' | 'list')}
+        animated={false}
+        size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
-              <Space size={10} wrap>
+              <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button icon={<PrinterOutlined />} onClick={handleOpenPrintModal} style={{ fontWeight: 600 }}>
-                    (F8) 印刷
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleOpenPrintModal}>
+                    <span className="erp-btn-shortcut">(F8) </span>
+                    <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="F6キーでも実行できます">
-                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                    (F6) CSV出力
+                  <Button className="erp-tab-action-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                    <span className="erp-btn-shortcut">(F6) </span>
+                    <span className="erp-btn-text-mobile-hide">CSV出力</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="マスタデータを再取得">
                   <Button
+                    className="erp-tab-action-btn"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       fetchData();
@@ -623,7 +626,7 @@ export const SiireMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge form-icon">
                     <FormOutlined />
                   </span>
-                  <span>登録・編集フォーム (AD1790C)</span>
+                  <span>登録・編集フォーム</span>
                   {mode === 'new' && (
                     <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
                       新規
@@ -668,7 +671,7 @@ export const SiireMasterPage: React.FC = () => {
                       gap: 12,
                     }}
                   >
-                    <Space size={14} align="center">
+                    <Space size={14} wrap align="center">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           処理区分:
@@ -721,10 +724,10 @@ export const SiireMasterPage: React.FC = () => {
                     {/* Sequential Navigation Buttons (F9, F10) */}
                     <Space size={8}>
                       <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
-                        (F9) 前データ
+                        <span className="erp-btn-shortcut">(F9) </span>前データ
                       </Button>
                       <Button onClick={handleNextRecord} disabled={data.length === 0}>
-                        (F10) 次データ <RightOutlined />
+                        <span className="erp-btn-shortcut">(F10) </span>次データ <RightOutlined />
                       </Button>
                     </Space>
                   </div>
@@ -908,17 +911,17 @@ export const SiireMasterPage: React.FC = () => {
                     style={{ marginBottom: 20, borderRadius: 8 }}
                   >
                     <Row gutter={16}>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko1" label="備考１ (全角60文字以内)">
                           <Input placeholder="仕入条件・特記事項・契約メモなど" maxLength={60} />
                         </Form.Item>
                       </Col>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko2" label="備考２ (全角60文字以内)">
                           <Input placeholder="追加メモ２" maxLength={60} />
                         </Form.Item>
                       </Col>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko3" label="備考３ (全角60文字以内)">
                           <Input placeholder="追加メモ３" maxLength={60} />
                         </Form.Item>
@@ -976,7 +979,7 @@ export const SiireMasterPage: React.FC = () => {
                         disabled={mode === 'inquiry'}
                         style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
                       >
-                        (F1) 登録・保存
+                        <span className="erp-btn-shortcut">(F1) </span>登録・保存
                       </Button>
                       <Button
                         size="large"
@@ -984,7 +987,7 @@ export const SiireMasterPage: React.FC = () => {
                         onClick={handleClearForm}
                         style={{ fontWeight: 600 }}
                       >
-                        (F2) クリア
+                        <span className="erp-btn-shortcut">(F2) </span>クリア
                       </Button>
                       <Button
                         size="large"
@@ -994,7 +997,7 @@ export const SiireMasterPage: React.FC = () => {
                           else handleClearForm();
                         }}
                       >
-                        (F11) 取消
+                        <span className="erp-btn-shortcut">(F11) </span>取消
                       </Button>
                     </Space>
 
@@ -1009,7 +1012,7 @@ export const SiireMasterPage: React.FC = () => {
                           okButtonProps={{ danger: true }}
                         >
                           <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
-                            (F7) 削除
+                            <span className="erp-btn-shortcut">(F7) </span>削除
                           </Button>
                         </Popconfirm>
                       )}
@@ -1019,7 +1022,7 @@ export const SiireMasterPage: React.FC = () => {
                         onClick={() => setActiveTab('list')}
                         style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
                       >
-                        (F5) 一覧照会へ
+                        <span className="erp-btn-shortcut">(F5) </span>一覧照会へ
                       </Button>
                     </Space>
                   </div>
@@ -1033,7 +1036,7 @@ export const SiireMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge list-icon">
                     <TableOutlined />
                   </span>
-                  <span>データ一覧・検索 (frm_sel_siire)</span>
+                  <span>データ一覧・検索</span>
                   <span className="erp-tab-count-pill">{total} 件</span>
                 </span>
               ),
@@ -1045,7 +1048,7 @@ export const SiireMasterPage: React.FC = () => {
                   {/* Search Filter Toolbar */}
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
                     <Col xs={24} sm={16} md={12}>
-                      <Space size={10} style={{ width: '100%' }}>
+                      <Space.Compact style={{ width: '100%', maxWidth: 460 }}>
                         <Input
                           placeholder="仕入先コード / 仕入先名 / 業種 / 電話番号... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
@@ -1056,7 +1059,6 @@ export const SiireMasterPage: React.FC = () => {
                             fetchData(keyword);
                           }}
                           allowClear
-                          style={{ width: 340 }}
                         />
                         <Button
                           type="primary"
@@ -1070,11 +1072,11 @@ export const SiireMasterPage: React.FC = () => {
                         >
                           検索
                         </Button>
-                      </Space>
+                      </Space.Compact>
                     </Col>
 
-                    <Col>
-                      <Space size={10}>
+                    <Col xs={24} sm={8} md={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Space size={10} wrap>
                         <Button
                           type="primary"
                           icon={<FormOutlined />}
@@ -1086,7 +1088,7 @@ export const SiireMasterPage: React.FC = () => {
                         >
                           新規登録フォームへ
                         </Button>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
+                        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                           登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
                         </Text>
                       </Space>
@@ -1098,6 +1100,7 @@ export const SiireMasterPage: React.FC = () => {
                     columns={columns}
                     dataSource={data}
                     loading={loading}
+                    scroll={{ x: 1000 }}
                     pagination={{
                       current: page,
                       pageSize,
@@ -1120,7 +1123,6 @@ export const SiireMasterPage: React.FC = () => {
             },
           ]}
         />
-      </Card>
 
       {/* ========================================================
           MODAL: PRINT SPECIFICATION (AD1790C 印刷指定 - F8)

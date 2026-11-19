@@ -391,29 +391,32 @@ export const MessageMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
+          UNIFIED WORKSPACE: True Folder Index Tabs & Content Container
           ============================================================== */}
-      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Tabs
-          className="erp-modern-pill-tabs"
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as 'form' | 'list')}
-          size="large"
+      <Tabs
+        className="erp-folder-tabs"
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as 'form' | 'list')}
+        animated={false}
+        size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
-              <Space size={10} wrap>
+              <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
-                    (F8) 印刷
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                    <span className="erp-btn-shortcut">(F8) </span>
+                    <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="F6キーでも実行できます">
-                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                    (F6) CSV出力
+                  <Button className="erp-tab-action-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                    <span className="erp-btn-shortcut">(F6) </span>
+                    <span className="erp-btn-text-mobile-hide">CSV出力</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="マスタデータを再取得">
                   <Button
+                    className="erp-tab-action-btn"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       setData(SEED_MESSAGES);
@@ -432,7 +435,7 @@ export const MessageMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge form-icon">
                     <FormOutlined />
                   </span>
-                  <span>登録・編集フォーム (AD1750C)</span>
+                  <span>登録・編集フォーム</span>
                   {mode === 'new' && (
                     <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
                       新規
@@ -706,7 +709,7 @@ export const MessageMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge list-icon">
                     <TableOutlined />
                   </span>
-                  <span>データ一覧・検索 (frm_sel_msg)</span>
+                  <span>データ一覧・検索</span>
                   <span className="erp-tab-count-pill">{filteredData.length} 件</span>
                 </span>
               ),
@@ -765,6 +768,7 @@ export const MessageMasterPage: React.FC = () => {
                     rowKey="msgNo"
                     columns={columns}
                     dataSource={filteredData}
+                    scroll={{ x: 800 }}
                     pagination={{ pageSize: 15 }}
                     bordered
                     size="middle"
@@ -777,7 +781,6 @@ export const MessageMasterPage: React.FC = () => {
             },
           ]}
         />
-      </Card>
 
       {/* ========================================================
           MODAL: PRINT SPECIFICATION (AD1750C 印刷指定 - F8)

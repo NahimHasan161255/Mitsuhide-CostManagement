@@ -39,6 +39,11 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 html, body, #root {
   width: 100%;
   min-height: 100vh;
@@ -567,6 +572,378 @@ html, body, #root {
   background: #ecfdf5;
   color: #059669;
   border: 1px solid #a7f3d0;
+}
+
+/* ==============================================================
+   Folder Index Tab Design (With Round Corners & Overlapping Slants)
+   Per User Reference:
+   - Adjacent tabs overlap (border sits on top/under)
+   - Active tab sits in foreground (higher z-index & larger/taller)
+   - Titles vertically centered
+   - Floating icon badge with vibrant background
+   ============================================================== */
+.erp-folder-tabs > .ant-tabs-nav {
+  margin-bottom: 0px !important;
+  position: relative !important;
+  overflow: visible !important;
+  padding: 0 4px !important;
+}
+
+/* Continuous solid dark baseline across the entire card */
+.erp-folder-tabs > .ant-tabs-nav::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 3.5px !important;
+  background: #0f172a !important; /* Slate-900 / Solid Black */
+  border: none !important;
+  z-index: 5 !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-extra-content {
+  padding-bottom: 6px !important;
+}
+
+/* Content Container: Acts as the main Folder Sheet/Card directly under the tabs */
+.erp-folder-tabs > .ant-tabs-content-holder {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-top: 3.5px solid #0f172a !important; /* Seamless connection to tab baseline */
+  border-radius: 0 0 12px 12px !important;
+  padding: 20px 22px 24px 22px !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03) !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+  display: none !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+  overflow: visible !important;
+  padding-top: 10px !important;
+}
+
+/* Tab list with flex alignment at baseline */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-nav-list {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 0px !important;
+  padding: 0 12px 0 12px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* BASE / INACTIVE TAB (Stable layout box, zero shaking) */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab {
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 34px !important;
+  height: 48px !important; /* FIXED height: Eliminates flexbox layout wobble */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  z-index: 2 !important; /* Behind active tab */
+  overflow: visible !important;
+  transition: z-index 0.15s ease !important;
+}
+
+/* Overlap adjacent tabs like real index folder dividers */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+  margin-left: -18px !important;
+}
+
+/* Trapezoid shape with rounded top corners via ::before */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: -1 !important;
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-bottom: none !important;
+  border-radius: 14px 14px 0 0 !important;
+  transform: perspective(30px) rotateX(10deg) !important;
+  transform-origin: bottom center !important;
+  box-shadow: 0 -2px 6px rgba(15, 23, 42, 0.05) !important;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+
+/* Inactive Tab Hover */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab:not(.ant-tabs-tab-active):hover {
+  z-index: 4 !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab:not(.ant-tabs-tab-active):hover::before {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* Vertically Centered Tab Content Button */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+  overflow: visible !important;
+  transition: color 0.18s ease !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: #0f172a !important;
+}
+
+/* Tab Label Wrapper - Centered Content */
+.erp-folder-tabs .erp-tab-label-wrap {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  line-height: 1 !important;
+}
+
+/* Floating Icon Badge with vibrant background */
+.erp-folder-tabs .erp-tab-icon-badge {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13.5px !important;
+  background: linear-gradient(135deg, #e0e7ff 0%, #cbd5e1 100%) !important;
+  color: #3b82f6 !important;
+  border: 1.5px solid #ffffff !important;
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.12) !important;
+  transition: transform 0.18s ease, background 0.18s ease !important;
+}
+
+.erp-folder-tabs .ant-tabs-tab:hover .erp-tab-icon-badge {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 10px rgba(59, 130, 246, 0.25) !important;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+}
+
+/* ==============================================================
+   ACTIVE (SELECTED) TAB:
+   - Sits on TOP (z-index: 10)
+   - Visually TALLER & LARGER via ::before rising higher (top: -7px)
+   - Layout box stays stable at 48px (ZERO layout shift or shake)
+   - Solid Black / Slate-900 with white typography
+   - Seamless connection to baseline
+   ============================================================== */
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active {
+  z-index: 10 !important; /* Sits on top of inactive tabs */
+  height: 48px !important; /* Stable container height */
+  padding: 0 36px !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active::before {
+  top: -7px !important; /* Rises 7px higher visually above inactive tab! */
+  background: #0f172a !important; /* Solid dark black matching reference */
+  border: 1.5px solid #0f172a !important;
+  border-bottom: none !important;
+  border-radius: 15px 15px 0 0 !important;
+  box-shadow: 0 -8px 20px rgba(15, 23, 42, 0.32) !important;
+}
+
+.erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Floating Icon in Active Tab */
+.erp-folder-tabs .ant-tabs-tab-active .erp-tab-icon-badge {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
+  font-size: 14px !important;
+  transform: translateY(-2px) !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.6) !important;
+}
+
+.erp-folder-tabs .ant-tabs-tab-active .erp-tab-count-pill {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+/* Responsive adjustments for folder tabs on smaller devices */
+/* ==============================================================
+   Responsive Action Buttons (Extra Content in Tab Bar)
+   ============================================================== */
+.erp-tab-action-btn {
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (min-width: 1200px) {
+  .erp-tab-action-btn {
+    height: 36px !important;
+    padding: 0 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .erp-tab-action-btn {
+    height: 32px !important;
+    padding: 0 11px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .erp-tab-action-btn {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 11.5px !important;
+  }
+  .erp-btn-text-mobile-hide {
+    display: none !important;
+  }
+}
+
+/* ==============================================================
+   Folder Tabs Multi-Breakpoint Responsive Sizing:
+   1. Desktop (>=1200px): Handled by base styles
+   2. Small Laptop (992px - 1199px)
+   3. Tablet (768px - 991px)
+   4. Mobile (<768px)
+   ============================================================== */
+
+/* 2. Small Laptop (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab {
+    height: 44px !important;
+    padding: 0 24px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: -14px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active {
+    height: 44px !important;
+    padding: 0 28px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active::before {
+    top: -6px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+    font-size: 13.5px !important;
+  }
+  .erp-folder-tabs .erp-tab-icon-badge {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* 3. Tablet (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab {
+    height: 40px !important;
+    padding: 0 18px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: -12px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active {
+    height: 40px !important;
+    padding: 0 22px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active::before {
+    top: -5px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+    font-size: 12.5px !important;
+  }
+  .erp-folder-tabs .erp-tab-icon-badge {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 12px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-content-holder {
+    padding: 16px 16px 20px 16px !important;
+  }
+}
+
+/* 4. Mobile (<768px) */
+@media (max-width: 767px) {
+  .erp-folder-tabs > .ant-tabs-nav {
+    flex-wrap: wrap !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-extra-content {
+    margin-top: 6px !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab {
+    height: 36px !important;
+    padding: 0 12px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+    margin-left: -10px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active {
+    height: 36px !important;
+    padding: 0 14px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active::before {
+    top: -4px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+    font-size: 11.5px !important;
+  }
+  .erp-folder-tabs .erp-tab-label-wrap {
+    font-size: 11.5px !important;
+    gap: 5px !important;
+  }
+  .erp-folder-tabs .erp-tab-icon-badge {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 11px !important;
+  }
+  .erp-folder-tabs .ant-tabs-tab-active .erp-tab-icon-badge {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 12px !important;
+  }
+  .erp-folder-tabs .ant-tabs-tab .ant-tag {
+    font-size: 10px !important;
+    padding: 0 4px !important;
+    line-height: 16px !important;
+  }
+  .erp-folder-tabs .erp-tab-count-pill {
+    font-size: 10.5px !important;
+    padding: 1px 6px !important;
+  }
+  .erp-folder-tabs > .ant-tabs-content-holder {
+    padding: 12px 10px 16px 10px !important;
+  }
 }
 
 /* Table Cell Content Safety & Tag Protection */
