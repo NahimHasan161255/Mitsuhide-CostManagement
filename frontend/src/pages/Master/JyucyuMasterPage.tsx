@@ -16,7 +16,6 @@ import {
   Select,
   Tabs,
   Tooltip,
-  Modal,
 } from 'antd';
 import {
   FormOutlined,
@@ -77,10 +76,9 @@ export const JyucyuMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<Jyucyu | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8) per AD1780C Specification
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [printStartCode, setPrintStartCode] = useState<number>(1);
-  const [printEndCode, setPrintEndCode] = useState<number>(999999);
+  // Code Range Filter State for Tab 2
+  const [startCode, setStartCode] = useState<number | undefined>(undefined);
+  const [endCode, setEndCode] = useState<number | undefined>(undefined);
   const [isSearchingZip, setIsSearchingZip] = useState(false);
 
   // Fetch Master Data
@@ -89,7 +87,7 @@ export const JyucyuMasterPage: React.FC = () => {
     try {
       const activeKeyword = keywordOverride !== undefined ? keywordOverride : debouncedKeyword;
       const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
-        params: { page, pageSize, keyword: activeKeyword },
+        params: { page, pageSize, keyword: activeKeyword, startCode, endCode },
       });
       setData(res.data.items);
       setTotal(res.data.totalCount);
@@ -169,8 +167,24 @@ export const JyucyuMasterPage: React.FC = () => {
         },
       ];
       const activeKeyword = keywordOverride !== undefined ? keywordOverride : debouncedKeyword;
-      setData(mockList.filter((x) => !activeKeyword || x.name.includes(activeKeyword) || String(x.code).includes(activeKeyword)));
-      setTotal(3);
+      let filtered = mockList;
+      if (startCode !== undefined && startCode !== null) {
+        filtered = filtered.filter((x) => x.code >= startCode);
+      }
+      if (endCode !== undefined && endCode !== null) {
+        filtered = filtered.filter((x) => x.code <= endCode);
+      }
+      if (activeKeyword) {
+        filtered = filtered.filter(
+          (x) =>
+            x.name.includes(activeKeyword) ||
+            String(x.code).includes(activeKeyword) ||
+            (x.kana && x.kana.includes(activeKeyword)) ||
+            (x.tel && x.tel.includes(activeKeyword))
+        );
+      }
+      setData(filtered);
+      setTotal(filtered.length);
     } finally {
       setLoading(false);
     }
@@ -178,11 +192,11 @@ export const JyucyuMasterPage: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedKeyword]);
+  }, [debouncedKeyword, startCode, endCode]);
 
   useEffect(() => {
     fetchData();
-  }, [page, pageSize, debouncedKeyword]);
+  }, [page, pageSize, debouncedKeyword, startCode, endCode]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -383,23 +397,12 @@ export const JyucyuMasterPage: React.FC = () => {
     }
   };
 
-  // Open Print Modal (F8)
-  const handleOpenPrintModal = () => {
-    if (data.length > 0) {
-      const sortedCodes = [...data].map((x) => x.code).sort((a, b) => a - b);
-      setPrintStartCode(sortedCodes[0]);
-      setPrintEndCode(sortedCodes[sortedCodes.length - 1]);
-    }
-    setIsPrintModalOpen(true);
-  };
-
-  // Execute Print
-  const handleExecutePrint = () => {
-    setIsPrintModalOpen(false);
+  // Direct Print (F8) - Directly triggers browser print without modal
+  const handleDirectPrint = () => {
     message.info('印刷ダイアログを開きます。');
     setTimeout(() => {
       window.print();
-    }, 300);
+    }, 200);
   };
 
   // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
@@ -426,7 +429,7 @@ export const JyucyuMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        handleOpenPrintModal();
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -558,8 +561,8 @@ export const JyucyuMasterPage: React.FC = () => {
           tabBarExtraContent={
             activeTab === 'list' ? (
               <Space size={8} wrap>
-                <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleOpenPrintModal}>
+                <Tooltip title="F8キーでも実行できます (指定範囲・検索結果を直接印刷)">
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -1022,38 +1025,85 @@ export const JyucyuMasterPage: React.FC = () => {
                    TAB 2: DATABASE DATA TABLE & SEARCH (AD1780C LIST)
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
-                  {/* Search Filter Toolbar */}
+                  {/* Table Action & Status Toolbar */}
+                  {/* Search and Code Range Filter Toolbar */}
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={12}>
-                      <Space.Compact style={{ width: '100%', maxWidth: 460 }}>
-                        <Input
-                          placeholder="受注先コード / 受注先名 / カナ / 電話番号... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={keyword}
-                          onChange={(e) => setKeyword(e.target.value)}
-                          onPressEnter={() => {
-                            setPage(1);
-                            fetchData(keyword);
-                          }}
-                          allowClear
-                        />
-                        <Button
-                          type="primary"
-                          icon={<SearchOutlined />}
-                          loading={loading}
-                          onClick={() => {
-                            setPage(1);
-                            fetchData(keyword);
-                          }}
-                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
-                        >
-                          検索
-                        </Button>
-                      </Space.Compact>
+                    <Col xs={24} lg={16}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Code Range Filter (on the LEFT) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <InputNumber
+                            min={1}
+                            max={999999}
+                            placeholder="開始"
+                            value={startCode}
+                            onChange={(val) => setStartCode(val || undefined)}
+                            style={{ width: 105, fontFamily: 'monospace' }}
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <InputNumber
+                            min={1}
+                            max={999999}
+                            placeholder="終了"
+                            value={endCode}
+                            onChange={(val) => setEndCode(val || undefined)}
+                            style={{ width: 105, fontFamily: 'monospace' }}
+                          />
+                        </div>
+
+                        {/* 2. Keyword Search (moved to the RIGHT of Code Range) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="受注先名 / カナ / TEL..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            onPressEnter={() => {
+                              setPage(1);
+                              fetchData();
+                            }}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            loading={loading}
+                            onClick={() => {
+                              setPage(1);
+                              fetchData();
+                            }}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* Reset Filter Button if any filter is active */}
+                        {(startCode !== undefined || endCode !== undefined || keyword) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setStartCode(undefined);
+                              setEndCode(undefined);
+                              setKeyword('');
+                            }}
+                            style={{ color: '#64748b' }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
+                      </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} md={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Space size={10} wrap>
+                    <Col xs={24} lg={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                      <Space size={12} wrap align="center">
+                        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                          登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
+                        </Text>
                         <Button
                           type="primary"
                           icon={<FormOutlined />}
@@ -1065,9 +1115,6 @@ export const JyucyuMasterPage: React.FC = () => {
                         >
                           新規登録フォームへ
                         </Button>
-                        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                          登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
-                        </Text>
                       </Space>
                     </Col>
                   </Row>
@@ -1100,96 +1147,6 @@ export const JyucyuMasterPage: React.FC = () => {
             },
           ]}
         />
-
-      {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1780C 印刷指定 - F8)
-          ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#2563eb' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1780C 受注先マスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={handleExecutePrint}
-            style={{ background: '#2563eb', borderColor: '#2563eb' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            帳票に出力する受注先コードの範囲を指定してください。
-          </Text>
-          <Row gutter={16} align="middle">
-            <Col span={10}>
-              <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                開始コード
-              </Text>
-              <InputNumber
-                min={1}
-                max={999999}
-                value={printStartCode}
-                onChange={(v) => setPrintStartCode(v || 1)}
-                style={{ width: '100%', fontFamily: 'monospace' }}
-              />
-            </Col>
-            <Col span={4} style={{ textAlign: 'center', marginTop: 22 }}>
-              <Text strong style={{ fontSize: 16 }}>
-                ～
-              </Text>
-            </Col>
-            <Col span={10}>
-              <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                終了コード
-              </Text>
-              <InputNumber
-                min={1}
-                max={999999}
-                value={printEndCode}
-                onChange={(v) => setPrintEndCode(v || 999999)}
-                style={{ width: '100%', fontFamily: 'monospace' }}
-              />
-            </Col>
-          </Row>
-          <div
-            style={{
-              marginTop: 20,
-              background: '#f8fafc',
-              padding: 12,
-              borderRadius: 8,
-              border: '1px solid #e2e8f0',
-              fontSize: 12,
-              color: '#475569',
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              ※ 印刷実行を押すと、指定範囲の受注先一覧表レイアウトでブラウザ印刷ダイアログが開きます。
-            </p>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
