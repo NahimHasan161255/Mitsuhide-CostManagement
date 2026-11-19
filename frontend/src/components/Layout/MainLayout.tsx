@@ -40,7 +40,7 @@ import type { MenuProps } from 'antd';
 import { useDeviceType } from '../../hooks/useDeviceType';
 import { useAuth } from '../../context/AuthContext';
 
-const { Header, Content, Sider, Footer } = Layout;
+const { Header, Content, Sider } = Layout;
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -773,21 +773,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
           >
             {children}
           </Content>
-
-          {/* Modern Elegant Footer */}
-          <Footer
-            style={{
-              textAlign: 'center',
-              color: '#94a3b8',
-              padding: '16px 28px',
-              fontSize: 12,
-              background: 'transparent',
-              borderTop: '1px solid #e2e8f0',
-              flexShrink: 0,
-            }}
-          >
-            株式会社ミツヒデ 原価管理システム Web版 ©{currentTime.getFullYear()} All Rights Reserved. | SQL Server 2019 Express
-          </Footer>
         </div>
       </Layout>
     </Layout>
