@@ -39,6 +39,7 @@ import { apiClient } from '../../api/client';
 import type { Jyucyu, PagedResult } from '../../types/master';
 import { exportToCsv } from '../../utils/csvExport';
 import { useDebounce } from '../../hooks/useDebounce';
+import { JyucyuPrintReport } from '../../components/Print/JyucyuPrintReport';
 
 const { Text } = Typography;
 
@@ -79,6 +80,7 @@ export const JyucyuMasterPage: React.FC = () => {
   // Code Range Filter State for Tab 2
   const [startCode, setStartCode] = useState<number | undefined>(undefined);
   const [endCode, setEndCode] = useState<number | undefined>(undefined);
+  const [printItems, setPrintItems] = useState<Jyucyu[]>([]);
   const [isSearchingZip, setIsSearchingZip] = useState(false);
 
   // Fetch Master Data
@@ -397,12 +399,24 @@ export const JyucyuMasterPage: React.FC = () => {
     }
   };
 
-  // Direct Print (F8) - Directly triggers browser print without modal
-  const handleDirectPrint = () => {
-    message.info('印刷ダイアログを開きます。');
+  // Direct Print (F8) - Fetches all records for the filter and triggers browser print
+  const handleDirectPrint = async () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1 });
+    let printableData = data;
+    try {
+      const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
+        params: { page: 1, pageSize: 5000, keyword: debouncedKeyword, startCode, endCode },
+      });
+      if (res.data.items && res.data.items.length > 0) {
+        printableData = res.data.items;
+      }
+    } catch {
+      printableData = data;
+    }
+    setPrintItems(printableData);
     setTimeout(() => {
       window.print();
-    }, 200);
+    }, 250);
   };
 
   // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
@@ -1134,6 +1148,17 @@ export const JyucyuMasterPage: React.FC = () => {
             },
           ]}
         />
+
+      {/* ========================================================
+          A4 LANDSCAPE PRINTABLE REPORT (AD1780C SPECIFICATION)
+          Hidden on screen, rendered in browser print preview
+          ======================================================== */}
+      <JyucyuPrintReport
+        items={printItems.length > 0 ? printItems : data}
+        startCode={startCode}
+        endCode={endCode}
+        keyword={debouncedKeyword}
+      />
     </div>
   );
 };

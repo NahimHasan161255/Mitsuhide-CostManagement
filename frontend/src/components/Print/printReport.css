@@ -1,0 +1,205 @@
+/* ==========================================================================
+   PRINT REPORT STYLESHEET (AD17xxP MASTER REPORTS - A4 LANDSCAPE)
+   Official Mitsuhide Cost Management ERP Report Specification
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   SCREEN PREVIEW MODE: Hidden in normal web view
+   -------------------------------------------------------------------------- */
+@media screen {
+  .erp-print-container {
+    display: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   PRINT MODE (@media print): Formal A4 Landscape Output
+   -------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
+  /* Reset body and background */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: "Meiryo", "MS Gothic", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide the entire web application root during print */
+  #root {
+    display: none !important;
+  }
+
+  /* Also hide any floating portals like modals, popups, tooltips */
+  .ant-modal-root,
+  .ant-message,
+  .ant-notification,
+  .ant-tooltip,
+  .ant-dropdown,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show Print Container as the only top-level element */
+  .erp-print-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  /* Page Break per A4 Sheet */
+  .erp-print-page {
+    width: 100%;
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box;
+    padding-bottom: 6mm;
+  }
+
+  .erp-print-page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Report Header */
+  .erp-print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 6px;
+    border-bottom: 2px solid #000000;
+    padding-bottom: 4px;
+  }
+
+  .erp-print-header-id {
+    font-size: 11pt;
+    font-weight: 700;
+    font-family: "Courier New", Courier, monospace;
+    width: 25%;
+  }
+
+  .erp-print-header-title {
+    font-size: 16pt;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 6px;
+    width: 50%;
+  }
+
+  .erp-print-header-meta {
+    font-size: 8.5pt;
+    text-align: right;
+    width: 25%;
+    line-height: 1.4;
+  }
+
+  /* Master Table */
+  .erp-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    line-height: 1.35;
+    border: 1.5px solid #000000;
+  }
+
+  .erp-print-table th,
+  .erp-print-table td {
+    padding: 3px 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    box-sizing: border-box;
+  }
+
+  /* Table Header */
+  .erp-print-table thead {
+    display: table-header-group;
+  }
+
+  .erp-print-table thead tr {
+    background-color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 7.5pt;
+    font-weight: 700;
+  }
+
+  .erp-print-table thead tr.th-top {
+    border-top: 1.5px solid #000000;
+    border-bottom: 1px dotted #94a3b8;
+  }
+
+  .erp-print-table thead tr.th-sub {
+    border-bottom: 1px dotted #94a3b8;
+  }
+
+  .erp-print-table thead tr.th-bot {
+    border-bottom: 2px solid #000000;
+  }
+
+  .erp-print-table thead th {
+    border-left: 1px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    text-align: left;
+    color: #0f172a;
+  }
+
+  /* Record Rows */
+  .erp-print-table tbody tr.sub-row {
+    border-bottom: 1px dotted #e2e8f0;
+  }
+
+  .erp-print-table tbody tr.sub-row-last {
+    border-bottom: 1.5px solid #000000;
+  }
+
+  .erp-print-table td {
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+  }
+
+  .erp-print-table td.code-cell {
+    border-right: 1.5px solid #000000;
+    text-align: center;
+    vertical-align: middle;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 11pt;
+    background-color: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .erp-print-val {
+    color: #000000;
+    font-weight: 500;
+  }
+
+  .erp-print-val-bold {
+    color: #000000;
+    font-weight: 700;
+  }
+
+  /* Report Footer */
+  .erp-print-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    margin-top: 4px;
+    border-top: 1px solid #000000;
+    padding-top: 3px;
+    color: #334155;
+  }
+}
