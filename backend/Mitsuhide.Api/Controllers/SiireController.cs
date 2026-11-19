@@ -26,6 +26,16 @@ public class SiireController : ControllerBase
     {
         var query = _context.SiireMaster.AsNoTracking();
 
+        if (request.StartCode.HasValue)
+        {
+            query = query.Where(x => x.Code >= request.StartCode.Value);
+        }
+
+        if (request.EndCode.HasValue)
+        {
+            query = query.Where(x => x.Code <= request.EndCode.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Keyword))
         {
             var kw = request.Keyword.Trim();

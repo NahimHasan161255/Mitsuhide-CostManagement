@@ -532,6 +532,7 @@ export const SysNameMasterPage: React.FC = () => {
                         </Text>
                         <Select
                           value={mode}
+                          disabled={false}
                           onChange={(val) => {
                             setMode(val);
                             if (val === 'new') handleClearForm();
@@ -690,6 +691,7 @@ export const SysNameMasterPage: React.FC = () => {
                       <Button
                         className="erp-bottom-action-btn"
                         icon={<ClearOutlined />}
+                        disabled={false}
                         onClick={handleClearForm}
                         style={{ fontWeight: 600 }}
                       >
@@ -698,6 +700,7 @@ export const SysNameMasterPage: React.FC = () => {
                       <Button
                         className="erp-bottom-action-btn"
                         icon={<UndoOutlined />}
+                        disabled={false}
                         onClick={() => {
                           if (currentRecord) form.setFieldsValue(currentRecord);
                           else handleClearForm();
@@ -725,6 +728,7 @@ export const SysNameMasterPage: React.FC = () => {
                       <Button
                         className="erp-bottom-action-btn"
                         icon={<TableOutlined />}
+                        disabled={false}
                         onClick={() => setActiveTab('list')}
                         style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
                       >
