@@ -431,6 +431,144 @@ html, body, #root {
   font-size: clamp(20px, 2.2vw, 26px) !important;
 }
 
+/* Master Form Top Control Bar (処理区分 & Code Inputs) */
+.master-top-control-bar .master-control-label {
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  color: #0f172a !important;
+}
+
+.master-top-control-bar .ant-select-selector,
+.master-top-control-bar .ant-select-selection-item,
+.master-top-control-bar .ant-input,
+.master-top-control-bar .ant-input-number-input,
+.master-top-control-bar input {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.master-top-control-bar .ant-input[disabled],
+.master-top-control-bar .ant-input-number-disabled .ant-input-number-input,
+.master-top-control-bar .ant-select-disabled .ant-select-selection-item {
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  -webkit-text-fill-color: #1e293b !important;
+}
+
+/* ==============================================================
+   Modern Segmented Pill Tabs (Idea 1: Apple / Stripe / Linear Style)
+   ============================================================== */
+.erp-modern-pill-tabs > .ant-tabs-nav {
+  margin-bottom: 16px !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav::before {
+  display: none !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-ink-bar {
+  display: none !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-nav-wrap {
+  overflow: visible !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-nav-list {
+  background: linear-gradient(180deg, #eef2f6 0%, #f1f5f9 100%) !important;
+  padding: 6px !important;
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+  gap: 6px !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab {
+  margin: 0 !important;
+  padding: 8px 18px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab:hover {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab .ant-tabs-tab-btn {
+  color: #64748b !important;
+  font-weight: 600 !important;
+  transition: color 0.2s ease !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab:hover .ant-tabs-tab-btn {
+  color: #1e293b !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab-active {
+  background: #ffffff !important;
+  border: 1px solid rgba(37, 99, 235, 0.22) !important;
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(37, 99, 235, 0.08) !important;
+}
+
+.erp-modern-pill-tabs > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+.erp-tab-label-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.erp-tab-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: #e2e8f0;
+  color: #64748b;
+  transition: all 0.22s ease;
+}
+
+.ant-tabs-tab-active .erp-tab-icon-badge.form-icon {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
+}
+
+.ant-tabs-tab-active .erp-tab-icon-badge.list-icon {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+}
+
+.erp-tab-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #475569;
+  transition: all 0.22s ease;
+}
+
+.ant-tabs-tab-active .erp-tab-count-pill {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
 /* Table Cell Content Safety & Tag Protection */
 .ant-table-cell {
   word-break: break-word;

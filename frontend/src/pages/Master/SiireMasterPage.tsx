@@ -15,7 +15,6 @@ import {
   Typography,
   Select,
   Tabs,
-  Badge,
   Tooltip,
   Modal,
   Divider,
@@ -33,7 +32,6 @@ import {
   UndoOutlined,
   EditOutlined,
   EyeOutlined,
-  SolutionOutlined,
   ReloadOutlined,
   PrinterOutlined,
   CompassOutlined,
@@ -44,7 +42,7 @@ import type { Siire, PagedResult } from '../../types/master';
 import { exportToCsv } from '../../utils/csvExport';
 import { useDebounce } from '../../hooks/useDebounce';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 // Initial Default Values per AD1790C Specification (移送項目表)
 const INITIAL_FORM_VALUES: Partial<Siire> = {
@@ -583,94 +581,64 @@ export const SiireMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          SCREEN TITLE & HIGH-LEVEL ERP METADATA BAR (CARD 1)
+          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
           ============================================================== */}
-      <Card bodyStyle={{ padding: '16px 24px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Row justify="space-between" align="middle" gutter={[16, 16]}>
-          <Col>
-            <Space align="center" size={14}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.15)',
-                }}
-              >
-                <SolutionOutlined style={{ fontSize: 24, color: '#059669' }} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Title level={4} style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>
-                    仕入先マスタメンテナンス (AD1790C)
-                  </Title>
-                  <Tag color="green" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
-                    マスタ
-                  </Tag>
-                  {activeTab === 'form' && (
-                    <Tag
-                      color={mode === 'new' ? 'success' : mode === 'edit' ? 'warning' : 'processing'}
-                      style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}
-                    >
-                      {mode === 'new' ? '【新規登録モード】' : mode === 'edit' ? '【修正モード】' : '【照会モード】'}
-                    </Tag>
-                  )}
-                </div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  外注加工先・資材仕入先・下請企業の基本台帳および支払・振込口座・締日を一括管理します。
-                </Text>
-              </div>
-            </Space>
-          </Col>
-
-          {/* Quick Stats / Header Actions */}
-          <Col>
-            <Space size={10} wrap>
-              <Tooltip title="F8キーでも実行できます">
-                <Button icon={<PrinterOutlined />} onClick={handleOpenPrintModal} style={{ fontWeight: 600 }}>
-                  (F8) 印刷
-                </Button>
-              </Tooltip>
-              <Tooltip title="F6キーでも実行できます">
-                <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                  (F6) CSV出力
-                </Button>
-              </Tooltip>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  fetchData();
-                  message.success('マスタデータを再取得しました。');
-                }}
-                loading={loading}
-              />
-            </Space>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* ==============================================================
-          TWO-TAB ARCHITECTURE: Tab 1 (登録・編集) & Tab 2 (データ一覧) (CARD 2)
-          ============================================================== */}
-      <Card bodyStyle={{ padding: '8px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
+      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
         <Tabs
+          className="erp-modern-pill-tabs"
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key as 'form' | 'list')}
           size="large"
+          tabBarExtraContent={
+            activeTab === 'list' ? (
+              <Space size={10} wrap>
+                <Tooltip title="F8キーでも実行できます">
+                  <Button icon={<PrinterOutlined />} onClick={handleOpenPrintModal} style={{ fontWeight: 600 }}>
+                    (F8) 印刷
+                  </Button>
+                </Tooltip>
+                <Tooltip title="F6キーでも実行できます">
+                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
+                    (F6) CSV出力
+                  </Button>
+                </Tooltip>
+                <Tooltip title="マスタデータを再取得">
+                  <Button
+                    icon={<ReloadOutlined />}
+                    onClick={() => {
+                      fetchData();
+                      message.success('マスタデータを再取得しました。');
+                    }}
+                    loading={loading}
+                  />
+                </Tooltip>
+              </Space>
+            ) : null
+          }
           items={[
             {
               key: 'form',
               label: (
-                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
-                  <FormOutlined style={{ marginRight: 6 }} />
-                  登録・編集フォーム (AD1790C)
-                  {mode === 'new' && <Tag color="green" style={{ marginLeft: 8 }}>新規</Tag>}
-                  {mode === 'edit' && <Tag color="blue" style={{ marginLeft: 8 }}>修正: #{currentRecord?.code}</Tag>}
-                  {mode === 'inquiry' && <Tag color="orange" style={{ marginLeft: 8 }}>照会</Tag>}
+                <span className="erp-tab-label-wrap">
+                  <span className="erp-tab-icon-badge form-icon">
+                    <FormOutlined />
+                  </span>
+                  <span>登録・編集フォーム (AD1790C)</span>
+                  {mode === 'new' && (
+                    <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      新規
+                    </Tag>
+                  )}
+                  {mode === 'edit' && (
+                    <Tag color="blue" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      修正: #{currentRecord?.code}
+                    </Tag>
+                  )}
+                  {mode === 'inquiry' && (
+                    <Tag color="orange" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
+                      照会
+                    </Tag>
+                  )}
                 </span>
               ),
               children: (
@@ -686,6 +654,7 @@ export const SiireMasterPage: React.FC = () => {
                 >
                   {/* Top Form Navigation & Mode Selector Bar */}
                   <div
+                    className="master-top-control-bar"
                     style={{
                       background: '#f8fafc',
                       padding: '12px 18px',
@@ -701,7 +670,7 @@ export const SiireMasterPage: React.FC = () => {
                   >
                     <Space size={14} align="center">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                        <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           処理区分:
                         </Text>
                         <Select
@@ -710,17 +679,17 @@ export const SiireMasterPage: React.FC = () => {
                             setMode(val);
                             if (val === 'new') handleClearForm();
                           }}
-                          style={{ width: 140 }}
+                          style={{ width: 145, fontWeight: 700 }}
                           options={[
-                            { value: 'new', label: '1: 新規登録' },
-                            { value: 'edit', label: '2: データ修正' },
-                            { value: 'inquiry', label: '4: 照会 (閲覧)' },
+                            { value: 'new', label: '新規登録' },
+                            { value: 'edit', label: 'データ修正' },
+                            { value: 'inquiry', label: '照会 (閲覧)' },
                           ]}
                         />
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Text strong style={{ fontSize: 13, color: '#475569' }}>
+                        <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           仕入先コード:
                         </Text>
                         <Form.Item name="code" noStyle rules={[{ required: true, message: 'コード必須' }]}>
@@ -730,18 +699,9 @@ export const SiireMasterPage: React.FC = () => {
                             placeholder="例: 2001"
                             disabled={mode !== 'new'}
                             onBlur={(e) => handleCheckCode(Number(e.target.value))}
-                            style={{ width: 130, fontFamily: 'monospace', fontWeight: 700 }}
+                            style={{ width: 130, fontFamily: 'monospace', fontWeight: 700, color: '#0f172a' }}
                           />
                         </Form.Item>
-                        <Tooltip title="データ一覧から仕入先を選択 (F5)">
-                          <Button
-                            icon={<SearchOutlined />}
-                            onClick={() => setActiveTab('list')}
-                            style={{ fontWeight: 600 }}
-                          >
-                            一覧から選択
-                          </Button>
-                        </Tooltip>
                       </div>
 
                       <div>
@@ -763,8 +723,8 @@ export const SiireMasterPage: React.FC = () => {
                       <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
                         (F9) 前データ
                       </Button>
-                      <Button icon={<RightOutlined />} onClick={handleNextRecord} disabled={data.length === 0}>
-                        (F10) 次データ
+                      <Button onClick={handleNextRecord} disabled={data.length === 0}>
+                        (F10) 次データ <RightOutlined />
                       </Button>
                     </Space>
                   </div>
@@ -776,7 +736,7 @@ export const SiireMasterPage: React.FC = () => {
                     style={{ marginBottom: 16, borderRadius: 8 }}
                   >
                     <Row gutter={16}>
-                      <Col xs={24} md={10}>
+                      <Col xs={24} md={8}>
                         <Form.Item
                           name="name"
                           label="仕入先名 (全角40文字以内)"
@@ -785,14 +745,19 @@ export const SiireMasterPage: React.FC = () => {
                           <Input placeholder="例: 新日鉄住金鋼材（株）" maxLength={40} />
                         </Form.Item>
                       </Col>
-                      <Col xs={24} md={5}>
+                      <Col xs={24} md={4}>
                         <Form.Item name="ryaku" label="略称 (全角16文字以内)">
                           <Input placeholder="例: 新日鉄鋼材" maxLength={16} />
                         </Form.Item>
                       </Col>
-                      <Col xs={24} md={5}>
+                      <Col xs={24} md={4}>
                         <Form.Item name="kana" label="カナ名 (半角カナ20文字以内)">
                           <Input placeholder="例: ｼﾝﾆﾂﾃﾂ" maxLength={20} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={4}>
+                        <Form.Item name="sekinin" label="責任者・ご担当者名">
+                          <Input placeholder="例: 加藤 健" maxLength={30} />
                         </Form.Item>
                       </Col>
                       <Col xs={24} md={4}>
@@ -803,11 +768,6 @@ export const SiireMasterPage: React.FC = () => {
                     </Row>
 
                     <Row gutter={16}>
-                      <Col xs={24} md={6}>
-                        <Form.Item name="sekinin" label="責任者・ご担当者名">
-                          <Input placeholder="例: 加藤 健" maxLength={30} />
-                        </Form.Item>
-                      </Col>
                       <Col xs={24} md={6}>
                         <Form.Item name="yubin" label="郵便番号 (ハイフン付)">
                           <Space.Compact style={{ width: '100%' }}>
@@ -823,6 +783,19 @@ export const SiireMasterPage: React.FC = () => {
                           </Space.Compact>
                         </Form.Item>
                       </Col>
+                      <Col xs={24} md={9}>
+                        <Form.Item name="jyusyo1" label="住所１ (都道府県・市区町村・番地)">
+                          <Input placeholder="例: 愛知県名古屋市中区錦" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={9}>
+                        <Form.Item name="jyusyo2" label="住所２ (ビル名・階数)">
+                          <Input placeholder="例: 1-1-1 鋼材ビル 8F" maxLength={40} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Row gutter={16}>
                       <Col xs={24} md={6}>
                         <Form.Item name="tel" label="電話番号 (TEL)">
                           <Input placeholder="例: 052-777-1111" maxLength={13} />
@@ -833,23 +806,7 @@ export const SiireMasterPage: React.FC = () => {
                           <Input placeholder="例: 052-777-1112" maxLength={13} />
                         </Form.Item>
                       </Col>
-                    </Row>
-
-                    <Row gutter={16}>
                       <Col xs={24} md={12}>
-                        <Form.Item name="jyusyo1" label="住所１ (都道府県・市区町村・番地)">
-                          <Input placeholder="例: 愛知県名古屋市中区錦" maxLength={40} />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item name="jyusyo2" label="住所２ (ビル名・階数)">
-                          <Input placeholder="例: 1-1-1 鋼材ビル 8F" maxLength={40} />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                      <Col span={24}>
                         <Form.Item name="mail" label="代表メールアドレス">
                           <Input placeholder="例: info@shinnittetsu-steel.example.co.jp" maxLength={40} />
                         </Form.Item>
@@ -1042,22 +999,6 @@ export const SiireMasterPage: React.FC = () => {
                     </Space>
 
                     <Space size={10} wrap>
-                      <Button
-                        size="large"
-                        icon={<PrinterOutlined />}
-                        onClick={handleOpenPrintModal}
-                        style={{ fontWeight: 600 }}
-                      >
-                        (F8) 印刷
-                      </Button>
-                      <Button
-                        size="large"
-                        icon={<DownloadOutlined />}
-                        onClick={handleExportCsv}
-                        style={{ fontWeight: 600 }}
-                      >
-                        (F6) CSV
-                      </Button>
                       {mode === 'edit' && currentRecord && (
                         <Popconfirm
                           title="削除の確認"
@@ -1088,10 +1029,12 @@ export const SiireMasterPage: React.FC = () => {
             {
               key: 'list',
               label: (
-                <span style={{ fontWeight: 700, fontSize: 14, padding: '0 8px' }}>
-                  <TableOutlined style={{ marginRight: 6 }} />
-                  データ一覧・検索 (frm_sel_siire)
-                  <Badge count={total} overflowCount={9999} style={{ backgroundColor: '#10b981', marginLeft: 8 }} />
+                <span className="erp-tab-label-wrap">
+                  <span className="erp-tab-icon-badge list-icon">
+                    <TableOutlined />
+                  </span>
+                  <span>データ一覧・検索 (frm_sel_siire)</span>
+                  <span className="erp-tab-count-pill">{total} 件</span>
                 </span>
               ),
               children: (

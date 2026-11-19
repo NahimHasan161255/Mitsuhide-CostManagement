@@ -478,41 +478,169 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, activeMenu, on
             </Tooltip>
 
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span
-                  className="erp-header-title"
-                  style={{
-                    fontSize: isMobile ? 14 : isTablet ? 15 : 16,
-                    fontWeight: 700,
-                    color: '#0f172a',
-                    letterSpacing: '-0.01em',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                  title="株式会社ミツヒデ 原価管理システム"
-                >
-                  {isMobile ? 'ミツヒデ 原価管理' : isTablet ? '株式会社ミツヒデ 原価管理' : '株式会社ミツヒデ 原価管理システム'}
-                </span>
-                {!isMobile && (
-                  <Tag
-                    color="blue"
-                    className="erp-header-status-tag"
-                    style={{
-                      borderRadius: 12,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      border: '1px solid #bfdbfe',
-                      background: '#eff6ff',
-                      color: '#1d4ed8',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
-                    稼働中 (R8)
-                  </Tag>
-                )}
-              </div>
+              {(() => {
+                const pageHeaderMeta: Record<
+                  string,
+                  { title: string; shortTitle: string; category: string; tagColor: string; icon: React.ReactNode; iconBg: string }
+                > = {
+                  ad1780c: {
+                    title: '受注先マスタメンテナンス (AD1780C)',
+                    shortTitle: '受注先マスタ (AD1780C)',
+                    category: 'マスタ',
+                    tagColor: 'blue',
+                    icon: <ShopOutlined style={{ fontSize: 18, color: '#2563eb' }} />,
+                    iconBg: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                  },
+                  ad1790c: {
+                    title: '仕入先マスタメンテナンス (AD1790C)',
+                    shortTitle: '仕入先マスタ (AD1790C)',
+                    category: 'マスタ',
+                    tagColor: 'green',
+                    icon: <SolutionOutlined style={{ fontSize: 18, color: '#10b981' }} />,
+                    iconBg: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                  },
+                  ad1730c: {
+                    title: 'ユーザマスタメンテナンス (AD1730C)',
+                    shortTitle: 'ユーザマスタ (AD1730C)',
+                    category: 'マスタ',
+                    tagColor: 'purple',
+                    icon: <TeamOutlined style={{ fontSize: 18, color: '#9333ea' }} />,
+                    iconBg: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+                  },
+                  ad1720c: {
+                    title: 'ユーザグループマスタメンテナンス (AD1720C)',
+                    shortTitle: 'グループマスタ (AD1720C)',
+                    category: 'システム',
+                    tagColor: 'cyan',
+                    icon: <TeamOutlined style={{ fontSize: 18, color: '#0891b2' }} />,
+                    iconBg: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 100%)',
+                  },
+                  ad1740c: {
+                    title: 'プログラムマスタメンテナンス (AD1740C)',
+                    shortTitle: 'プログラムマスタ (AD1740C)',
+                    category: 'システム',
+                    tagColor: 'geekblue',
+                    icon: <AppstoreOutlined style={{ fontSize: 18, color: '#0284c7' }} />,
+                    iconBg: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                  },
+                  ad1750c: {
+                    title: 'メッセージマスタメンテナンス (AD1750C)',
+                    shortTitle: 'メッセージマスタ (AD1750C)',
+                    category: 'システム',
+                    tagColor: 'magenta',
+                    icon: <MessageOutlined style={{ fontSize: 18, color: '#c026d3' }} />,
+                    iconBg: 'linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%)',
+                  },
+                  ad1760c: {
+                    title: 'システム名称マスタメンテナンス (AD1760C)',
+                    shortTitle: 'システム名称マスタ (AD1760C)',
+                    category: 'システム',
+                    tagColor: 'orange',
+                    icon: <TagsOutlined style={{ fontSize: 18, color: '#d97706' }} />,
+                    iconBg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                  },
+                  ad1770c: {
+                    title: '処理基準管理マスタメンテナンス (AD1770C)',
+                    shortTitle: '処理基準管理マスタ (AD1770C)',
+                    category: 'システム',
+                    tagColor: 'volcano',
+                    icon: <ControlOutlined style={{ fontSize: 18, color: '#db2777' }} />,
+                    iconBg: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+                  },
+                };
+
+                const currentMeta = pageHeaderMeta[activeMenu];
+
+                if (currentMeta) {
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div
+                        style={{
+                          width: 34,
+                          height: 34,
+                          borderRadius: 9,
+                          background: currentMeta.iconBg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          border: '1px solid rgba(15, 23, 42, 0.06)',
+                        }}
+                      >
+                        {currentMeta.icon}
+                      </div>
+                      <span
+                        className="erp-header-title"
+                        style={{
+                          fontSize: isMobile ? 14 : isTablet ? 15 : 17,
+                          fontWeight: 800,
+                          color: '#0f172a',
+                          letterSpacing: '-0.01em',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        title={currentMeta.title}
+                      >
+                        {isMobile ? currentMeta.shortTitle : currentMeta.title}
+                      </span>
+                      {!isMobile && (
+                        <Tag
+                          color={currentMeta.tagColor}
+                          style={{
+                            borderRadius: 6,
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            padding: '1px 8px',
+                            margin: 0,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {currentMeta.category}
+                        </Tag>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span
+                      className="erp-header-title"
+                      style={{
+                        fontSize: isMobile ? 14 : isTablet ? 15 : 16,
+                        fontWeight: 700,
+                        color: '#0f172a',
+                        letterSpacing: '-0.01em',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                      title="株式会社ミツヒデ 原価管理システム"
+                    >
+                      {isMobile ? 'ミツヒデ 原価管理' : isTablet ? '株式会社ミツヒデ 原価管理' : '株式会社ミツヒデ 原価管理システム'}
+                    </span>
+                    {!isMobile && (
+                      <Tag
+                        color="blue"
+                        className="erp-header-status-tag"
+                        style={{
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          border: '1px solid #bfdbfe',
+                          background: '#eff6ff',
+                          color: '#1d4ed8',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <CheckCircleFilled style={{ color: '#2563eb', marginRight: 4 }} />
+                        稼働中 (R8)
+                      </Tag>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
