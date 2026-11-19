@@ -396,17 +396,36 @@ export const UserMasterPage: React.FC = () => {
     }
   };
 
-  // Export CSV (F6)
+  // Export CSV (F6) - Exports all filtered records, or all database records if no filter
   const handleExportCsv = async () => {
     let exportData = data;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/user?page=1&pageSize=1000`);
+      let url = `${API_BASE_URL}/api/user?page=1&pageSize=5000`;
+      if (debouncedSearchText) url += `&search=${encodeURIComponent(debouncedSearchText)}`;
+      if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
+      if (startUserCd) url += `&startUserCd=${encodeURIComponent(startUserCd)}`;
+      if (endUserCd) url += `&endUserCd=${encodeURIComponent(endUserCd)}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         if (json.items && json.items.length > 0) exportData = json.items;
       }
     } catch {
       // Fallback
+      let filtered = data;
+      if (startUserCd) filtered = filtered.filter((x) => x.userCd >= startUserCd.padStart(6, '0'));
+      if (endUserCd) filtered = filtered.filter((x) => x.userCd <= endUserCd.padStart(6, '0'));
+      if (debouncedSearchText) {
+        filtered = filtered.filter(
+          (x) =>
+            x.userName.includes(debouncedSearchText) ||
+            x.userCd.includes(debouncedSearchText) ||
+            (x.userNameK && x.userNameK.includes(debouncedSearchText))
+        );
+      }
+      if (selectedGrp) filtered = filtered.filter((x) => x.userGrpCd === selectedGrp);
+      exportData = filtered;
     }
 
     if (!exportData || exportData.length === 0) {

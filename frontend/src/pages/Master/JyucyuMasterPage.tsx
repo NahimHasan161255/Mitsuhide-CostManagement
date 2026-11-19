@@ -314,18 +314,40 @@ export const JyucyuMasterPage: React.FC = () => {
     }
   };
 
-  // Export CSV (F6)
+  // Export CSV (F6) - Exports all filtered records, or all database records if no filter
   const handleExportCsv = async () => {
     let exportData = data;
     try {
       const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
-        params: { page: 1, pageSize: 1000, keyword },
+        params: {
+          page: 1,
+          pageSize: 5000,
+          keyword: debouncedKeyword,
+          startCode,
+          endCode,
+        },
       });
       if (res.data?.items && res.data.items.length > 0) {
         exportData = res.data.items;
       }
     } catch {
-      // Fallback to loaded data
+      // Fallback: filter loaded data
+      let filtered = data;
+      if (startCode !== undefined && startCode !== null) {
+        filtered = filtered.filter((x) => x.code >= startCode);
+      }
+      if (endCode !== undefined && endCode !== null) {
+        filtered = filtered.filter((x) => x.code <= endCode);
+      }
+      if (debouncedKeyword) {
+        filtered = filtered.filter(
+          (x) =>
+            x.name.includes(debouncedKeyword) ||
+            String(x.code).includes(debouncedKeyword) ||
+            (x.kana && x.kana.includes(debouncedKeyword))
+        );
+      }
+      exportData = filtered;
     }
 
     if (!exportData || exportData.length === 0) {

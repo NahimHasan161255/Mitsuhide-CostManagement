@@ -334,18 +334,40 @@ export const SiireMasterPage: React.FC = () => {
     }
   };
 
-  // Export CSV (F6)
+  // Export CSV (F6) - Exports all filtered records, or all database records if no filter
   const handleExportCsv = async () => {
     let exportData = data;
     try {
       const res = await apiClient.get<PagedResult<Siire>>('/siire', {
-        params: { page: 1, pageSize: 1000, keyword },
+        params: {
+          page: 1,
+          pageSize: 5000,
+          keyword: debouncedKeyword,
+          startCode,
+          endCode,
+        },
       });
       if (res.data?.items && res.data.items.length > 0) {
         exportData = res.data.items;
       }
     } catch {
       // Fallback
+      let filtered = data;
+      if (startCode !== undefined && startCode !== null) {
+        filtered = filtered.filter((x) => x.code >= startCode);
+      }
+      if (endCode !== undefined && endCode !== null) {
+        filtered = filtered.filter((x) => x.code <= endCode);
+      }
+      if (debouncedKeyword) {
+        filtered = filtered.filter(
+          (x) =>
+            x.name.includes(debouncedKeyword) ||
+            String(x.code).includes(debouncedKeyword) ||
+            (x.gyousyu && x.gyousyu.includes(debouncedKeyword))
+        );
+      }
+      exportData = filtered;
     }
 
     if (!exportData || exportData.length === 0) {
