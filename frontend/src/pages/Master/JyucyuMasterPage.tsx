@@ -557,19 +557,22 @@ export const JyucyuMasterPage: React.FC = () => {
         size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
-              <Space size={10} wrap>
+              <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button icon={<PrinterOutlined />} onClick={handleOpenPrintModal} style={{ fontWeight: 600 }}>
-                    (F8) 印刷
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleOpenPrintModal}>
+                    <span className="erp-btn-shortcut">(F8) </span>
+                    <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="F6キーでも実行できます">
-                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                    (F6) CSV出力
+                  <Button className="erp-tab-action-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                    <span className="erp-btn-shortcut">(F6) </span>
+                    <span className="erp-btn-text-mobile-hide">CSV出力</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="マスタデータを再取得">
                   <Button
+                    className="erp-tab-action-btn"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       fetchData();
@@ -686,10 +689,10 @@ export const JyucyuMasterPage: React.FC = () => {
                     {/* Sequential Navigation Buttons (F9, F10) */}
                     <Space size={8}>
                       <Button icon={<LeftOutlined />} onClick={handlePrevRecord} disabled={data.length === 0}>
-                        (F9) 前データ
+                        <span className="erp-btn-shortcut">(F9) </span>前データ
                       </Button>
                       <Button onClick={handleNextRecord} disabled={data.length === 0}>
-                        (F10) 次データ <RightOutlined />
+                        <span className="erp-btn-shortcut">(F10) </span>次データ <RightOutlined />
                       </Button>
                     </Space>
                   </div>
@@ -959,7 +962,7 @@ export const JyucyuMasterPage: React.FC = () => {
                         disabled={mode === 'inquiry'}
                         style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 700 }}
                       >
-                        (F1) 登録・保存
+                        <span className="erp-btn-shortcut">(F1) </span>登録・保存
                       </Button>
                       <Button
                         size="large"
@@ -967,7 +970,7 @@ export const JyucyuMasterPage: React.FC = () => {
                         onClick={handleClearForm}
                         style={{ fontWeight: 600 }}
                       >
-                        (F2) クリア
+                        <span className="erp-btn-shortcut">(F2) </span>クリア
                       </Button>
                       <Button
                         size="large"
@@ -977,7 +980,7 @@ export const JyucyuMasterPage: React.FC = () => {
                           else handleClearForm();
                         }}
                       >
-                        (F11) 取消
+                        <span className="erp-btn-shortcut">(F11) </span>取消
                       </Button>
                     </Space>
 
@@ -992,7 +995,7 @@ export const JyucyuMasterPage: React.FC = () => {
                           okButtonProps={{ danger: true }}
                         >
                           <Button danger size="large" icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
-                            (F7) 削除
+                            <span className="erp-btn-shortcut">(F7) </span>削除
                           </Button>
                         </Popconfirm>
                       )}
@@ -1002,7 +1005,7 @@ export const JyucyuMasterPage: React.FC = () => {
                         onClick={() => setActiveTab('list')}
                         style={{ fontWeight: 600, background: '#1e293b', color: '#fff', borderColor: '#334155' }}
                       >
-                        (F5) 一覧照会へ
+                        <span className="erp-btn-shortcut">(F5) </span>一覧照会へ
                       </Button>
                     </Space>
                   </div>

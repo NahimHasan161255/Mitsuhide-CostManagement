@@ -401,19 +401,22 @@ export const MessageMasterPage: React.FC = () => {
         size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
-              <Space size={10} wrap>
+              <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)} style={{ fontWeight: 600 }}>
-                    (F8) 印刷
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                    <span className="erp-btn-shortcut">(F8) </span>
+                    <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="F6キーでも実行できます">
-                  <Button icon={<DownloadOutlined />} onClick={handleExportCsv} style={{ fontWeight: 600 }}>
-                    (F6) CSV出力
+                  <Button className="erp-tab-action-btn" icon={<DownloadOutlined />} onClick={handleExportCsv}>
+                    <span className="erp-btn-shortcut">(F6) </span>
+                    <span className="erp-btn-text-mobile-hide">CSV出力</span>
                   </Button>
                 </Tooltip>
                 <Tooltip title="マスタデータを再取得">
                   <Button
+                    className="erp-tab-action-btn"
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       setData(SEED_MESSAGES);
