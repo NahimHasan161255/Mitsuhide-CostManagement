@@ -908,17 +908,17 @@ export const SiireMasterPage: React.FC = () => {
                     style={{ marginBottom: 20, borderRadius: 8 }}
                   >
                     <Row gutter={16}>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko1" label="備考１ (全角60文字以内)">
                           <Input placeholder="仕入条件・特記事項・契約メモなど" maxLength={60} />
                         </Form.Item>
                       </Col>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko2" label="備考２ (全角60文字以内)">
                           <Input placeholder="追加メモ２" maxLength={60} />
                         </Form.Item>
                       </Col>
-                      <Col span={24}>
+                      <Col xs={24} md={8}>
                         <Form.Item name="biko3" label="備考３ (全角60文字以内)">
                           <Input placeholder="追加メモ３" maxLength={60} />
                         </Form.Item>
