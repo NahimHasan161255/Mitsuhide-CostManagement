@@ -547,14 +547,14 @@ export const JyucyuMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
+          UNIFIED WORKSPACE: True Folder Index Tabs & Content Container
           ============================================================== */}
-      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Tabs
-          className="erp-modern-pill-tabs"
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          size="large"
+      <Tabs
+        className="erp-folder-tabs"
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        animated={false}
+        size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
               <Space size={10} wrap>
@@ -589,7 +589,7 @@ export const JyucyuMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge form-icon">
                     <FormOutlined />
                   </span>
-                  <span>登録・編集フォーム (AD1780C)</span>
+                  <span>登録・編集フォーム</span>
                   {mode === 'new' && (
                     <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
                       新規
@@ -633,7 +633,7 @@ export const JyucyuMasterPage: React.FC = () => {
                       gap: 12,
                     }}
                   >
-                    <Space size={14} align="center">
+                    <Space size={14} wrap align="center">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Text strong className="master-control-label" style={{ fontSize: 13.5, fontWeight: 700, color: '#0f172a' }}>
                           処理区分:
@@ -1016,7 +1016,7 @@ export const JyucyuMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge list-icon">
                     <TableOutlined />
                   </span>
-                  <span>データ一覧・検索 (frm_sel_jyutyu)</span>
+                  <span>データ一覧・検索</span>
                   <span className="erp-tab-count-pill">{total} 件</span>
                 </span>
               ),
@@ -1028,7 +1028,7 @@ export const JyucyuMasterPage: React.FC = () => {
                   {/* Search Filter Toolbar */}
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
                     <Col xs={24} sm={16} md={12}>
-                      <Space size={10} style={{ width: '100%' }}>
+                      <Space.Compact style={{ width: '100%', maxWidth: 460 }}>
                         <Input
                           placeholder="受注先コード / 受注先名 / カナ / 電話番号... (リアルタイム検索)"
                           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
@@ -1039,7 +1039,6 @@ export const JyucyuMasterPage: React.FC = () => {
                             fetchData(keyword);
                           }}
                           allowClear
-                          style={{ width: 340 }}
                         />
                         <Button
                           type="primary"
@@ -1053,11 +1052,11 @@ export const JyucyuMasterPage: React.FC = () => {
                         >
                           検索
                         </Button>
-                      </Space>
+                      </Space.Compact>
                     </Col>
 
-                    <Col>
-                      <Space size={10}>
+                    <Col xs={24} sm={8} md={12} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Space size={10} wrap>
                         <Button
                           type="primary"
                           icon={<FormOutlined />}
@@ -1069,7 +1068,7 @@ export const JyucyuMasterPage: React.FC = () => {
                         >
                           新規登録フォームへ
                         </Button>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
+                        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                           登録件数: <strong style={{ color: '#0f172a' }}>{total}</strong> 件
                         </Text>
                       </Space>
@@ -1081,6 +1080,7 @@ export const JyucyuMasterPage: React.FC = () => {
                     columns={columns}
                     dataSource={data}
                     loading={loading}
+                    scroll={{ x: 1000 }}
                     pagination={{
                       current: page,
                       pageSize,
@@ -1103,7 +1103,6 @@ export const JyucyuMasterPage: React.FC = () => {
             },
           ]}
         />
-      </Card>
 
       {/* ========================================================
           MODAL: PRINT SPECIFICATION (AD1780C 印刷指定 - F8)

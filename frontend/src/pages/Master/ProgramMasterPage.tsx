@@ -405,14 +405,14 @@ export const ProgramMasterPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* ==============================================================
-          UNIFIED WORKSPACE CARD: Modern Pill Tabs & Action Toolbar
+          UNIFIED WORKSPACE: True Folder Index Tabs & Content Container
           ============================================================== */}
-      <Card bodyStyle={{ padding: '14px 20px 20px 20px' }} style={{ borderRadius: 12, border: '1px solid #e2e8f0' }}>
-        <Tabs
-          className="erp-modern-pill-tabs"
-          activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as 'form' | 'list')}
-          size="large"
+      <Tabs
+        className="erp-folder-tabs"
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as 'form' | 'list')}
+        animated={false}
+        size="large"
           tabBarExtraContent={
             activeTab === 'list' ? (
               <Space size={10} wrap>
@@ -446,7 +446,7 @@ export const ProgramMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge form-icon">
                     <FormOutlined />
                   </span>
-                  <span>登録・編集フォーム (AD1740C)</span>
+                  <span>登録・編集フォーム</span>
                   {mode === 'new' && (
                     <Tag color="green" style={{ margin: 0, borderRadius: 999, padding: '0 10px', fontWeight: 700 }}>
                       新規
@@ -728,7 +728,7 @@ export const ProgramMasterPage: React.FC = () => {
                   <span className="erp-tab-icon-badge list-icon">
                     <TableOutlined />
                   </span>
-                  <span>データ一覧・検索 (frm_sel_prog)</span>
+                  <span>データ一覧・検索</span>
                   <span className="erp-tab-count-pill">{filteredData.length} 件</span>
                 </span>
               ),
@@ -788,6 +788,7 @@ export const ProgramMasterPage: React.FC = () => {
                     rowKey="progId"
                     columns={columns}
                     dataSource={filteredData}
+                    scroll={{ x: 800 }}
                     pagination={{ pageSize: 15 }}
                     bordered
                     size="middle"
@@ -800,7 +801,6 @@ export const ProgramMasterPage: React.FC = () => {
             },
           ]}
         />
-      </Card>
 
       {/* ========================================================
           MODAL: PRINT SPECIFICATION (AD1740C 印刷指定 - F8)
