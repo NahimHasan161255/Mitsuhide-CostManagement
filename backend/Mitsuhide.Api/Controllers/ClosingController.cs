@@ -77,6 +77,7 @@ public class ClosingController : ControllerBase
     /// 月次更新処理実行 (VM0010 - 工事仕掛計算および月度更新)
     /// </summary>
     [HttpPost("execute")]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<ClosingResultDto>> ExecuteClosing([FromBody] ExecuteClosingRequest req)
     {
         using var tx = await _context.Database.BeginTransactionAsync();

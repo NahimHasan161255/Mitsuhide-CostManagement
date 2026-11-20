@@ -44,6 +44,7 @@ public class UserGrpController : ControllerBase
     /// ユーザーグループ新規登録 (F1)
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<UserGrpDto>> Create([FromBody] CreateUserGrpRequest req)
     {
         var exists = await _context.UserGrpMaster.AnyAsync(x => x.UserGrpCd == req.UserGrpCd);
@@ -79,6 +80,7 @@ public class UserGrpController : ControllerBase
     /// ユーザーグループ更新
     /// </summary>
     [HttpPut("{grpCd}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Update(string grpCd, [FromBody] UpdateUserGrpRequest req)
     {
         var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd);
@@ -104,6 +106,7 @@ public class UserGrpController : ControllerBase
     /// ユーザーグループ削除 (物理削除 - F7)
     /// </summary>
     [HttpDelete("{grpCd}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(string grpCd)
     {
         var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd);

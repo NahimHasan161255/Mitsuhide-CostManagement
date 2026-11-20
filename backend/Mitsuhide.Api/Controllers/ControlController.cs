@@ -67,6 +67,7 @@ public class ControlController : ControllerBase
     /// 処理基準新規登録 (F1)
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<ControlDto>> Create([FromBody] CreateControlRequest req)
     {
         var exists = await _context.ControlMaster.AnyAsync(x => x.SubSysCd == req.SubSysCd && x.ProgId == req.ProgId);
@@ -110,6 +111,7 @@ public class ControlController : ControllerBase
     /// 処理基準更新
     /// </summary>
     [HttpPut("{subSysCd}/{progId}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Update(string subSysCd, string progId, [FromBody] UpdateControlRequest req)
     {
         var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId);
@@ -138,6 +140,7 @@ public class ControlController : ControllerBase
     /// 処理基準削除 (物理削除 - F7)
     /// </summary>
     [HttpDelete("{subSysCd}/{progId}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(string subSysCd, string progId)
     {
         var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId);

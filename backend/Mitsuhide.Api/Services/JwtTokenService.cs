@@ -36,8 +36,8 @@ public class JwtTokenService : IJwtTokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        // Administrator role for TantoKbn == 2 or UserGrpCd == "9"
-        if (tantoKbn == 2 || userGrpCd == "9")
+        // Administrator role strictly for UserGrpCd == "9" (システム管理者グループ)
+        if (userGrpCd == "9")
         {
             claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
         }
