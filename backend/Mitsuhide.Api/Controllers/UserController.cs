@@ -208,9 +208,10 @@ public class UserController : ControllerBase
             entity.DelFg = req.DeleteFlg.Value ? 1 : 0;
         }
 
-        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+        var passwordToSet = !string.IsNullOrWhiteSpace(req.NewPassword) ? req.NewPassword : req.Password;
+        if (!string.IsNullOrWhiteSpace(passwordToSet))
         {
-            entity.PasswordHash = PasswordHasher.HashPassword(req.NewPassword);
+            entity.PasswordHash = PasswordHasher.HashPassword(passwordToSet);
             entity.PassUpdDate = DateTime.Now;
         }
 
