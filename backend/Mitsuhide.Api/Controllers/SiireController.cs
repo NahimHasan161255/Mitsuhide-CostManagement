@@ -80,7 +80,8 @@ public class SiireController : ControllerBase
                 KozaNm = x.KozaNm,
                 Biko1 = x.Biko1,
                 Biko2 = x.Biko2,
-                Biko3 = x.Biko3
+                Biko3 = x.Biko3,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -126,7 +127,8 @@ public class SiireController : ControllerBase
             KozaNm = x.KozaNm,
             Biko1 = x.Biko1,
             Biko2 = x.Biko2,
-            Biko3 = x.Biko3
+            Biko3 = x.Biko3,
+            UpdDate = x.UpdDate ?? x.NewDate
         });
     }
 
@@ -139,6 +141,7 @@ public class SiireController : ControllerBase
         var exists = await _context.SiireMaster.AnyAsync(e => e.Code == dto.Code);
         if (exists) return Conflict(new { message = $"仕入先コード {dto.Code} は既に登録されています。" });
 
+        var now = DateTime.Now;
         var entity = new AdMSiire
         {
             Code = dto.Code,
@@ -164,13 +167,16 @@ public class SiireController : ControllerBase
             Biko1 = dto.Biko1,
             Biko2 = dto.Biko2,
             Biko3 = dto.Biko3,
-            NewDate = DateTime.Now,
-            NewApid = "AD1790C"
+            NewDate = now,
+            NewApid = "AD1790C",
+            UpdDate = now,
+            UpdApid = "AD1790C"
         };
 
         _context.SiireMaster.Add(entity);
         await _context.SaveChangesAsync();
 
+        dto.UpdDate = entity.UpdDate;
         return CreatedAtAction(nameof(GetByCode), new { code = entity.Code }, dto);
     }
 
@@ -182,6 +188,12 @@ public class SiireController : ControllerBase
     {
         var entity = await _context.SiireMaster.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"仕入先コード {code} は見つかりません。" });
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && dto.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - dto.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         entity.Name = dto.Name;
         entity.Ryaku = dto.Ryaku;

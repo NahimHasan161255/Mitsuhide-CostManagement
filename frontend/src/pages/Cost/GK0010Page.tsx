@@ -16,6 +16,7 @@ import {
   Badge,
   Tabs,
   Statistic,
+  Modal,
 } from 'antd';
 import {
   SaveOutlined,
@@ -38,6 +39,7 @@ const { Text } = Typography;
 export const GK0010Page: React.FC = () => {
   const [form] = Form.useForm();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Kojijyu | null>(null);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [customerName, setCustomerName] = useState<string>('');
@@ -83,6 +85,7 @@ export const GK0010Page: React.FC = () => {
   const handleClear = () => {
     form.resetFields();
     setIsEditMode(false);
+    setCurrentProject(null);
     setCustomerName('');
     const today = new Date();
     const ymd = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
@@ -120,6 +123,7 @@ export const GK0010Page: React.FC = () => {
 
   const handleLoadProject = async (project: Kojijyu) => {
     form.setFieldsValue(project);
+    setCurrentProject(project);
     setCustomerName(project.jyuNm || '');
     setIsEditMode(true);
     calculateTotals();
@@ -130,15 +134,28 @@ export const GK0010Page: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (isEditMode) {
-        await apiClient.put(`/kojijyu/${values.kojiCd}/${values.kojiSyu}`, values).catch(() => {});
+        const payload = {
+          ...values,
+          updDate: currentProject?.updDate,
+        };
+        await apiClient.put(`/kojijyu/${values.kojiCd}/${values.kojiSyu}`, payload);
         message.success(`工事 ${values.kojiCd}-${values.kojiSyu} を正常に更新しました。(F1)`);
+        setCurrentProject({ ...currentProject, ...payload, updDate: new Date().toISOString() });
       } else {
-        await apiClient.post('/kojijyu', values).catch(() => {});
+        const res = await apiClient.post('/kojijyu', values);
         message.success(`工事 ${values.kojiCd}-${values.kojiSyu} を新規登録しました。(F1)`);
+        setCurrentProject(res.data || values);
         setIsEditMode(true);
       }
-    } catch {
-      message.error('入力エラーがあります。赤枠の必須項目をご確認ください。');
+    } catch (err: any) {
+      if (err?.response?.status === 409) {
+        Modal.error({
+          title: '排他エラー (409 Conflict)',
+          content: err.response?.data?.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+        });
+        return;
+      }
+      message.error(err?.response?.data?.message || '入力エラーがあります。赤枠の必須項目をご確認ください。');
     }
   };
 

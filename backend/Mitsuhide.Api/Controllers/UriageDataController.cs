@@ -71,7 +71,8 @@ public class UriageDataController : ControllerBase
                 ZeiRt = x.u.ZeiRt,
                 ZeiGk = x.u.ZeiGk,
                 UriageGkKm = x.u.UriageGkKm,
-                Biko = x.u.Biko
+                Biko = x.u.Biko,
+                UpdDate = x.u.UpdDate ?? x.u.NewDate
             })
             .ToListAsync();
 
@@ -108,7 +109,8 @@ public class UriageDataController : ControllerBase
                               ZeiRt = u.ZeiRt,
                               ZeiGk = u.ZeiGk,
                               UriageGkKm = u.UriageGkKm,
-                              Biko = u.Biko
+                              Biko = u.Biko,
+                              UpdDate = u.UpdDate ?? u.NewDate
                           }).FirstOrDefaultAsync();
 
         if (item == null) return NotFound();
@@ -124,6 +126,7 @@ public class UriageDataController : ControllerBase
         var zeiGk = Math.Floor(req.UriageGkNk * req.ZeiRt / 100m);
         var uriageGkKm = req.UriageGkNk + zeiGk;
 
+        var now = DateTime.Now;
         var entity = new GkTUriage
         {
             UriageDate = req.UriageDate,
@@ -135,9 +138,12 @@ public class UriageDataController : ControllerBase
             ZeiGk = zeiGk,
             UriageGkKm = uriageGkKm,
             Biko = req.Biko,
-            NewDate = DateTime.Now,
+            NewDate = now,
             NewUser = "SYSTEM",
             NewApid = "UR0010",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "UR0010",
             DelFg = 0
         };
 
@@ -155,7 +161,8 @@ public class UriageDataController : ControllerBase
             ZeiRt = entity.ZeiRt,
             ZeiGk = entity.ZeiGk,
             UriageGkKm = entity.UriageGkKm,
-            Biko = entity.Biko
+            Biko = entity.Biko,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -167,6 +174,12 @@ public class UriageDataController : ControllerBase
     {
         var entity = await _context.Uriage.FirstOrDefaultAsync(x => x.UnqId == id && x.DelFg == 0);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         var zeiGk = Math.Floor(req.UriageGkNk * req.ZeiRt / 100m);
         var uriageGkKm = req.UriageGkNk + zeiGk;

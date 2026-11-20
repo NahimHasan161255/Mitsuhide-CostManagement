@@ -74,7 +74,8 @@ public class SiireDataController : ControllerBase
                 ZeiRt = x.s.ZeiRt,
                 ZeiGk = x.s.ZeiGk,
                 SiireGkKm = x.s.SiireGkKm,
-                Biko = x.s.Biko
+                Biko = x.s.Biko,
+                UpdDate = x.s.UpdDate ?? x.s.NewDate
             })
             .ToListAsync();
 
@@ -114,7 +115,8 @@ public class SiireDataController : ControllerBase
                               ZeiRt = s.ZeiRt,
                               ZeiGk = s.ZeiGk,
                               SiireGkKm = s.SiireGkKm,
-                              Biko = s.Biko
+                              Biko = s.Biko,
+                              UpdDate = s.UpdDate ?? s.NewDate
                           }).FirstOrDefaultAsync();
 
         if (item == null) return NotFound();
@@ -130,6 +132,7 @@ public class SiireDataController : ControllerBase
         var zeiGk = Math.Floor(req.SiireGkNk * req.ZeiRt / 100m);
         var siireGkKm = req.SiireGkNk + zeiGk;
 
+        var now = DateTime.Now;
         var entity = new GkTSiire
         {
             SiireDate = req.SiireDate,
@@ -143,9 +146,12 @@ public class SiireDataController : ControllerBase
             ZeiGk = zeiGk,
             SiireGkKm = siireGkKm,
             Biko = req.Biko,
-            NewDate = DateTime.Now,
+            NewDate = now,
             NewUser = "SYSTEM",
             NewApid = "SR0010",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "SR0010",
             DelFg = 0
         };
 
@@ -166,7 +172,8 @@ public class SiireDataController : ControllerBase
             ZeiRt = entity.ZeiRt,
             ZeiGk = entity.ZeiGk,
             SiireGkKm = entity.SiireGkKm,
-            Biko = entity.Biko
+            Biko = entity.Biko,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -178,6 +185,12 @@ public class SiireDataController : ControllerBase
     {
         var entity = await _context.Siire.FirstOrDefaultAsync(x => x.UnqId == id && x.DelFg == 0);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         var zeiGk = Math.Floor(req.SiireGkNk * req.ZeiRt / 100m);
         var siireGkKm = req.SiireGkNk + zeiGk;

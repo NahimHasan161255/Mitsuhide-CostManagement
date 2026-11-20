@@ -17,6 +17,7 @@ public class SiireRecordDto
     public decimal ZeiGk { get; set; }
     public decimal SiireGkKm { get; set; }
     public string? Biko { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateSiireRequest
@@ -43,4 +44,5 @@ public class UpdateSiireRequest
     public decimal SiireGkNk { get; set; }
     public int ZeiRt { get; set; } = 10;
     public string? Biko { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

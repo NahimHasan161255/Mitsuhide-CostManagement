@@ -44,6 +44,7 @@ interface UriageRecord {
   zeiGk: number;
   uriageGkKm: number;
   biko?: string;
+  updDate?: string;
 }
 
 export const UR0010Page: React.FC = () => {
@@ -162,24 +163,48 @@ export const UR0010Page: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`${API_BASE_URL}/api/uriagedata/${editingItem.unqId}`, {
+        const payload = {
+          ...values,
+          updDate: editingItem.updDate,
+        };
+        const res = await fetch(`${API_BASE_URL}/api/uriagedata/${editingItem.unqId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
         });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchData();
+            },
+          });
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '売上伝票の更新に失敗しました。');
+        }
         message.success('売上伝票を更新しました。');
       } else {
-        await fetch(`${API_BASE_URL}/api/uriagedata`, {
+        const res = await fetch(`${API_BASE_URL}/api/uriagedata`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '売上伝票の登録に失敗しました。');
+        }
         message.success('売上伝票を登録しました。');
       }
       setIsModalOpen(false);
       fetchData();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      message.error(err.message || '入力エラーがあります。確認してください。');
     }
   };
 

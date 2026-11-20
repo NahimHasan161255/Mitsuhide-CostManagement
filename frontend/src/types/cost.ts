@@ -53,4 +53,5 @@ export interface Kojijyu {
   biko2?: string;
   kojiBiko1?: string;
   kojiBiko2?: string;
+  updDate?: string;
 }

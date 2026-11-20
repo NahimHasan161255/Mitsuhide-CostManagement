@@ -51,6 +51,7 @@ export interface ControlItem {
   ch1?: string;
   ch2?: string;
   ch3?: string;
+  updDate?: string;
 }
 
 export const SUBSYS_OPTIONS = [
@@ -224,32 +225,58 @@ export const ControlMasterPage: React.FC = () => {
       setIsSaving(true);
       const values = await form.validateFields();
       if (mode === 'edit' && currentRecord) {
-        await fetch(`${API_BASE_URL}/api/control/${currentRecord.subSysCd}/${currentRecord.progId}`, {
+        const payload = {
+          ...values,
+          updDate: currentRecord.updDate,
+        };
+        const res = await fetch(`${API_BASE_URL}/api/control/${currentRecord.subSysCd}/${currentRecord.progId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        }).catch(() => {});
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchData();
+            },
+          });
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '更新処理に失敗しました。');
+        }
         message.success(`処理基準 [${currentRecord.subSysCd}-${currentRecord.progId}] を更新しました。`);
+        const updated = { ...currentRecord, ...payload, updDate: new Date().toISOString() };
         setData((prev) =>
           prev.map((item) =>
-            item.subSysCd === currentRecord.subSysCd && item.progId === currentRecord.progId ? { ...item, ...values } : item
+            item.subSysCd === currentRecord.subSysCd && item.progId === currentRecord.progId ? updated : item
           )
         );
-        setCurrentRecord({ ...currentRecord, ...values });
+        setCurrentRecord(updated);
       } else {
-        await fetch(`${API_BASE_URL}/api/control`, {
+        const res = await fetch(`${API_BASE_URL}/api/control`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '新規登録処理に失敗しました。');
+        }
+        const created = await res.json().catch(() => values);
         message.success(`新規処理基準 [${values.subSysCd}-${values.progId}] を登録しました。`);
-        setData((prev) => [...prev, values]);
-        setCurrentRecord(values);
+        setData((prev) => [...prev, created]);
+        setCurrentRecord(created);
         setMode('edit');
       }
       fetchData();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      message.error(err.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }

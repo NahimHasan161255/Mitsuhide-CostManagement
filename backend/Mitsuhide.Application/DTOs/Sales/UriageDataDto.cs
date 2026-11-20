@@ -14,6 +14,7 @@ public class UriageRecordDto
     public decimal ZeiGk { get; set; }
     public decimal UriageGkKm { get; set; }
     public string? Biko { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateUriageRequest
@@ -36,4 +37,5 @@ public class UpdateUriageRequest
     public decimal UriageGkNk { get; set; }
     public int ZeiRt { get; set; } = 10;
     public string? Biko { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

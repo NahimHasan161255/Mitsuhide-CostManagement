@@ -32,7 +32,8 @@ public class UserGrpController : ControllerBase
             {
                 UserGrpCd = x.UserGrpCd,
                 UserGrpName = x.UserGrpName,
-                RunAplCnt = x.RunAplCnt
+                RunAplCnt = x.RunAplCnt,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -48,14 +49,18 @@ public class UserGrpController : ControllerBase
         var exists = await _context.UserGrpMaster.AnyAsync(x => x.UserGrpCd == req.UserGrpCd);
         if (exists) return Conflict(new { message = $"グループコード {req.UserGrpCd} は既に存在します。" });
 
+        var now = DateTime.Now;
         var entity = new AdMUserGrp
         {
             UserGrpCd = req.UserGrpCd,
             UserGrpName = req.UserGrpName,
             RunAplCnt = req.RunAplCnt,
-            NewDate = DateTime.Now,
+            NewDate = now,
             NewUser = "SYSTEM",
-            NewApid = "AD1720C"
+            NewApid = "AD1720C",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "AD1720C"
         };
 
         _context.UserGrpMaster.Add(entity);
@@ -65,7 +70,8 @@ public class UserGrpController : ControllerBase
         {
             UserGrpCd = entity.UserGrpCd,
             UserGrpName = entity.UserGrpName,
-            RunAplCnt = entity.RunAplCnt
+            RunAplCnt = entity.RunAplCnt,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -77,6 +83,12 @@ public class UserGrpController : ControllerBase
     {
         var entity = await _context.UserGrpMaster.FirstOrDefaultAsync(x => x.UserGrpCd == grpCd);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         entity.UserGrpName = req.UserGrpName;
         entity.RunAplCnt = req.RunAplCnt;

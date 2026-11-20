@@ -48,6 +48,7 @@ export interface SysNameItem {
   ch2?: string;
   nm1?: number;
   nm2?: number;
+  updDate?: string;
 }
 
 export const NAME_KBN_OPTIONS = [
@@ -227,32 +228,58 @@ export const SysNameMasterPage: React.FC = () => {
       setIsSaving(true);
       const values = await form.validateFields();
       if (mode === 'edit' && currentRecord) {
-        await fetch(`${API_BASE_URL}/api/sysname/${currentRecord.nameKbn}/${currentRecord.nameCd}`, {
+        const payload = {
+          ...values,
+          updDate: currentRecord.updDate,
+        };
+        const res = await fetch(`${API_BASE_URL}/api/sysname/${currentRecord.nameKbn}/${currentRecord.nameCd}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        }).catch(() => {});
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchData();
+            },
+          });
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '更新処理に失敗しました。');
+        }
         message.success(`名称 [${currentRecord.nameKbn}-${currentRecord.nameCd}] を更新しました。`);
+        const updated = { ...currentRecord, ...payload, updDate: new Date().toISOString() };
         setData((prev) =>
           prev.map((item) =>
-            item.nameKbn === currentRecord.nameKbn && item.nameCd === currentRecord.nameCd ? { ...item, ...values } : item
+            item.nameKbn === currentRecord.nameKbn && item.nameCd === currentRecord.nameCd ? updated : item
           )
         );
-        setCurrentRecord({ ...currentRecord, ...values });
+        setCurrentRecord(updated);
       } else {
-        await fetch(`${API_BASE_URL}/api/sysname`, {
+        const res = await fetch(`${API_BASE_URL}/api/sysname`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '新規登録処理に失敗しました。');
+        }
+        const created = await res.json().catch(() => values);
         message.success(`新規名称 [${values.nameKbn}-${values.nameCd}] を登録しました。`);
-        setData((prev) => [...prev, values]);
-        setCurrentRecord(values);
+        setData((prev) => [...prev, created]);
+        setCurrentRecord(created);
         setMode('edit');
       }
       fetchData();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      message.error(err.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }

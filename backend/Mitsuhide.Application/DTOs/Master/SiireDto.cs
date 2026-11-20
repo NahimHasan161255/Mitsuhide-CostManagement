@@ -25,6 +25,7 @@ public class SiireDto
     public string? Biko1 { get; set; }
     public string? Biko2 { get; set; }
     public string? Biko3 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateOrUpdateSiireDto
@@ -52,4 +53,5 @@ public class CreateOrUpdateSiireDto
     public string? Biko1 { get; set; }
     public string? Biko2 { get; set; }
     public string? Biko3 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

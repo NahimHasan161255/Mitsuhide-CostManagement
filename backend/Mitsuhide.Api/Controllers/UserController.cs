@@ -79,7 +79,8 @@ public class UserController : ControllerBase
                 Biko = x.u.Biko,
                 DeleteFlg = x.u.DelFg == 1,
                 LoginDate = x.u.LoginDate,
-                PassUpdDate = x.u.PassUpdDate
+                PassUpdDate = x.u.PassUpdDate,
+                UpdDate = x.u.UpdDate ?? x.u.NewDate
             })
             .ToListAsync();
 
@@ -114,7 +115,8 @@ public class UserController : ControllerBase
                               Biko = u.Biko,
                               DeleteFlg = u.DelFg == 1,
                               LoginDate = u.LoginDate,
-                              PassUpdDate = u.PassUpdDate
+                              PassUpdDate = u.PassUpdDate,
+                              UpdDate = u.UpdDate ?? u.NewDate
                           }).FirstOrDefaultAsync();
 
         if (item == null) return NotFound();
@@ -130,6 +132,7 @@ public class UserController : ControllerBase
         var exists = await _context.UserMaster.AnyAsync(x => x.UserCd == req.UserCd);
         if (exists) return Conflict(new { message = $"ユーザーコード {req.UserCd} は既に使用されています。" });
 
+        var now = DateTime.Now;
         var entity = new AdMUser
         {
             UserCd = req.UserCd,
@@ -141,10 +144,13 @@ public class UserController : ControllerBase
             Syubetu = req.Syubetu,
             Biko = req.Biko,
             PasswordHash = !string.IsNullOrWhiteSpace(req.Password) ? PasswordHasher.HashPassword(req.Password) : PasswordHasher.HashPassword("user123"),
-            PassUpdDate = DateTime.Now,
-            NewDate = DateTime.Now,
+            PassUpdDate = now,
+            NewDate = now,
             NewUser = "SYSTEM",
             NewApid = "AD1730C",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "AD1730C",
             DelFg = req.DeleteFlg ? 1 : 0
         };
 
@@ -161,7 +167,8 @@ public class UserController : ControllerBase
             UserGrpCd = entity.UserGrpCd,
             Syubetu = entity.Syubetu,
             Biko = entity.Biko,
-            DeleteFlg = entity.DelFg == 1
+            DeleteFlg = entity.DelFg == 1,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -173,6 +180,12 @@ public class UserController : ControllerBase
     {
         var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         // 1. セルフ無効化防止ガード (ログイン中の自身のアカウントは無効化不可)
         string? requestingUserCd = Request.Headers["X-User-Cd"].FirstOrDefault();
