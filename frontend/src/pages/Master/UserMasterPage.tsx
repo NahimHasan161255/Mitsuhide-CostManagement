@@ -42,6 +42,7 @@ import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
 import { useAuth } from '../../context/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
+import { UserPrintReport } from '../../components/Print/UserPrintReport';
 
 const { Text } = Typography;
 
@@ -64,6 +65,15 @@ export interface UserItem {
   loginDate?: string;
   passUpdDate?: string;
   updDate?: string;
+  passKigen?: number;
+  userKigen?: number;
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 // Initial Default Values per AD1730C Specification
@@ -107,6 +117,7 @@ export const UserMasterPage: React.FC = () => {
   // Code Range Filter State (Tab 2 & Print)
   const [startUserCd, setStartUserCd] = useState<string>('');
   const [endUserCd, setEndUserCd] = useState<string>('');
+  const [printItems, setPrintItems] = useState<UserItem[]>([]);
 
   // Fetch Master Data
   const fetchUsers = async (searchOverride?: string) => {
@@ -481,11 +492,29 @@ export const UserMasterPage: React.FC = () => {
   };
 
   // Direct Print (F8) - Directly triggers browser print without modal
-  const handleDirectPrint = () => {
-    message.info('印刷ダイアログを開きます。');
+  const handleDirectPrint = async () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1 });
+    let printableData = data;
+    try {
+      let url = `${API_BASE_URL}/api/user?page=1&pageSize=5000`;
+      if (debouncedSearchText) url += `&search=${encodeURIComponent(debouncedSearchText)}`;
+      if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
+      if (startUserCd) url += `&startUserCd=${encodeURIComponent(startUserCd)}`;
+      if (endUserCd) url += `&endUserCd=${encodeURIComponent(endUserCd)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const result = await res.json();
+        if (result.items && result.items.length > 0) {
+          printableData = result.items;
+        }
+      }
+    } catch {
+      printableData = data;
+    }
+    setPrintItems(printableData);
     setTimeout(() => {
       window.print();
-    }, 200);
+    }, 250);
   };
 
   // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
@@ -1192,6 +1221,17 @@ export const UserMasterPage: React.FC = () => {
             },
           ]}
         />
+
+      {/* ========================================================
+          A4 LANDSCAPE PRINTABLE REPORT (AD1730C SPECIFICATION)
+          Hidden on screen, rendered in browser print preview
+          ======================================================== */}
+      <UserPrintReport
+        items={printItems.length > 0 ? printItems : data}
+        startUserCd={startUserCd}
+        endUserCd={endUserCd}
+        keyword={debouncedSearchText}
+      />
     </div>
   );
 };

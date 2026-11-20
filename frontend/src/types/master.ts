@@ -52,6 +52,34 @@ export interface Siire {
   updDate?: string;
 }
 
+export interface User {
+  userCd: string;
+  userName: string;
+  userNameR?: string;
+  userNameK?: string;
+  tantoKbn: number;
+  tantoKbnNm?: string;
+  userGrpCd?: string;
+  userGrpNm?: string;
+  syubetu: number;
+  syubetuNm?: string;
+  password?: string;
+  biko?: string;
+  deleteFlg?: boolean;
+  loginDate?: string;
+  passUpdDate?: string;
+  passKigen?: number;
+  userKigen?: number;
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
+  updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;

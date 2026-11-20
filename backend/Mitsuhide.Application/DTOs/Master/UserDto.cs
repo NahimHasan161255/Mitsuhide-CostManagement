@@ -24,7 +24,16 @@ public class UserDto
     public bool DeleteFlg { get; set; }
     public DateTime? LoginDate { get; set; }
     public DateTime? PassUpdDate { get; set; }
+    public int? PassKigen { get; set; }
+    public int? UserKigen { get; set; }
+    public string? NewUser { get; set; }
+    public DateTime? NewDate { get; set; }
+    public string? NewApid { get; set; }
+    public string? NewWsnm { get; set; }
+    public string? UpdUser { get; set; }
     public DateTime? UpdDate { get; set; }
+    public string? UpdApid { get; set; }
+    public string? UpdWsnm { get; set; }
 }
 
 public class CreateUserRequest
