@@ -11,7 +11,7 @@ interface JyucyuPrintReportProps {
   printDate?: Date;
 }
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 7;
 
 const getDayOfWeekJa = (d: Date) => {
   const days = ['日', '月', '火', '水', '木', '金', '土'];
@@ -47,7 +47,7 @@ export const JyucyuPrintReport: React.FC<JyucyuPrintReportProps> = ({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="erp-print-container" aria-hidden="true">
+    <div className="erp-print-container erp-report-ad1780c" aria-hidden="true">
       {pages.map((pageItems, pageIdx) => (
         <div key={pageIdx} className="erp-print-page">
           {/* Header per AD1780C Official Specification */}

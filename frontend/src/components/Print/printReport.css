@@ -13,12 +13,12 @@
 }
 
 /* --------------------------------------------------------------------------
-   PRINT MODE (@media print): Formal A4 Landscape Output
+   PRINT MODE (@media print): Formal A4 Landscape Output (Strict Single Sheet)
    -------------------------------------------------------------------------- */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 8mm 10mm 8mm 10mm;
+    margin: 6mm 10mm 6mm 10mm;
   }
 
   /* Reset body and background */
@@ -56,13 +56,20 @@
     background: #ffffff !important;
   }
 
-  /* Page Break per A4 Sheet */
+  /* Page Break per A4 Sheet - strictly sized to avoid page spill */
   .erp-print-page {
     width: 100%;
+    height: 196mm;
+    max-height: 196mm;
     page-break-after: always;
     break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
     box-sizing: border-box;
-    padding-bottom: 6mm;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .erp-print-page:last-child {
@@ -75,51 +82,70 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 6px;
-    border-bottom: 2px solid #000000;
-    padding-bottom: 4px;
+    margin-bottom: 2mm;
+    border-bottom: 1.5px solid #000000;
+    padding-bottom: 2px;
+    flex: 0 0 auto;
   }
 
   .erp-print-header-id {
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 700;
     font-family: "Courier New", Courier, monospace;
     width: 25%;
   }
 
   .erp-print-header-title {
-    font-size: 16pt;
+    font-size: 14pt;
     font-weight: 700;
     text-align: center;
-    letter-spacing: 6px;
+    letter-spacing: 5px;
     width: 50%;
   }
 
   .erp-print-header-meta {
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     text-align: right;
     width: 25%;
-    line-height: 1.4;
+    line-height: 1.25;
   }
 
   /* Master Table */
   .erp-print-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8pt;
     table-layout: fixed;
-    line-height: 1.35;
     border: 1.5px solid #000000;
+    flex: 0 0 auto;
+  }
+
+  .erp-print-table tr {
+    height: 4.8mm;
   }
 
   .erp-print-table th,
   .erp-print-table td {
-    padding: 3px 6px;
+    height: 4.8mm;
+    padding: 1.5px 4px;
+    font-size: 7.5pt;
+    line-height: 1.25;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
     box-sizing: border-box;
+  }
+
+  /* AD1780C (7 items/page, 32 total rows) - comfortable row height */
+  .erp-report-ad1780c .erp-print-table tr {
+    height: 5.5mm;
+  }
+
+  .erp-report-ad1780c .erp-print-table th,
+  .erp-report-ad1780c .erp-print-table td {
+    height: 5.5mm;
+    padding: 2px 4px;
+    font-size: 8pt;
   }
 
   /* Table Header */
@@ -131,7 +157,7 @@
     background-color: #f1f5f9 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    font-size: 7.5pt;
+    font-size: 7pt;
     font-weight: 700;
   }
 
@@ -145,7 +171,7 @@
   }
 
   .erp-print-table thead tr.th-bot {
-    border-bottom: 2px solid #000000;
+    border-bottom: 1.5px solid #000000;
   }
 
   .erp-print-table thead th {
@@ -175,31 +201,36 @@
     vertical-align: middle;
     font-family: monospace;
     font-weight: 700;
-    font-size: 11pt;
+    font-size: 10pt;
     background-color: #f8fafc !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
   .erp-print-val {
+    display: inline-block;
+    min-height: 12px;
     color: #000000;
     font-weight: 500;
   }
 
   .erp-print-val-bold {
+    display: inline-block;
+    min-height: 12px;
     color: #000000;
     font-weight: 700;
   }
 
-  /* Report Footer */
+  /* Report Footer - pinned strictly at the bottom margin */
   .erp-print-footer {
+    margin-top: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 8pt;
-    margin-top: 4px;
+    font-size: 7.5pt;
     border-top: 1px solid #000000;
-    padding-top: 3px;
+    padding-top: 2px;
     color: #334155;
+    flex: 0 0 auto;
   }
 }
