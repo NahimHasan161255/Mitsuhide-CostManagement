@@ -306,17 +306,30 @@ export const SysNameMasterPage: React.FC = () => {
     }
   };
 
-  // Export CSV (F6)
+  // Export CSV (F6) - Exports currently filtered data matching Tab 2
   const handleExportCsv = async () => {
-    let exportData = data;
+    let exportData: SysNameItem[] = [];
+    const activeSearch = searchText || debouncedSearchText;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/sysname?page=1&pageSize=1000`);
+      let url = `${API_BASE_URL}/api/sysname?page=1&pageSize=5000`;
+      if (selectedKbn) url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        if (json.items && json.items.length > 0) exportData = json.items;
+        if (json.items) exportData = json.items;
       }
     } catch {
       // Fallback
+      let filtered = data;
+      if (selectedKbn) filtered = filtered.filter((x) => x.nameKbn === selectedKbn);
+      if (activeSearch) {
+        filtered = filtered.filter(
+          (x) => x.ch1.includes(activeSearch) || x.nameCd.includes(activeSearch)
+        );
+      }
+      exportData = filtered;
     }
 
     if (!exportData || exportData.length === 0) {

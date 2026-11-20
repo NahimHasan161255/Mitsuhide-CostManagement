@@ -27,12 +27,16 @@ public class ControlController : ControllerBase
     public async Task<ActionResult<PagedResult<ControlDto>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 30,
-        [FromQuery] string? subSysCd = null)
+        [FromQuery] string? subSysCd = null,
+        [FromQuery] string? keyword = null)
     {
         var query = _context.ControlMaster.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(subSysCd))
+        if (!string.IsNullOrWhiteSpace(subSysCd) && subSysCd != "ALL")
             query = query.Where(x => x.SubSysCd == subSysCd);
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(x => x.ProgId.Contains(keyword) || x.KanriName.Contains(keyword));
 
         var total = await query.CountAsync();
 

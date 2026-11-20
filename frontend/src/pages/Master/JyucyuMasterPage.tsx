@@ -336,16 +336,17 @@ export const JyucyuMasterPage: React.FC = () => {
   const handleExportCsv = async () => {
     let exportData = data;
     try {
+      const searchKw = keyword || debouncedKeyword;
       const res = await apiClient.get<PagedResult<Jyucyu>>('/jyucyu', {
         params: {
           page: 1,
           pageSize: 5000,
-          keyword: debouncedKeyword,
+          keyword: searchKw,
           startCode,
           endCode,
         },
       });
-      if (res.data?.items && res.data.items.length > 0) {
+      if (res.data?.items) {
         exportData = res.data.items;
       }
     } catch {
@@ -357,12 +358,13 @@ export const JyucyuMasterPage: React.FC = () => {
       if (endCode !== undefined && endCode !== null) {
         filtered = filtered.filter((x) => x.code <= endCode);
       }
-      if (debouncedKeyword) {
+      const searchKw = keyword || debouncedKeyword;
+      if (searchKw) {
         filtered = filtered.filter(
           (x) =>
-            x.name.includes(debouncedKeyword) ||
-            String(x.code).includes(debouncedKeyword) ||
-            (x.kana && x.kana.includes(debouncedKeyword))
+            x.name.includes(searchKw) ||
+            String(x.code).includes(searchKw) ||
+            (x.kana && x.kana.includes(searchKw))
         );
       }
       exportData = filtered;

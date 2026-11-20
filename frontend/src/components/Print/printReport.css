@@ -160,6 +160,21 @@
     font-size: 7pt;
   }
 
+  /* AD1720C & AD1740C (16 items/page, 34 total rows) */
+  .erp-report-ad1720c .erp-print-table tr,
+  .erp-report-ad1740c .erp-print-table tr {
+    height: 5.1mm;
+  }
+
+  .erp-report-ad1720c .erp-print-table th,
+  .erp-report-ad1720c .erp-print-table td,
+  .erp-report-ad1740c .erp-print-table th,
+  .erp-report-ad1740c .erp-print-table td {
+    height: 5.1mm;
+    padding: 2px 4px;
+    font-size: 7.5pt;
+  }
+
   /* Table Header */
   .erp-print-table thead {
     display: table-header-group;

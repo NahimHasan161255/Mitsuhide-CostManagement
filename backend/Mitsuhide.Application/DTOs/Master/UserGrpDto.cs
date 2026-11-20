@@ -7,7 +7,14 @@ public class UserGrpDto
     public string UserGrpCd { get; set; } = string.Empty;
     public string UserGrpName { get; set; } = string.Empty;
     public int RunAplCnt { get; set; }
+    public string? NewUser { get; set; }
+    public DateTime? NewDate { get; set; }
+    public string? NewApid { get; set; }
+    public string? NewWsnm { get; set; }
+    public string? UpdUser { get; set; }
     public DateTime? UpdDate { get; set; }
+    public string? UpdApid { get; set; }
+    public string? UpdWsnm { get; set; }
 }
 
 public class CreateUserGrpRequest
