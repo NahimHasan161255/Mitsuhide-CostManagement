@@ -175,6 +175,18 @@
     font-size: 7.5pt;
   }
 
+  /* AD1750C (12 items/page, 3 sub-rows/item, 38 total rows) */
+  .erp-report-ad1750c .erp-print-table tr {
+    height: 4.6mm;
+  }
+
+  .erp-report-ad1750c .erp-print-table th,
+  .erp-report-ad1750c .erp-print-table td {
+    height: 4.6mm;
+    padding: 1.5px 4px;
+    font-size: 7pt;
+  }
+
   /* Table Header */
   .erp-print-table thead {
     display: table-header-group;
