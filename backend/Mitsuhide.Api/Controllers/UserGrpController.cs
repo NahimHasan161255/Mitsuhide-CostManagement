@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mitsuhide.Application.DTOs.Master;
@@ -8,6 +9,7 @@ namespace Mitsuhide.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserGrpController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

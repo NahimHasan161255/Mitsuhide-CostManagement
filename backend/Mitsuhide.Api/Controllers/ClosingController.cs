@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mitsuhide.Application.DTOs.Closing;
@@ -9,6 +10,7 @@ namespace Mitsuhide.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ClosingController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
