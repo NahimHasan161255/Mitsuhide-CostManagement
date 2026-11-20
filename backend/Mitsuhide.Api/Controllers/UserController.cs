@@ -40,12 +40,14 @@ public class UserController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(startUserCd))
         {
-            query = query.Where(x => string.Compare(x.u.UserCd, startUserCd) >= 0);
+            var s = startUserCd.Trim().PadLeft(6, '0');
+            query = query.Where(x => string.Compare(x.u.UserCd, s) >= 0);
         }
 
         if (!string.IsNullOrWhiteSpace(endUserCd))
         {
-            query = query.Where(x => string.Compare(x.u.UserCd, endUserCd) <= 0);
+            var e = endUserCd.Trim().PadLeft(6, '0');
+            query = query.Where(x => string.Compare(x.u.UserCd, e) <= 0);
         }
 
         if (!string.IsNullOrWhiteSpace(search))

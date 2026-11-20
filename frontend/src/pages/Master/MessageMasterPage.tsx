@@ -238,7 +238,7 @@ export const MessageMasterPage: React.FC = () => {
 
   // Export CSV (F6)
   const handleExportCsv = () => {
-    if (!data || data.length === 0) {
+    if (!filteredData || filteredData.length === 0) {
       message.warning('出力対象のデータがありません。');
       return;
     }
@@ -251,7 +251,7 @@ export const MessageMasterPage: React.FC = () => {
         { header: '基本使用サブシステム', key: 'subSysCd' },
         { header: 'ボタン区分', key: 'botanKbn' },
       ],
-      data
+      filteredData
     );
   };
 

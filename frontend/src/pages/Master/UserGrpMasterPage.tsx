@@ -39,6 +39,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
+import { UserGrpPrintReport } from '../../components/Print/UserGrpPrintReport';
 
 const { Text } = Typography;
 
@@ -47,7 +48,14 @@ export interface UserGrpItem {
   userGrpName: string;
   runAplCnt: number;
   permissions?: string[];
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
   updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 const INITIAL_FORM_VALUES: Partial<UserGrpItem> = {
@@ -72,14 +80,27 @@ export const UserGrpMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<UserGrpItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  // Code Range Filter & Direct Print State
+  const [startGrpCd, setStartGrpCd] = useState<string>('');
+  const [endGrpCd, setEndGrpCd] = useState<string>('');
+  const [printItems, setPrintItems] = useState<UserGrpItem[]>([]);
 
   // Fetch Master Data
-  const fetchGroups = async () => {
+  const fetchGroups = async (overrideKw?: string, overrideStart?: string, overrideEnd?: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/usergrp`);
+      const kw = overrideKw !== undefined ? overrideKw : keyword;
+      const sCd = overrideStart !== undefined ? overrideStart : startGrpCd;
+      const eCd = overrideEnd !== undefined ? overrideEnd : endGrpCd;
+
+      let url = `${API_BASE_URL}/api/usergrp`;
+      const params: string[] = [];
+      if (kw) params.push(`keyword=${encodeURIComponent(kw)}`);
+      if (sCd) params.push(`startGrpCd=${encodeURIComponent(sCd)}`);
+      if (eCd) params.push(`endGrpCd=${encodeURIComponent(eCd)}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
+
+      const res = await fetch(url);
       if (res.ok) {
         const result = await res.json();
         setData(result || []);
@@ -256,9 +277,9 @@ export const UserGrpMasterPage: React.FC = () => {
     }
   };
 
-  // Export CSV (F6)
+  // Export CSV (F6) - Exports currently filtered data matching Tab 2
   const handleExportCsv = () => {
-    if (!data || data.length === 0) {
+    if (!filteredData || filteredData.length === 0) {
       message.warning('出力対象のデータがありません。');
       return;
     }
@@ -269,8 +290,36 @@ export const UserGrpMasterPage: React.FC = () => {
         { header: 'グループ名称', key: 'userGrpName' },
         { header: '同時実行可能APL数', key: 'runAplCnt' },
       ],
-      data
+      filteredData
     );
+  };
+
+  // Direct Print (F8) - Directly triggers browser print without modal
+  const handleDirectPrint = async () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1 });
+    let printableData = data;
+    try {
+      let url = `${API_BASE_URL}/api/usergrp`;
+      const params: string[] = [];
+      if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
+      if (startGrpCd) params.push(`startGrpCd=${encodeURIComponent(startGrpCd)}`);
+      if (endGrpCd) params.push(`endGrpCd=${encodeURIComponent(endGrpCd)}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const result = await res.json();
+        if (Array.isArray(result) && result.length > 0) {
+          printableData = result;
+        }
+      }
+    } catch {
+      printableData = data;
+    }
+    setPrintItems(printableData);
+    setTimeout(() => {
+      window.print();
+    }, 250);
   };
 
   // Keyboard Shortcuts (F1, F2, F4, F5, F6, F7, F8, F9, F10, F11)
@@ -297,7 +346,7 @@ export const UserGrpMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        setIsPrintModalOpen(true);
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -313,12 +362,31 @@ export const UserGrpMasterPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+  }, [handleSave, handleClearForm, mode, currentRecord, data, keyword, startGrpCd, endGrpCd]);
 
   // Filtered data for Tab 2
-  const filteredData = data.filter(
-    (x) => !keyword || x.userGrpName.includes(keyword) || x.userGrpCd.includes(keyword)
-  );
+  const filteredData = data.filter((x) => {
+    if (keyword && !x.userGrpName.includes(keyword) && !x.userGrpCd.includes(keyword)) return false;
+    if (startGrpCd) {
+      const isNumX = !isNaN(Number(x.userGrpCd)) && x.userGrpCd.trim() !== '';
+      const isNumStart = !isNaN(Number(startGrpCd)) && startGrpCd.trim() !== '';
+      if (isNumX && isNumStart) {
+        if (Number(x.userGrpCd) < Number(startGrpCd)) return false;
+      } else {
+        if (x.userGrpCd < startGrpCd) return false;
+      }
+    }
+    if (endGrpCd) {
+      const isNumX = !isNaN(Number(x.userGrpCd)) && x.userGrpCd.trim() !== '';
+      const isNumEnd = !isNaN(Number(endGrpCd)) && endGrpCd.trim() !== '';
+      if (isNumX && isNumEnd) {
+        if (Number(x.userGrpCd) > Number(endGrpCd)) return false;
+      } else {
+        if (x.userGrpCd > endGrpCd) return false;
+      }
+    }
+    return true;
+  });
 
   // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<UserGrpItem> = [
@@ -414,7 +482,7 @@ export const UserGrpMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -735,20 +803,73 @@ export const UserGrpMasterPage: React.FC = () => {
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={12}>
-                      <Space size={10} style={{ width: '100%' }}>
-                        <Input
-                          placeholder="グループCD / グループ名称... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={keyword}
-                          onChange={(e) => setKeyword(e.target.value)}
-                          allowClear
-                          style={{ width: 300 }}
-                        />
+                    <Col xs={24} lg={18}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Code Range Filter (on the LEFT) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={4}
+                            value={startGrpCd}
+                            onChange={(e) => setStartGrpCd(e.target.value)}
+                            style={{ width: 90, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={4}
+                            value={endGrpCd}
+                            onChange={(e) => setEndGrpCd(e.target.value)}
+                            style={{ width: 90, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 2. Keyword Search (on the RIGHT of Code Range) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="グループ名 / CD..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            onPressEnter={() => fetchGroups()}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            loading={loading}
+                            onClick={() => fetchGroups()}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* Reset Filter Button if any filter is active */}
+                        {(startGrpCd || endGrpCd || keyword) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setStartGrpCd('');
+                              setEndGrpCd('');
+                              setKeyword('');
+                              fetchGroups('', '', '');
+                            }}
+                            style={{ color: '#64748b' }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Col xs={24} lg={6} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                         登録件数: <strong style={{ color: '#0f172a' }}>{filteredData.length}</strong> 件
                       </Text>
@@ -775,51 +896,15 @@ export const UserGrpMasterPage: React.FC = () => {
         />
 
       {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1720C 印刷指定 - F8)
+          A4 LANDSCAPE PRINTABLE REPORT (AD1720C SPECIFICATION)
+          Hidden on screen, rendered in browser print preview
           ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#4f46e5' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1720C ユーザーグループマスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() => {
-              setIsPrintModalOpen(false);
-              window.print();
-            }}
-            style={{ background: '#4f46e5', borderColor: '#4f46e5' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-            現在登録されているユーザーグループマスタの一覧および起動許可権限を印刷プレビューで表示します。
-          </p>
-        </div>
-      </Modal>
+      <UserGrpPrintReport
+        items={printItems.length > 0 ? printItems : filteredData}
+        startGrpCd={startGrpCd}
+        endGrpCd={endGrpCd}
+        keyword={keyword}
+      />
     </div>
   );
 };

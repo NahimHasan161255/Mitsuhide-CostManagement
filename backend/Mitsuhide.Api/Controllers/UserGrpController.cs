@@ -23,17 +23,43 @@ public class UserGrpController : ControllerBase
     /// ユーザーグループ一覧取得 (AD1720C)
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<UserGrpDto>>> GetAll()
+    public async Task<ActionResult<List<UserGrpDto>>> GetAll(
+        [FromQuery] string? startGrpCd = null,
+        [FromQuery] string? endGrpCd = null,
+        [FromQuery] string? keyword = null)
     {
-        var groups = await _context.UserGrpMaster
-            .AsNoTracking()
+        var query = _context.UserGrpMaster.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(startGrpCd))
+        {
+            query = query.Where(x => string.Compare(x.UserGrpCd, startGrpCd) >= 0);
+        }
+
+        if (!string.IsNullOrWhiteSpace(endGrpCd))
+        {
+            query = query.Where(x => string.Compare(x.UserGrpCd, endGrpCd) <= 0);
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(x => x.UserGrpCd.Contains(keyword) || x.UserGrpName.Contains(keyword));
+        }
+
+        var groups = await query
             .OrderBy(x => x.UserGrpCd)
             .Select(x => new UserGrpDto
             {
                 UserGrpCd = x.UserGrpCd,
                 UserGrpName = x.UserGrpName,
                 RunAplCnt = x.RunAplCnt,
-                UpdDate = x.UpdDate ?? x.NewDate
+                NewUser = x.NewUser,
+                NewDate = x.NewDate,
+                NewApid = x.NewApid,
+                NewWsnm = x.NewWsnm,
+                UpdUser = x.UpdUser,
+                UpdDate = x.UpdDate ?? x.NewDate,
+                UpdApid = x.UpdApid,
+                UpdWsnm = x.UpdWsnm
             })
             .ToListAsync();
 

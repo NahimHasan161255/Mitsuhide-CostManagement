@@ -16,7 +16,6 @@ import {
   Typography,
   Tabs,
   Tooltip,
-  Modal,
 } from 'antd';
 import {
   FormOutlined,
@@ -38,6 +37,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { exportToCsv } from '../../utils/csvExport';
+import { ProgramPrintReport } from '../../components/Print/ProgramPrintReport';
 
 const { Text } = Typography;
 
@@ -50,32 +50,40 @@ export interface ProgramMasterItem {
   maxCnt: number;
   runBad: number; // 0: 起動可, 1: 起動不可
   progOpt?: string;
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
+  updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 // Master Program List from official specification (プログラム一覧.xls)
 const SEED_PROGRAMS: ProgramMasterItem[] = [
-  { subSysCd: 'AD', progId: 'AD1010C', progName: '基幹システムメニュー', gyo: 101, progVer: '9.9.9', maxCnt: 20, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1780C', progName: '受注先マスタ', gyo: 102, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1790C', progName: '仕入先マスタ', gyo: 103, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1730C', progName: 'ユーザマスタ', gyo: 104, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0010', progName: '受注入力', gyo: 105, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0020', progName: '予算入力', gyo: 106, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0030', progName: '工事台帳', gyo: 107, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0110', progName: '月次仕掛計算書', gyo: 108, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0120', progName: '工事一覧表', gyo: 109, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'GK', progId: 'GK0130', progName: '工事別粗利管理表', gyo: 110, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'UR', progId: 'UR0010', progName: '工事種目明細', gyo: 111, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'UR', progId: 'UR0120', progName: '売上伝票リスト', gyo: 112, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'SR', progId: 'SR0010', progName: '仕入入力', gyo: 113, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'SR', progId: 'SR0110', progName: '仕入先別工事別仕入管理表', gyo: 114, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'SR', progId: 'SR0120', progName: '仕入伝票リスト', gyo: 115, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'VM', progId: 'VM0010', progName: '月次更新', gyo: 116, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'VM', progId: 'VM0110', progName: '更新履歴照会', gyo: 117, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1720C', progName: 'ユーザーグループマスタ', gyo: 201, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1740C', progName: 'プログラムマスタ', gyo: 202, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1750C', progName: 'メッセージマスタ', gyo: 203, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1760C', progName: 'システム名称マスタ', gyo: 204, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
-  { subSysCd: 'AD', progId: 'AD1770C', progName: '処理基準管理マスタ', gyo: 205, progVer: '9.9.9', maxCnt: 99999, runBad: 0 },
+  { subSysCd: 'AD', progId: 'AD1010C', progName: '基幹システムメニュー', gyo: 101, progVer: '9.9.9', maxCnt: 20, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1780C', progName: '受注先マスタ', gyo: 102, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1790C', progName: '仕入先マスタ', gyo: 103, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1730C', progName: 'ユーザマスタ', gyo: 104, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0010', progName: '受注入力', gyo: 105, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0020', progName: '予算入力', gyo: 106, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0030', progName: '工事台帳', gyo: 107, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0110', progName: '月次仕掛計算書', gyo: 108, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0120', progName: '工事一覧表', gyo: 109, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'GK', progId: 'GK0130', progName: '工事別粗利管理表', gyo: 110, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'UR', progId: 'UR0010', progName: '工事種目明細', gyo: 111, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'UR', progId: 'UR0120', progName: '売上伝票リスト', gyo: 112, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'SR', progId: 'SR0010', progName: '仕入入力', gyo: 113, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'SR', progId: 'SR0110', progName: '仕入先別工事別仕入管理表', gyo: 114, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'SR', progId: 'SR0120', progName: '仕入伝票リスト', gyo: 115, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'VM', progId: 'VM0010', progName: '月次更新', gyo: 116, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'VM', progId: 'VM0110', progName: '更新履歴照会', gyo: 117, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1720C', progName: 'ユーザーグループマスタ', gyo: 201, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1740C', progName: 'プログラムマスタ', gyo: 202, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1750C', progName: 'メッセージマスタ', gyo: 203, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1760C', progName: 'システム名称マスタ', gyo: 204, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
+  { subSysCd: 'AD', progId: 'AD1770C', progName: '処理基準管理マスタ', gyo: 205, progVer: '9.9.9', maxCnt: 99999, runBad: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1740C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1740C', updWsnm: 'PC-ADMIN' },
 ];
 
 const SUBSYS_TAG_COLORS: Record<string, string> = {
@@ -104,6 +112,9 @@ export const ProgramMasterPage: React.FC = () => {
   // Master Data & Search
   const [data, setData] = useState<ProgramMasterItem[]>(SEED_PROGRAMS);
   const [selectedSubSys, setSelectedSubSys] = useState<string>('ALL');
+  const [startProgId, setStartProgId] = useState<string>('');
+  const [endProgId, setEndProgId] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [searchText, setSearchText] = useState('');
 
   // Form State
@@ -111,8 +122,17 @@ export const ProgramMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<ProgramMasterItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  // Direct Print State (F8)
+  const [printItems, setPrintItems] = useState<ProgramMasterItem[]>([]);
+
+  // Direct Print (F8) - Directly triggers browser print without modal per AD1740C specification
+  const handleDirectPrint = () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1 });
+    setPrintItems(filteredData);
+    setTimeout(() => {
+      window.print();
+    }, 250);
+  };
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -230,7 +250,7 @@ export const ProgramMasterPage: React.FC = () => {
 
   // Export CSV (F6)
   const handleExportCsv = () => {
-    if (!data || data.length === 0) {
+    if (!filteredData || filteredData.length === 0) {
       message.warning('出力対象のデータがありません。');
       return;
     }
@@ -245,7 +265,7 @@ export const ProgramMasterPage: React.FC = () => {
         { header: '最大件数', key: 'maxCnt' },
         { header: '起動状態', key: 'runBad' },
       ],
-      data
+      filteredData
     );
   };
 
@@ -273,7 +293,7 @@ export const ProgramMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        setIsPrintModalOpen(true);
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -289,16 +309,42 @@ export const ProgramMasterPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+  }, [handleSave, handleClearForm, mode, currentRecord, data, selectedSubSys, startProgId, endProgId, selectedStatus, searchText]);
 
-  // Filter Data for Tab 2
-  const filteredData = data.filter(
-    (item) =>
-      (selectedSubSys === 'ALL' || item.subSysCd === selectedSubSys) &&
-      (!searchText ||
-        item.progName.includes(searchText) ||
-        item.progId.toLowerCase().includes(searchText.toLowerCase()))
-  );
+  // Filter Data for Tab 2 (Matches Specification: サブシステムCD, プログラムID範囲, 起動状態, キーワード)
+  const filteredData = data.filter((item) => {
+    // 1. Subsystem filter (Official Document: 抽出条件 - サブシステムCD)
+    if (selectedSubSys !== 'ALL' && item.subSysCd !== selectedSubSys) {
+      return false;
+    }
+
+    // 2. Program ID Code Range (コード範囲: 開始 〜 終了)
+    const upperProgId = item.progId.toUpperCase();
+    if (startProgId && upperProgId < startProgId.trim().toUpperCase()) {
+      return false;
+    }
+    if (endProgId && upperProgId > endProgId.trim().toUpperCase()) {
+      return false;
+    }
+
+    // 3. Run status filter (起動可否: 0=起動可, 1=起動不可)
+    if (selectedStatus !== 'ALL') {
+      if (selectedStatus === '0' && item.runBad !== 0) return false;
+      if (selectedStatus === '1' && item.runBad !== 1) return false;
+    }
+
+    // 4. Keyword search (プログラム名 / ID / 引数)
+    if (searchText) {
+      const q = searchText.trim().toLowerCase();
+      const matchName = item.progName.toLowerCase().includes(q);
+      const matchId = item.progId.toLowerCase().includes(q);
+      const matchSubSys = item.subSysCd.toLowerCase().includes(q);
+      const matchOpt = item.progOpt ? item.progOpt.toLowerCase().includes(q) : false;
+      if (!matchName && !matchId && !matchSubSys && !matchOpt) return false;
+    }
+
+    return true;
+  });
 
   // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<ProgramMasterItem> = [
@@ -417,7 +463,7 @@ export const ProgramMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -734,12 +780,13 @@ export const ProgramMasterPage: React.FC = () => {
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={14}>
-                      <Space size={10} style={{ width: '100%' }} wrap>
+                    <Col xs={24} lg={19}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Subsystem Dropdown (Official Document: 抽出条件 - サブシステムCD) */}
                         <Select
                           value={selectedSubSys}
                           onChange={(val) => setSelectedSubSys(val)}
-                          style={{ width: 170 }}
+                          style={{ width: 175 }}
                           options={[
                             { value: 'ALL', label: 'すべてのサブシステム' },
                             { value: 'AD', label: 'AD: システム管理' },
@@ -749,18 +796,82 @@ export const ProgramMasterPage: React.FC = () => {
                             { value: 'VM', label: 'VM: 月次更新' },
                           ]}
                         />
-                        <Input
-                          placeholder="プログラム名 / ID... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          allowClear
-                          style={{ width: 280 }}
+
+                        {/* 2. Program ID Code Range (コード範囲: 開始 〜 終了) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={7}
+                            value={startProgId}
+                            onChange={(e) => setStartProgId(e.target.value.toUpperCase())}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={7}
+                            value={endProgId}
+                            onChange={(e) => setEndProgId(e.target.value.toUpperCase())}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 3. Run Status Filter (起動可否) */}
+                        <Select
+                          value={selectedStatus}
+                          onChange={(val) => setSelectedStatus(val)}
+                          style={{ width: 115 }}
+                          options={[
+                            { value: 'ALL', label: '起動: 全て' },
+                            { value: '0', label: '起動可能' },
+                            { value: '1', label: '起動不可' },
+                          ]}
                         />
+
+                        {/* 4. Keyword Search (Space.Compact with blue 検索 button matching other screens) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="プログラム名 / ID..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* 5. Reset Filter Button if any filter is active */}
+                        {(selectedSubSys !== 'ALL' || startProgId || endProgId || selectedStatus !== 'ALL' || searchText) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setSelectedSubSys('ALL');
+                              setStartProgId('');
+                              setEndProgId('');
+                              setSelectedStatus('ALL');
+                              setSearchText('');
+                            }}
+                            style={{ color: '#64748b' }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Col xs={24} lg={5} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                         登録件数: <strong style={{ color: '#0f172a' }}>{filteredData.length}</strong> 件
                       </Text>
@@ -786,51 +897,17 @@ export const ProgramMasterPage: React.FC = () => {
         />
 
       {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1740C 印刷指定 - F8)
+          A4 LANDSCAPE PRINTABLE REPORT (AD1740C SPECIFICATION)
+          Hidden on screen, rendered in browser print preview
           ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#0284c7' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1740C プログラムマスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() => {
-              setIsPrintModalOpen(false);
-              window.print();
-            }}
-            style={{ background: '#0284c7', borderColor: '#0284c7' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-            登録されている全サブシステムのプログラムマスタ定義一覧を印刷プレビューで表示します。
-          </p>
-        </div>
-      </Modal>
+      <ProgramPrintReport
+        items={printItems.length > 0 ? printItems : filteredData}
+        subSysCd={selectedSubSys}
+        startProgId={startProgId}
+        endProgId={endProgId}
+        selectedStatus={selectedStatus}
+        keyword={searchText}
+      />
     </div>
   );
 };

@@ -80,6 +80,21 @@ export interface User {
   updWsnm?: string;
 }
 
+export interface UserGrp {
+  userGrpCd: string;
+  userGrpName: string;
+  runAplCnt: number;
+  permissions?: string[];
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
+  updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;

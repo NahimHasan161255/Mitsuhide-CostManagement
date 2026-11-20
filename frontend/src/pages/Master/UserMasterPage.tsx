@@ -438,30 +438,32 @@ export const UserMasterPage: React.FC = () => {
 
   // Export CSV (F6) - Exports all filtered records, or all database records if no filter
   const handleExportCsv = async () => {
-    let exportData = data;
+    let exportData: UserItem[] = [];
     try {
       let url = `${API_BASE_URL}/api/user?page=1&pageSize=5000`;
-      if (debouncedSearchText) url += `&search=${encodeURIComponent(debouncedSearchText)}`;
+      const kw = searchText || debouncedSearchText;
+      if (kw) url += `&search=${encodeURIComponent(kw)}`;
       if (selectedGrp) url += `&userGrpCd=${encodeURIComponent(selectedGrp)}`;
-      if (startUserCd) url += `&startUserCd=${encodeURIComponent(startUserCd)}`;
-      if (endUserCd) url += `&endUserCd=${encodeURIComponent(endUserCd)}`;
+      if (startUserCd) url += `&startUserCd=${encodeURIComponent(startUserCd.padStart(6, '0'))}`;
+      if (endUserCd) url += `&endUserCd=${encodeURIComponent(endUserCd.padStart(6, '0'))}`;
 
       const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        if (json.items && json.items.length > 0) exportData = json.items;
+        if (json.items) exportData = json.items;
       }
     } catch {
       // Fallback
       let filtered = data;
       if (startUserCd) filtered = filtered.filter((x) => x.userCd >= startUserCd.padStart(6, '0'));
       if (endUserCd) filtered = filtered.filter((x) => x.userCd <= endUserCd.padStart(6, '0'));
-      if (debouncedSearchText) {
+      const kw = searchText || debouncedSearchText;
+      if (kw) {
         filtered = filtered.filter(
           (x) =>
-            x.userName.includes(debouncedSearchText) ||
-            x.userCd.includes(debouncedSearchText) ||
-            (x.userNameK && x.userNameK.includes(debouncedSearchText))
+            x.userName.includes(kw) ||
+            x.userCd.includes(kw) ||
+            (x.userNameK && x.userNameK.includes(kw))
         );
       }
       if (selectedGrp) filtered = filtered.filter((x) => x.userGrpCd === selectedGrp);
