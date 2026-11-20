@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Mitsuhide.Application.Common.Security;
 using Mitsuhide.Application.DTOs.Auth;
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("LoginPolicy")]
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto req)
     {
         if (string.IsNullOrWhiteSpace(req.UserCd) || string.IsNullOrWhiteSpace(req.Password))
