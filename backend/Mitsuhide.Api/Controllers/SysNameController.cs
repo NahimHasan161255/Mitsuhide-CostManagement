@@ -29,15 +29,23 @@ public class SysNameController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 30,
         [FromQuery] string? nameKbn = null,
+        [FromQuery] string? startNameCd = null,
+        [FromQuery] string? endNameCd = null,
         [FromQuery] string? keyword = null)
     {
         var query = _context.SysNameMaster.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(nameKbn))
+        if (!string.IsNullOrWhiteSpace(nameKbn) && nameKbn != "ALL")
             query = query.Where(x => x.NameKbn == nameKbn);
 
+        if (!string.IsNullOrWhiteSpace(startNameCd))
+            query = query.Where(x => string.Compare(x.NameCd, startNameCd) >= 0);
+
+        if (!string.IsNullOrWhiteSpace(endNameCd))
+            query = query.Where(x => string.Compare(x.NameCd, endNameCd) <= 0);
+
         if (!string.IsNullOrWhiteSpace(keyword))
-            query = query.Where(x => x.NameCd.Contains(keyword) || x.Ch1.Contains(keyword));
+            query = query.Where(x => x.NameCd.Contains(keyword) || x.Ch1.Contains(keyword) || (x.Ch2 != null && x.Ch2.Contains(keyword)));
 
         var total = await query.CountAsync();
 
@@ -56,7 +64,14 @@ public class SysNameController : ControllerBase
                 Nm2 = x.Nm2,
                 Date1 = x.Date1,
                 Date2 = x.Date2,
-                UpdDate = x.UpdDate ?? x.NewDate
+                NewUser = x.NewUser,
+                NewDate = x.NewDate,
+                NewApid = x.NewApid,
+                NewWsnm = x.NewWsnm,
+                UpdUser = x.UpdUser,
+                UpdDate = x.UpdDate ?? x.NewDate,
+                UpdApid = x.UpdApid,
+                UpdWsnm = x.UpdWsnm,
             })
             .ToListAsync();
 
