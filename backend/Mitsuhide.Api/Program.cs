@@ -71,8 +71,24 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 5. Controllers
-builder.Services.AddControllers();
+// 5. Controllers with unified validation error response formatting
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .SelectMany(e => e.Value!.Errors.Select(x => !string.IsNullOrWhiteSpace(x.ErrorMessage) ? x.ErrorMessage : "入力形式が不正です。"))
+                .ToList();
+            var message = string.Join(" ", errors);
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new
+            {
+                message = !string.IsNullOrWhiteSpace(message) ? message : "入力データに不備があります。入力内容を確認してください。",
+                errors = errors
+            });
+        };
+    });
 
 // 6. Swagger / OpenAPI Documentation with JWT Bearer Support
 builder.Services.AddEndpointsApiExplorer();

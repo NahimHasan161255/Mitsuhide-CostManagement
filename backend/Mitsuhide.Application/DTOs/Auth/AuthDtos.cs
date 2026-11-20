@@ -1,15 +1,29 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Mitsuhide.Application.DTOs.Auth;
 
 public class LoginRequestDto
 {
+    [Required(ErrorMessage = "社員コードは必須です。")]
+    [StringLength(6, ErrorMessage = "社員コードは6文字以内で入力してください。")]
     public string UserCd { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "パスワードは必須です。")]
+    [StringLength(100, ErrorMessage = "パスワードは100文字以内で入力してください。")]
     public string Password { get; set; } = string.Empty;
 }
 
 public class ChangePasswordRequestDto
 {
+    [Required(ErrorMessage = "社員コードは必須です。")]
+    [StringLength(6, ErrorMessage = "社員コードは6文字以内で入力してください。")]
     public string UserCd { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "現在のパスワードは必須です。")]
     public string OldPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "新パスワードは必須です。")]
+    [StringLength(50, MinimumLength = 4, ErrorMessage = "新パスワードは4文字以上50文字以内で入力してください。")]
     public string NewPassword { get; set; } = string.Empty;
 }
 
