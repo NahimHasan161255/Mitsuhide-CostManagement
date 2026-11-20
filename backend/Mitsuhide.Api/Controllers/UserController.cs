@@ -127,6 +127,7 @@ public class UserController : ControllerBase
     /// ユーザー新規登録 (F1)
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserRequest req)
     {
         var exists = await _context.UserMaster.AnyAsync(x => x.UserCd == req.UserCd);
@@ -176,6 +177,7 @@ public class UserController : ControllerBase
     /// ユーザー情報更新
     /// </summary>
     [HttpPut("{userCd}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Update(string userCd, [FromBody] UpdateUserRequest req)
     {
         var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
@@ -240,6 +242,7 @@ public class UserController : ControllerBase
     /// ユーザー論理削除 (F7)
     /// </summary>
     [HttpDelete("{userCd}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(string userCd)
     {
         var entity = await _context.UserMaster.FirstOrDefaultAsync(x => x.UserCd == userCd);
