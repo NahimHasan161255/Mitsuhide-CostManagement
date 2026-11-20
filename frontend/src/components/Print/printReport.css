@@ -187,6 +187,30 @@
     font-size: 7pt;
   }
 
+  /* AD1760C (10 items/page, 4 sub-rows/item, 42 total rows) */
+  .erp-report-ad1760c .erp-print-table tr {
+    height: 4.2mm;
+  }
+
+  .erp-report-ad1760c .erp-print-table th,
+  .erp-report-ad1760c .erp-print-table td {
+    height: 4.2mm;
+    padding: 1px 3px;
+    font-size: 7pt;
+  }
+
+  /* AD1770C (12 items/page, 2 sub-rows/item, 26 total rows) */
+  .erp-report-ad1770c .erp-print-table tr {
+    height: 5.5mm;
+  }
+
+  .erp-report-ad1770c .erp-print-table th,
+  .erp-report-ad1770c .erp-print-table td {
+    height: 5.5mm;
+    padding: 2px 4px;
+    font-size: 7.5pt;
+  }
+
   /* Table Header */
   .erp-print-table thead {
     display: table-header-group;

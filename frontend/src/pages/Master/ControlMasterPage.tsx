@@ -38,6 +38,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
 import { useDebounce } from '../../hooks/useDebounce';
+import { ControlPrintReport } from '../../components/Print/ControlPrintReport';
 
 const { Text } = Typography;
 
@@ -51,7 +52,14 @@ export interface ControlItem {
   ch1?: string;
   ch2?: string;
   ch3?: string;
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
   updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 export const SUBSYS_OPTIONS = [
@@ -80,6 +88,8 @@ export const ControlMasterPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [selectedSubSys, setSelectedSubSys] = useState<string>('ALL');
+  const [startProgId, setStartProgId] = useState<string>('');
+  const [endProgId, setEndProgId] = useState<string>('');
   const [searchText, setSearchText] = useState('');
   const debouncedSearchText = useDebounce(searchText, 300);
 
@@ -88,8 +98,34 @@ export const ControlMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<ControlItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  // Direct Print State (F8)
+  const [printItems, setPrintItems] = useState<ControlItem[]>([]);
+
+  // Direct Print (F8) - Directly triggers browser print without modal per AD1770C specification
+  const handleDirectPrint = async () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1.5 });
+    try {
+      const activeSearch = searchText || debouncedSearchText;
+      let url = `${API_BASE_URL}/api/control?page=1&pageSize=5000`;
+      if (selectedSubSys && selectedSubSys !== 'ALL') url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
+      if (startProgId) url += `&startProgId=${encodeURIComponent(startProgId)}`;
+      if (endProgId) url += `&endProgId=${encodeURIComponent(endProgId)}`;
+      if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        setPrintItems(json.items || []);
+      } else {
+        setPrintItems(data);
+      }
+    } catch {
+      setPrintItems(data);
+    }
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
 
   // Fetch Master Data
   const fetchData = async (searchOverride?: string) => {
@@ -99,6 +135,12 @@ export const ControlMasterPage: React.FC = () => {
       let url = `${API_BASE_URL}/api/control?page=${page}&pageSize=${pageSize}`;
       if (selectedSubSys && selectedSubSys !== 'ALL') {
         url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
+      }
+      if (startProgId) {
+        url += `&startProgId=${encodeURIComponent(startProgId)}`;
+      }
+      if (endProgId) {
+        url += `&endProgId=${encodeURIComponent(endProgId)}`;
       }
       if (activeSearch) {
         url += `&keyword=${encodeURIComponent(activeSearch)}`;
@@ -112,18 +154,20 @@ export const ControlMasterPage: React.FC = () => {
       } else {
         // Fallback demo data
         const mockList: ControlItem[] = [
-          { subSysCd: 'GK', progId: 'GK1010C', kanriName: '工事登録 制御基準', nm1: 1, ch1: '初期請負区分=1', ch2: '自動採番有効' },
-          { subSysCd: 'GK', progId: 'GK1020C', kanriName: '実行予算 承認基準', nm1: 1000000, ch1: '承認必須閾値=100万円', ch2: '課長決裁' },
-          { subSysCd: 'UR', progId: 'UR1010C', kanriName: '売上締日 基準管理', nm1: 25, ch1: '通常締日=25日', ch2: '月末締め設定' },
-          { subSysCd: 'SR', progId: 'SR1010C', kanriName: '仕入締日 基準管理', nm1: 31, ch1: '月末締め一括処理', ch2: '翌月末支払' },
-          { subSysCd: 'VM', progId: 'VM1010C', kanriName: '月次更新 処理年度', nm1: 2026, nm2: 11, ch1: '当期年度=2026', ch2: '当月度=11' },
-          { subSysCd: 'AD', progId: 'AD1780C', kanriName: '受注先保守 処理基準', nm1: 1, ch1: 'コード自動採番=1', ch2: '手形期日制限=120日' },
+          { subSysCd: 'GK', progId: 'GK1010C', kanriName: '工事登録 制御基準', nm1: 1, ch1: '初期請負区分=1', ch2: '自動採番有効', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
+          { subSysCd: 'GK', progId: 'GK1020C', kanriName: '実行予算 承認基準', nm1: 1000000, ch1: '承認必須閾値=100万円', ch2: '課長決裁', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
+          { subSysCd: 'UR', progId: 'UR1010C', kanriName: '売上締日 基準管理', nm1: 25, ch1: '通常締日=25日', ch2: '月末締め設定', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
+          { subSysCd: 'SR', progId: 'SR1010C', kanriName: '仕入締日 基準管理', nm1: 31, ch1: '月末締め一括処理', ch2: '翌月末支払', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
+          { subSysCd: 'VM', progId: 'VM1010C', kanriName: '月次更新 処理年度', nm1: 2026, nm2: 11, ch1: '当期年度=2026', ch2: '当月度=11', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
+          { subSysCd: 'AD', progId: 'AD1780C', kanriName: '受注先保守 処理基準', nm1: 1, ch1: 'コード自動採番=1', ch2: '手形期日制限=120日', newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1770C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1770C', updWsnm: 'PC-ADMIN' },
         ];
         const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
         setData(
           mockList.filter(
             (x) =>
               (selectedSubSys === 'ALL' || x.subSysCd === selectedSubSys) &&
+              (!startProgId || x.progId >= startProgId.trim().toUpperCase()) &&
+              (!endProgId || x.progId <= endProgId.trim().toUpperCase()) &&
               (!activeSearch || x.kanriName.includes(activeSearch) || x.progId.includes(activeSearch))
           )
         );
@@ -138,11 +182,11 @@ export const ControlMasterPage: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchText, selectedSubSys]);
+  }, [debouncedSearchText, selectedSubSys, startProgId, endProgId]);
 
   useEffect(() => {
     fetchData();
-  }, [page, pageSize, selectedSubSys, debouncedSearchText]);
+  }, [page, pageSize, selectedSubSys, startProgId, endProgId, debouncedSearchText]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -312,6 +356,12 @@ export const ControlMasterPage: React.FC = () => {
       if (selectedSubSys && selectedSubSys !== 'ALL') {
         url += `&subSysCd=${encodeURIComponent(selectedSubSys)}`;
       }
+      if (startProgId) {
+        url += `&startProgId=${encodeURIComponent(startProgId)}`;
+      }
+      if (endProgId) {
+        url += `&endProgId=${encodeURIComponent(endProgId)}`;
+      }
       if (activeSearch) {
         url += `&keyword=${encodeURIComponent(activeSearch)}`;
       }
@@ -326,6 +376,12 @@ export const ControlMasterPage: React.FC = () => {
       let filtered = data;
       if (selectedSubSys && selectedSubSys !== 'ALL') {
         filtered = filtered.filter((x) => x.subSysCd === selectedSubSys);
+      }
+      if (startProgId) {
+        filtered = filtered.filter((x) => x.progId >= startProgId.trim().toUpperCase());
+      }
+      if (endProgId) {
+        filtered = filtered.filter((x) => x.progId <= endProgId.trim().toUpperCase());
       }
       if (activeSearch) {
         filtered = filtered.filter(
@@ -379,7 +435,7 @@ export const ControlMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        setIsPrintModalOpen(true);
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -395,7 +451,7 @@ export const ControlMasterPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+  }, [handleSave, handleClearForm, mode, currentRecord, data, selectedSubSys, startProgId, endProgId, searchText]);
 
   // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<ControlItem> = [
@@ -487,7 +543,7 @@ export const ControlMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -817,8 +873,9 @@ export const ControlMasterPage: React.FC = () => {
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={14}>
-                      <Space size={10} style={{ width: '100%' }} wrap>
+                    <Col xs={24} lg={19}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Subsystem Dropdown */}
                         <Select
                           value={selectedSubSys}
                           onChange={(val) => {
@@ -831,34 +888,85 @@ export const ControlMasterPage: React.FC = () => {
                             ...SUBSYS_OPTIONS,
                           ]}
                         />
-                        <Input
-                          placeholder="プログラムID / 管理名称... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          onPressEnter={() => {
-                            setPage(1);
-                            fetchData(searchText);
-                          }}
-                          allowClear
-                          style={{ width: 300 }}
-                        />
-                        <Button
-                          type="primary"
-                          icon={<SearchOutlined />}
-                          loading={loading}
-                          onClick={() => {
-                            setPage(1);
-                            fetchData(searchText);
-                          }}
-                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
-                        >
-                          検索
-                        </Button>
+
+                        {/* 2. Program ID Code Range (コード範囲: 開始 〜 終了) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={7}
+                            value={startProgId}
+                            onChange={(e) => {
+                              setStartProgId(e.target.value.toUpperCase());
+                              setPage(1);
+                            }}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={7}
+                            value={endProgId}
+                            onChange={(e) => {
+                              setEndProgId(e.target.value.toUpperCase());
+                              setPage(1);
+                            }}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 3. Keyword Search (Space.Compact with blue 検索 button) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="プログラムID / 管理名称..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            onPressEnter={() => {
+                              setPage(1);
+                              fetchData(searchText);
+                            }}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            loading={loading}
+                            onClick={() => {
+                              setPage(1);
+                              fetchData(searchText);
+                            }}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* 4. Reset Filter Button if any filter is active */}
+                        {(selectedSubSys !== 'ALL' || startProgId || endProgId || searchText) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setSelectedSubSys('ALL');
+                              setStartProgId('');
+                              setEndProgId('');
+                              setSearchText('');
+                              setPage(1);
+                            }}
+                            style={{ color: '#ef4444', fontWeight: 600 }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Col xs={24} lg={5} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                         登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
                       </Text>
@@ -895,51 +1003,9 @@ export const ControlMasterPage: React.FC = () => {
         />
 
       {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1770C 印刷指定 - F8)
+          A4 LANDSCAPE DIRECT PRINT COMPONENT (AD1770C SPECIFICATION - F8)
           ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#0d9488' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1770C 処理基準管理マスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() => {
-              setIsPrintModalOpen(false);
-              window.print();
-            }}
-            style={{ background: '#0d9488', borderColor: '#0d9488' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-            登録されている各サブシステムの処理基準管理マスタ定義を印刷プレビューで表示します。
-          </p>
-        </div>
-      </Modal>
+      <ControlPrintReport items={printItems.length > 0 ? printItems : data} />
     </div>
   );
 };

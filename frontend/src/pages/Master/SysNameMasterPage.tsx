@@ -38,6 +38,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { API_BASE_URL } from '../../api/client';
 import { exportToCsv } from '../../utils/csvExport';
 import { useDebounce } from '../../hooks/useDebounce';
+import { SysNamePrintReport } from '../../components/Print/SysNamePrintReport';
 
 const { Text } = Typography;
 
@@ -48,7 +49,16 @@ export interface SysNameItem {
   ch2?: string;
   nm1?: number;
   nm2?: number;
+  date1?: number;
+  date2?: number;
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
   updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 export const NAME_KBN_OPTIONS = [
@@ -80,7 +90,9 @@ export const SysNameMasterPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
-  const [selectedKbn, setSelectedKbn] = useState<string | undefined>();
+  const [selectedKbn, setSelectedKbn] = useState<string>('ALL');
+  const [startNameCd, setStartNameCd] = useState<string>('');
+  const [endNameCd, setEndNameCd] = useState<string>('');
   const [searchText, setSearchText] = useState('');
   const debouncedSearchText = useDebounce(searchText, 300);
 
@@ -89,8 +101,34 @@ export const SysNameMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<SysNameItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  // Direct Print State (F8)
+  const [printItems, setPrintItems] = useState<SysNameItem[]>([]);
+
+  // Direct Print (F8) - Directly triggers browser print without modal per AD1760C specification
+  const handleDirectPrint = async () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1.5 });
+    try {
+      const activeSearch = searchText || debouncedSearchText;
+      let url = `${API_BASE_URL}/api/sysname?page=1&pageSize=5000`;
+      if (selectedKbn && selectedKbn !== 'ALL') url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (startNameCd) url += `&startNameCd=${encodeURIComponent(startNameCd)}`;
+      if (endNameCd) url += `&endNameCd=${encodeURIComponent(endNameCd)}`;
+      if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        setPrintItems(json.items || []);
+      } else {
+        setPrintItems(data);
+      }
+    } catch {
+      setPrintItems(data);
+    }
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
 
   // Fetch Master Data
   const fetchData = async (searchOverride?: string) => {
@@ -98,7 +136,9 @@ export const SysNameMasterPage: React.FC = () => {
     try {
       const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
       let url = `${API_BASE_URL}/api/sysname?page=${page}&pageSize=${pageSize}`;
-      if (selectedKbn) url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (selectedKbn && selectedKbn !== 'ALL') url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (startNameCd) url += `&startNameCd=${encodeURIComponent(startNameCd)}`;
+      if (endNameCd) url += `&endNameCd=${encodeURIComponent(endNameCd)}`;
       if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
 
       const res = await fetch(url);
@@ -109,24 +149,26 @@ export const SysNameMasterPage: React.FC = () => {
       } else {
         // Fallback demo data
         const mockList: SysNameItem[] = [
-          { nameKbn: 'GK001', nameCd: '0', ch1: '未成', ch2: '工事施工中・仕掛', nm1: 1 },
-          { nameKbn: 'GK001', nameCd: '1', ch1: '完成', ch2: '完工引渡済', nm1: 2 },
-          { nameKbn: 'GK002', nameCd: '1', ch1: '民間', ch2: '一般企業・民間工事', nm1: 1 },
-          { nameKbn: 'GK002', nameCd: '2', ch1: '官公庁', ch2: '公共工事・入札', nm1: 2 },
-          { nameKbn: 'GK003', nameCd: '1', ch1: '元請', ch2: '直接請負', nm1: 1 },
-          { nameKbn: 'GK003', nameCd: '2', ch1: '下請', ch2: 'ゼネコン一次下請', nm1: 2 },
-          { nameKbn: 'GK004', nameCd: '1', ch1: '課税 (10%)', ch2: '標準税率', nm1: 10 },
-          { nameKbn: 'GK004', nameCd: '2', ch1: '非課税', ch2: '非課税取引', nm1: 0 },
-          { nameKbn: 'AD003', nameCd: '1', ch1: '自社指定書式', ch2: 'ミツヒデ標準請求書', nm1: 1 },
-          { nameKbn: 'AD003', nameCd: '2', ch1: '客先指定書式', ch2: '元請指定フォーマット', nm1: 2 },
-          { nameKbn: 'AD004', nameCd: '1', ch1: '通常取引', ch2: '随時・継続取引先', nm1: 1 },
-          { nameKbn: 'AD004', nameCd: '2', ch1: '取引停止', ch2: '一時休止', nm1: 2 },
+          { nameKbn: 'GK001', nameCd: '0', ch1: '未成', ch2: '工事施工中・仕掛', nm1: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK001', nameCd: '1', ch1: '完成', ch2: '完工引渡済', nm1: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK002', nameCd: '1', ch1: '民間', ch2: '一般企業・民間工事', nm1: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK002', nameCd: '2', ch1: '官公庁', ch2: '公共工事・入札', nm1: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK003', nameCd: '1', ch1: '元請', ch2: '直接請負', nm1: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK003', nameCd: '2', ch1: '下請', ch2: 'ゼネコン一次下請', nm1: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK004', nameCd: '1', ch1: '課税 (10%)', ch2: '標準税率', nm1: 10, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'GK004', nameCd: '2', ch1: '非課税', ch2: '非課税取引', nm1: 0, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'AD003', nameCd: '1', ch1: '自社指定書式', ch2: 'ミツヒデ標準請求書', nm1: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'AD003', nameCd: '2', ch1: '客先指定書式', ch2: '元請指定フォーマット', nm1: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'AD004', nameCd: '1', ch1: '通常取引', ch2: '随時・継続取引先', nm1: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
+          { nameKbn: 'AD004', nameCd: '2', ch1: '取引停止', ch2: '一時休止', nm1: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1760C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1760C', updWsnm: 'PC-ADMIN' },
         ];
         const activeSearch = searchOverride !== undefined ? searchOverride : debouncedSearchText;
         setData(
           mockList.filter(
             (x) =>
-              (!selectedKbn || x.nameKbn === selectedKbn) &&
+              (selectedKbn === 'ALL' || x.nameKbn === selectedKbn) &&
+              (!startNameCd || x.nameCd >= startNameCd.trim()) &&
+              (!endNameCd || x.nameCd <= endNameCd.trim()) &&
               (!activeSearch || x.ch1.includes(activeSearch) || x.nameCd.includes(activeSearch))
           )
         );
@@ -141,18 +183,18 @@ export const SysNameMasterPage: React.FC = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearchText, selectedKbn]);
+  }, [debouncedSearchText, selectedKbn, startNameCd, endNameCd]);
 
   useEffect(() => {
     fetchData();
-  }, [page, pageSize, selectedKbn, debouncedSearchText]);
+  }, [page, pageSize, selectedKbn, startNameCd, endNameCd, debouncedSearchText]);
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
     form.resetFields();
     form.setFieldsValue({
       ...INITIAL_FORM_VALUES,
-      nameKbn: selectedKbn || 'GK001',
+      nameKbn: selectedKbn && selectedKbn !== 'ALL' ? selectedKbn : 'GK001',
     });
     setCurrentRecord(null);
     setMode('new');
@@ -312,7 +354,9 @@ export const SysNameMasterPage: React.FC = () => {
     const activeSearch = searchText || debouncedSearchText;
     try {
       let url = `${API_BASE_URL}/api/sysname?page=1&pageSize=5000`;
-      if (selectedKbn) url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (selectedKbn && selectedKbn !== 'ALL') url += `&nameKbn=${encodeURIComponent(selectedKbn)}`;
+      if (startNameCd) url += `&startNameCd=${encodeURIComponent(startNameCd)}`;
+      if (endNameCd) url += `&endNameCd=${encodeURIComponent(endNameCd)}`;
       if (activeSearch) url += `&keyword=${encodeURIComponent(activeSearch)}`;
 
       const res = await fetch(url);
@@ -323,7 +367,9 @@ export const SysNameMasterPage: React.FC = () => {
     } catch {
       // Fallback
       let filtered = data;
-      if (selectedKbn) filtered = filtered.filter((x) => x.nameKbn === selectedKbn);
+      if (selectedKbn && selectedKbn !== 'ALL') filtered = filtered.filter((x) => x.nameKbn === selectedKbn);
+      if (startNameCd) filtered = filtered.filter((x) => x.nameCd >= startNameCd.trim());
+      if (endNameCd) filtered = filtered.filter((x) => x.nameCd <= endNameCd.trim());
       if (activeSearch) {
         filtered = filtered.filter(
           (x) => x.ch1.includes(activeSearch) || x.nameCd.includes(activeSearch)
@@ -375,7 +421,7 @@ export const SysNameMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        setIsPrintModalOpen(true);
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -391,7 +437,7 @@ export const SysNameMasterPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+  }, [handleSave, handleClearForm, mode, currentRecord, data, selectedKbn, startNameCd, endNameCd, searchText]);
 
   // Columns for Tab 2 (一覧照会)
   const columns: ColumnsType<SysNameItem> = [
@@ -487,7 +533,7 @@ export const SysNameMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -796,47 +842,100 @@ export const SysNameMasterPage: React.FC = () => {
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={14}>
-                      <Space size={10} style={{ width: '100%' }} wrap>
+                    <Col xs={24} lg={19}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Name Category Dropdown (名称区分) */}
                         <Select
-                          placeholder="名称区分で絞込"
-                          allowClear
-                          value={selectedKbn}
+                          value={selectedKbn || 'ALL'}
                           onChange={(val) => {
                             setSelectedKbn(val);
                             setPage(1);
                           }}
                           style={{ width: 220 }}
-                          options={NAME_KBN_OPTIONS}
+                          options={[
+                            { value: 'ALL', label: 'すべての名称区分' },
+                            ...NAME_KBN_OPTIONS,
+                          ]}
                         />
-                        <Input
-                          placeholder="名称 / 名称CD... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          onPressEnter={() => {
-                            setPage(1);
-                            fetchData(searchText);
-                          }}
-                          allowClear
-                          style={{ width: 280 }}
-                        />
-                        <Button
-                          type="primary"
-                          icon={<SearchOutlined />}
-                          loading={loading}
-                          onClick={() => {
-                            setPage(1);
-                            fetchData(searchText);
-                          }}
-                          style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
-                        >
-                          検索
-                        </Button>
+
+                        {/* 2. Name CD Range (コード範囲: 開始 〜 終了) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={7}
+                            value={startNameCd}
+                            onChange={(e) => {
+                              setStartNameCd(e.target.value);
+                              setPage(1);
+                            }}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={7}
+                            value={endNameCd}
+                            onChange={(e) => {
+                              setEndNameCd(e.target.value);
+                              setPage(1);
+                            }}
+                            style={{ width: 95, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 3. Keyword Search (Space.Compact with blue 検索 button) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="名称 / 名称CD..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            onPressEnter={() => {
+                              setPage(1);
+                              fetchData(searchText);
+                            }}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            loading={loading}
+                            onClick={() => {
+                              setPage(1);
+                              fetchData(searchText);
+                            }}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* 4. Reset Filter Button if any filter is active */}
+                        {((selectedKbn && selectedKbn !== 'ALL') || startNameCd || endNameCd || searchText) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setSelectedKbn('ALL');
+                              setStartNameCd('');
+                              setEndNameCd('');
+                              setSearchText('');
+                              setPage(1);
+                            }}
+                            style={{ color: '#ef4444', fontWeight: 600 }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Col xs={24} lg={5} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                         登録件数: <strong style={{ color: '#0f172a' }}>{totalCount}</strong> 件
                       </Text>
@@ -873,51 +972,9 @@ export const SysNameMasterPage: React.FC = () => {
         />
 
       {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1760C 印刷指定 - F8)
+          A4 LANDSCAPE DIRECT PRINT COMPONENT (AD1760C SPECIFICATION - F8)
           ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#0284c7' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1760C システム名称マスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() => {
-              setIsPrintModalOpen(false);
-              window.print();
-            }}
-            style={{ background: '#0284c7', borderColor: '#0284c7' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-            登録されているシステム名称マスタの定義一覧表を印刷プレビューで表示します。
-          </p>
-        </div>
-      </Modal>
+      <SysNamePrintReport items={printItems.length > 0 ? printItems : data} />
     </div>
   );
 };

@@ -11,7 +11,14 @@ public class ControlDto
     public decimal? Nm2 { get; set; }
     public string? Ch1 { get; set; }
     public string? Ch2 { get; set; }
+    public string? NewUser { get; set; }
+    public DateTime? NewDate { get; set; }
+    public string? NewApid { get; set; }
+    public string? NewWsnm { get; set; }
+    public string? UpdUser { get; set; }
     public DateTime? UpdDate { get; set; }
+    public string? UpdApid { get; set; }
+    public string? UpdWsnm { get; set; }
 }
 
 public class CreateControlRequest

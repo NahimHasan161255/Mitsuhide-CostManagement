@@ -28,12 +28,20 @@ public class ControlController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 30,
         [FromQuery] string? subSysCd = null,
+        [FromQuery] string? startProgId = null,
+        [FromQuery] string? endProgId = null,
         [FromQuery] string? keyword = null)
     {
         var query = _context.ControlMaster.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(subSysCd) && subSysCd != "ALL")
             query = query.Where(x => x.SubSysCd == subSysCd);
+
+        if (!string.IsNullOrWhiteSpace(startProgId))
+            query = query.Where(x => string.Compare(x.ProgId, startProgId) >= 0);
+
+        if (!string.IsNullOrWhiteSpace(endProgId))
+            query = query.Where(x => string.Compare(x.ProgId, endProgId) <= 0);
 
         if (!string.IsNullOrWhiteSpace(keyword))
             query = query.Where(x => x.ProgId.Contains(keyword) || x.KanriName.Contains(keyword));
@@ -54,7 +62,14 @@ public class ControlController : ControllerBase
                 Nm2 = x.Nm2,
                 Ch1 = x.Ch1,
                 Ch2 = x.Ch2,
-                UpdDate = x.UpdDate ?? x.NewDate
+                NewUser = x.NewUser,
+                NewDate = x.NewDate,
+                NewApid = x.NewApid,
+                NewWsnm = x.NewWsnm,
+                UpdUser = x.UpdUser,
+                UpdDate = x.UpdDate ?? x.NewDate,
+                UpdApid = x.UpdApid,
+                UpdWsnm = x.UpdWsnm,
             })
             .ToListAsync();
 
