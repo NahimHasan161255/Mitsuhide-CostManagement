@@ -15,7 +15,6 @@ import {
   Typography,
   Tabs,
   Tooltip,
-  Modal,
 } from 'antd';
 import {
   FormOutlined,
@@ -39,6 +38,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { exportToCsv } from '../../utils/csvExport';
+import { MessagePrintReport } from '../../components/Print/MessagePrintReport';
 
 const { Text } = Typography;
 
@@ -48,28 +48,36 @@ export interface MessageMasterItem {
   msg2?: string;
   subSysCd: string;
   botanKbn: number; // 1: はい/OK, 2: いいえ
+  newUser?: string;
+  newDate?: string;
+  newApid?: string;
+  newWsnm?: string;
+  updUser?: string;
+  updDate?: string;
+  updApid?: string;
+  updWsnm?: string;
 }
 
 // Seed Messages extracted directly from official sheet (01 コード仕様書（●メッセージマスタ登録シート.xlsx)
 const SEED_MESSAGES: MessageMasterItem[] = [
-  { msgNo: '00001', msg1: '正常終了しました。', msg2: '処理が正常に完了しました。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '00002', msg1: '終了しました。', msg2: '', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '00003', msg1: 'ＣＳＶ出力が完了しました。', msg2: '', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '00004', msg1: 'ＰＤＦ出力が完了しました。', msg2: '', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '00070', msg1: 'パスワードが変更されました。', msg2: '次回ログオンより新パスワードが適用されます。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01001', msg1: '登録しますか？', msg2: '入力内容をデータベースに保存します。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01002', msg1: '検索しますか？', msg2: '指定条件で検索を実行します。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01003', msg1: '条件訂正しますか？', msg2: 'ヘッダ検索条件部に戻ります。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01004', msg1: 'マスタ検索しますか？', msg2: '関連マスタ検索画面を表示します。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01005', msg1: 'ＣＳＶ出力しますか？', msg2: 'ファイル出力処理を実行します。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '01006', msg1: '削除しますか？', msg2: 'この操作は取り消せません。本当によろしいですか？', subSysCd: '共通', botanKbn: 2 },
-  { msgNo: '01007', msg1: '印刷しますか？', msg2: '帳票プレビューまたは印刷を実行します。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '02086', msg1: '月次更新（仮締）が行われていません。', msg2: '対象年月の月次仮締めを実行してください。(AD1010C仕様)', subSysCd: 'MS', botanKbn: 1 },
-  { msgNo: '02087', msg1: '月次更新（本締）が行われていません。', msg2: '対象年月の月次本締めを実行してください。(AD1010C仕様)', subSysCd: 'MS', botanKbn: 1 },
-  { msgNo: '03001', msg1: '入力項目にエラーがあります。', msg2: '必須項目の未入力またはフォーマットを確認してください。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '03002', msg1: '対象データが存在しません。', msg2: '指定されたコードのデータが見つかりませんでした。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '03003', msg1: '既に登録されています。', msg2: '一意キーが重複しているため登録できません。', subSysCd: '共通', botanKbn: 1 },
-  { msgNo: '03004', msg1: '権限がありません。', msg2: 'このプログラムの実行権限がグループに割り当てられていません。', subSysCd: '共通', botanKbn: 1 },
+  { msgNo: '00001', msg1: '正常終了しました。', msg2: '処理が正常に完了しました。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '00002', msg1: '終了しました。', msg2: '', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '00003', msg1: 'ＣＳＶ出力が完了しました。', msg2: '', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '00004', msg1: 'ＰＤＦ出力が完了しました。', msg2: '', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '00070', msg1: 'パスワードが変更されました。', msg2: '次回ログオンより新パスワードが適用されます。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01001', msg1: '登録しますか？', msg2: '入力内容をデータベースに保存します。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01002', msg1: '検索しますか？', msg2: '指定条件で検索を実行します。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01003', msg1: '条件訂正しますか？', msg2: 'ヘッダ検索条件部に戻ります。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01004', msg1: 'マスタ検索しますか？', msg2: '関連マスタ検索画面を表示します。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01005', msg1: 'ＣＳＶ出力しますか？', msg2: 'ファイル出力処理を実行します。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01006', msg1: '削除しますか？', msg2: 'この操作は取り消せません。本当によろしいですか？', subSysCd: '共通', botanKbn: 2, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '01007', msg1: '印刷しますか？', msg2: '帳票プレビューまたは印刷を実行します。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '02086', msg1: '月次更新（仮締）が行われていません。', msg2: '対象年月の月次仮締めを実行してください。(AD1010C仕様)', subSysCd: 'MS', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '02087', msg1: '月次更新（本締）が行われていません。', msg2: '対象年月の月次本締めを実行してください。(AD1010C仕様)', subSysCd: 'MS', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '03001', msg1: '入力項目にエラーがあります。', msg2: '必須項目の未入力またはフォーマットを確認してください。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '03002', msg1: '対象データが存在しません。', msg2: '指定されたコードのデータが見つかりませんでした。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '03003', msg1: '既に登録されています。', msg2: '一意キーが重複しているため登録できません。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
+  { msgNo: '03004', msg1: '権限がありません。', msg2: 'このプログラムの実行権限がグループに割り当てられていません。', subSysCd: '共通', botanKbn: 1, newUser: '000001', newDate: '2026/11/01 09:00:00', newApid: 'AD1750C', newWsnm: 'PC-ADMIN', updUser: '000001', updDate: '2026/11/15 14:30:00', updApid: 'AD1750C', updWsnm: 'PC-ADMIN' },
 ];
 
 const getMsgCategoryTag = (msgNo: string) => {
@@ -116,6 +124,9 @@ export const MessageMasterPage: React.FC = () => {
   // Master Data & Search
   const [data, setData] = useState<MessageMasterItem[]>(SEED_MESSAGES);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [startMsgNo, setStartMsgNo] = useState<string>('');
+  const [endMsgNo, setEndMsgNo] = useState<string>('');
+  const [selectedSubSys, setSelectedSubSys] = useState<string>('ALL');
   const [searchText, setSearchText] = useState('');
 
   // Form State
@@ -123,8 +134,17 @@ export const MessageMasterPage: React.FC = () => {
   const [currentRecord, setCurrentRecord] = useState<MessageMasterItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Print Modal State (F8)
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  // Direct Print State (F8)
+  const [printItems, setPrintItems] = useState<MessageMasterItem[]>([]);
+
+  // Direct Print (F8) - Directly triggers browser print without modal per AD1750C specification
+  const handleDirectPrint = () => {
+    message.loading({ content: '印刷データを準備中...', key: 'printLoading', duration: 1 });
+    setPrintItems(filteredData);
+    setTimeout(() => {
+      window.print();
+    }, 250);
+  };
 
   // Initial Form Reset
   const handleClearForm = useCallback(() => {
@@ -279,7 +299,7 @@ export const MessageMasterPage: React.FC = () => {
         handleDeleteCurrent();
       } else if (e.key === 'F8') {
         e.preventDefault();
-        setIsPrintModalOpen(true);
+        handleDirectPrint();
       } else if (e.key === 'F9') {
         e.preventDefault();
         handlePrevRecord();
@@ -295,10 +315,11 @@ export const MessageMasterPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave, handleClearForm, mode, currentRecord, data]);
+  }, [handleSave, handleClearForm, mode, currentRecord, data, selectedCategory, startMsgNo, endMsgNo, selectedSubSys, searchText]);
 
-  // Filter Data for Tab 2
+  // Filter Data for Tab 2 (Matches Specification: 分類, メッセージCD範囲, サブシステム, キーワード)
   const filteredData = data.filter((item) => {
+    // 1. Category Filter
     const num = parseInt(item.msgNo, 10);
     let matchesCategory = true;
     if (selectedCategory === 'INFO') matchesCategory = num < 1000;
@@ -306,13 +327,25 @@ export const MessageMasterPage: React.FC = () => {
     else if (selectedCategory === 'WARN') matchesCategory = num >= 2000 && num < 3000;
     else if (selectedCategory === 'ERROR') matchesCategory = num >= 3000;
 
+    // 2. Message CD Range (コード範囲: 開始 〜 終了)
+    let matchesRange = true;
+    if (startMsgNo && item.msgNo < startMsgNo.trim()) matchesRange = false;
+    if (endMsgNo && item.msgNo > endMsgNo.trim()) matchesRange = false;
+
+    // 3. Subsystem Filter
+    let matchesSubSys = true;
+    if (selectedSubSys !== 'ALL' && item.subSysCd !== selectedSubSys) {
+      matchesSubSys = false;
+    }
+
+    // 4. Keyword Search
     const matchesSearch =
       !searchText ||
       item.msg1.includes(searchText) ||
       (item.msg2 && item.msg2.includes(searchText)) ||
       item.msgNo.includes(searchText);
 
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesRange && matchesSubSys && matchesSearch;
   });
 
   // Columns for Tab 2 (一覧照会)
@@ -403,7 +436,7 @@ export const MessageMasterPage: React.FC = () => {
             activeTab === 'list' ? (
               <Space size={8} wrap>
                 <Tooltip title="F8キーでも実行できます">
-                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={() => setIsPrintModalOpen(true)}>
+                  <Button className="erp-tab-action-btn" icon={<PrinterOutlined />} onClick={handleDirectPrint}>
                     <span className="erp-btn-shortcut">(F8) </span>
                     <span className="erp-btn-text-mobile-hide">印刷</span>
                   </Button>
@@ -712,8 +745,9 @@ export const MessageMasterPage: React.FC = () => {
                    ======================================================== */
                 <div style={{ marginTop: 8 }}>
                   <Row justify="space-between" align="middle" style={{ marginBottom: 16 }} gutter={[12, 12]}>
-                    <Col xs={24} sm={16} md={14}>
-                      <Space size={10} style={{ width: '100%' }} wrap>
+                    <Col xs={24} lg={19}>
+                      <Space size={14} wrap align="center">
+                        {/* 1. Category Filter */}
                         <Select
                           value={selectedCategory}
                           onChange={(val) => setSelectedCategory(val)}
@@ -726,18 +760,87 @@ export const MessageMasterPage: React.FC = () => {
                             { value: 'ERROR', label: 'エラー (03000)' },
                           ]}
                         />
-                        <Input
-                          placeholder="メッセージ本文 / CD... (リアルタイム検索)"
-                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                          allowClear
-                          style={{ width: 280 }}
+
+                        {/* 2. Message CD Range (コード範囲: 開始 〜 終了) */}
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <Text strong style={{ fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>
+                            コード範囲:
+                          </Text>
+                          <Input
+                            placeholder="開始"
+                            maxLength={5}
+                            value={startMsgNo}
+                            onChange={(e) => setStartMsgNo(e.target.value)}
+                            style={{ width: 85, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                          <Text style={{ color: '#94a3b8' }}>〜</Text>
+                          <Input
+                            placeholder="終了"
+                            maxLength={5}
+                            value={endMsgNo}
+                            onChange={(e) => setEndMsgNo(e.target.value)}
+                            style={{ width: 85, fontFamily: 'monospace' }}
+                            allowClear
+                          />
+                        </div>
+
+                        {/* 3. Subsystem Filter */}
+                        <Select
+                          value={selectedSubSys}
+                          onChange={(val) => setSelectedSubSys(val)}
+                          style={{ width: 155 }}
+                          options={[
+                            { value: 'ALL', label: 'すべてのサブシステム' },
+                            { value: '共通', label: '共通 (全般)' },
+                            { value: 'AD', label: 'AD: システム管理' },
+                            { value: 'GK', label: 'GK: 原価管理' },
+                            { value: 'UR', label: 'UR: 売上管理' },
+                            { value: 'SR', label: 'SR: 仕入管理' },
+                            { value: 'VM', label: 'VM: 月次更新' },
+                            { value: 'MS', label: 'MS: マスタ保守' },
+                          ]}
                         />
+
+                        {/* 4. Keyword Search (Space.Compact with blue 検索 button) */}
+                        <Space.Compact style={{ width: 280, maxWidth: '100%' }}>
+                          <Input
+                            placeholder="メッセージ本文 / CD..."
+                            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            allowClear
+                          />
+                          <Button
+                            type="primary"
+                            icon={<SearchOutlined />}
+                            style={{ background: '#2563eb', borderColor: '#2563eb', fontWeight: 600 }}
+                          >
+                            検索
+                          </Button>
+                        </Space.Compact>
+
+                        {/* 5. Reset Filter Button if any filter is active */}
+                        {(selectedCategory !== 'ALL' || startMsgNo || endMsgNo || selectedSubSys !== 'ALL' || searchText) && (
+                          <Button
+                            size="small"
+                            type="text"
+                            onClick={() => {
+                              setSelectedCategory('ALL');
+                              setStartMsgNo('');
+                              setEndMsgNo('');
+                              setSelectedSubSys('ALL');
+                              setSearchText('');
+                            }}
+                            style={{ color: '#ef4444', fontWeight: 600 }}
+                          >
+                            条件クリア
+                          </Button>
+                        )}
                       </Space>
                     </Col>
 
-                    <Col xs={24} sm={8} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Col xs={24} lg={5} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                       <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
                         登録件数: <strong style={{ color: '#0f172a' }}>{filteredData.length}</strong> 件
                       </Text>
@@ -763,51 +866,16 @@ export const MessageMasterPage: React.FC = () => {
         />
 
       {/* ========================================================
-          MODAL: PRINT SPECIFICATION (AD1750C 印刷指定 - F8)
+          A4 LANDSCAPE DIRECT PRINT COMPONENT (AD1750C SPECIFICATION - F8)
           ======================================================== */}
-      <Modal
-        title={
-          <Space>
-            <PrinterOutlined style={{ color: '#0ea5e9' }} />
-            <span style={{ fontWeight: 700 }}>■ 印刷指定 (AD1750C メッセージマスタ一覧表)</span>
-          </Space>
-        }
-        open={isPrintModalOpen}
-        onCancel={() => setIsPrintModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsPrintModalOpen(false)}>
-            キャンセル
-          </Button>,
-          <Button
-            key="csv"
-            icon={<DownloadOutlined />}
-            onClick={() => {
-              handleExportCsv();
-              setIsPrintModalOpen(false);
-            }}
-          >
-            CSVダウンロード
-          </Button>,
-          <Button
-            key="print"
-            type="primary"
-            icon={<PrinterOutlined />}
-            onClick={() => {
-              setIsPrintModalOpen(false);
-              window.print();
-            }}
-            style={{ background: '#0ea5e9', borderColor: '#0ea5e9' }}
-          >
-            印刷プレビュー (F8)
-          </Button>,
-        ]}
-      >
-        <div style={{ padding: '12px 0' }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#475569' }}>
-            登録されている全メッセージマスタ（案内・確認・警告・エラー）一覧を印刷プレビューで表示します。
-          </p>
-        </div>
-      </Modal>
+      <MessagePrintReport
+        items={printItems.length > 0 ? printItems : filteredData}
+        startMsgNo={startMsgNo}
+        endMsgNo={endMsgNo}
+        selectedCategory={selectedCategory}
+        selectedSubSys={selectedSubSys}
+        keyword={searchText}
+      />
     </div>
   );
 };
