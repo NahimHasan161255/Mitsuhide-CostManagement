@@ -15,6 +15,33 @@ export const apiClient = axios.create({
   },
 });
 
+// Intercept native window.fetch to automatically include JWT Bearer token & handle 401
+if (typeof window !== 'undefined' && window.fetch) {
+  const originalFetch = window.fetch;
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    try {
+      const token = sessionStorage.getItem('mitsuhide_auth_token');
+      let modifiedInit = init ? { ...init } : {};
+      if (token) {
+        const headers = new Headers(modifiedInit.headers || {});
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${token}`);
+        }
+        modifiedInit.headers = headers;
+      }
+      const res = await originalFetch(input, modifiedInit);
+      if (res.status === 401) {
+        sessionStorage.removeItem('mitsuhide_auth_user');
+        sessionStorage.removeItem('mitsuhide_auth_token');
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      }
+      return res;
+    } catch (err) {
+      return originalFetch(input, init);
+    }
+  };
+}
+
 // Request interceptor: attach bearer session token if present
 apiClient.interceptors.request.use((config) => {
   try {

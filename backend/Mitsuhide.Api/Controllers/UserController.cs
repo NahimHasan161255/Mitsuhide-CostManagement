@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mitsuhide.Application.Common.Security;
 using Mitsuhide.Application.DTOs.Common;
 using Mitsuhide.Application.DTOs.Master;
 using Mitsuhide.Domain.Entities.Master;
@@ -9,6 +11,7 @@ namespace Mitsuhide.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -137,7 +140,7 @@ public class UserController : ControllerBase
             UserGrpCd = req.UserGrpCd,
             Syubetu = req.Syubetu,
             Biko = req.Biko,
-            PasswordHash = req.Password, // In production, hash with BCrypt / Argon2
+            PasswordHash = !string.IsNullOrWhiteSpace(req.Password) ? PasswordHasher.HashPassword(req.Password) : PasswordHasher.HashPassword("user123"),
             PassUpdDate = DateTime.Now,
             NewDate = DateTime.Now,
             NewUser = "SYSTEM",
@@ -205,9 +208,10 @@ public class UserController : ControllerBase
             entity.DelFg = req.DeleteFlg.Value ? 1 : 0;
         }
 
-        if (!string.IsNullOrWhiteSpace(req.NewPassword))
+        var passwordToSet = !string.IsNullOrWhiteSpace(req.NewPassword) ? req.NewPassword : req.Password;
+        if (!string.IsNullOrWhiteSpace(passwordToSet))
         {
-            entity.PasswordHash = req.NewPassword;
+            entity.PasswordHash = PasswordHasher.HashPassword(passwordToSet);
             entity.PassUpdDate = DateTime.Now;
         }
 

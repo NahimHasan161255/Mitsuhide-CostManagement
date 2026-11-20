@@ -49,4 +49,5 @@ public class UpdateUserRequest
     public string? Biko { get; set; }
     public bool? DeleteFlg { get; set; }
     public string? NewPassword { get; set; }
+    public string? Password { get; set; }
 }

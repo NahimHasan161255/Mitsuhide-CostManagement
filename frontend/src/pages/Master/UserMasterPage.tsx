@@ -66,9 +66,15 @@ export interface UserItem {
 
 // Initial Default Values per AD1730C Specification
 const INITIAL_FORM_VALUES: Partial<UserItem> = {
+  userCd: '',
+  userName: '',
+  userNameR: '',
+  userNameK: '',
   tantoKbn: 1,
   userGrpCd: '1',
   syubetu: 1,
+  biko: '',
+  password: '',
   deleteFlg: false,
 };
 
@@ -233,6 +239,7 @@ export const UserMasterPage: React.FC = () => {
       setMode(targetMode);
       form.setFieldsValue({
         ...item,
+        password: '',
         deleteFlg: !!item.deleteFlg,
         passExpireDate: item.passExpireDate ? dayjs(item.passExpireDate) : undefined,
         userIdExpireDate: item.userIdExpireDate ? dayjs(item.userIdExpireDate) : undefined,
@@ -315,6 +322,8 @@ export const UserMasterPage: React.FC = () => {
         ...values,
         userCd: String(values.userCd).padStart(6, '0'),
         deleteFlg: !!values.deleteFlg,
+        password: values.password || undefined,
+        newPassword: values.password || undefined,
         passExpireDate: values.passExpireDate ? values.passExpireDate.format('YYYY/MM/DD') : undefined,
         userIdExpireDate: values.userIdExpireDate ? values.userIdExpireDate.format('YYYY/MM/DD') : undefined,
       };
@@ -682,6 +691,7 @@ export const UserMasterPage: React.FC = () => {
                   layout="vertical"
                   initialValues={INITIAL_FORM_VALUES}
                   disabled={mode === 'inquiry'}
+                  autoComplete="off"
                   style={{ marginTop: 8 }}
                 >
                   {/* Top Form Navigation & Mode Selector Bar */}
@@ -865,12 +875,13 @@ export const UserMasterPage: React.FC = () => {
                         <Form.Item
                           name="password"
                           label="パスワード"
-                          tooltip="8文字以上の英数字。新規登録時は必須です。"
+                          tooltip="新規登録時またはパスワード変更時に半角英数字で入力してください"
                           rules={mode === 'new' ? [{ required: true, message: 'パスワードを入力してください' }] : []}
                         >
                           <Input.Password
                             prefix={<LockOutlined style={{ color: '#94a3b8' }} />}
                             placeholder={mode === 'edit' ? '変更する場合のみ入力' : '半角英数字8桁以上'}
+                            autoComplete="new-password"
                           />
                         </Form.Item>
                       </Col>

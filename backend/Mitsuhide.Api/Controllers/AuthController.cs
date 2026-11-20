@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Mitsuhide.Application.Common.Security;
 using Mitsuhide.Application.DTOs.Auth;
 using Mitsuhide.Infrastructure.Data;
 
@@ -10,16 +12,19 @@ namespace Mitsuhide.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly IJwtTokenService _jwtTokenService;
 
-    public AuthController(ApplicationDbContext context)
+    public AuthController(ApplicationDbContext context, IJwtTokenService jwtTokenService)
     {
         _context = context;
+        _jwtTokenService = jwtTokenService;
     }
 
     /// <summary>
     /// ログオン認証 (AD1010C - Logon)
     /// </summary>
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto req)
     {
         if (string.IsNullOrWhiteSpace(req.UserCd) || string.IsNullOrWhiteSpace(req.Password))
@@ -57,9 +62,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        // Verify password
-        // Supports plain text stored or initial default passwords for flexibility
-        bool isPasswordValid = string.Equals(user.PasswordHash, req.Password, StringComparison.Ordinal);
+        // Verify password using BCrypt (supports automatic upgrade from legacy plain-text)
+        bool isPasswordValid = PasswordHasher.VerifyPassword(req.Password, user.PasswordHash);
 
         // Fallback for initial demo setup if empty or user123
         if (!isPasswordValid && string.IsNullOrEmpty(user.PasswordHash) && req.Password == "user123")
@@ -74,6 +78,12 @@ public class AuthController : ControllerBase
                 Success = false,
                 Message = "パスワードが正しくありません。"
             });
+        }
+
+        // Seamless migration: auto-upgrade legacy plain-text password to BCrypt hash in DB
+        if (PasswordHasher.NeedsRehash(user.PasswordHash))
+        {
+            user.PasswordHash = PasswordHasher.HashPassword(req.Password);
         }
 
         // Update last login date
@@ -135,12 +145,21 @@ public class AuthController : ControllerBase
             }
         }
 
+        // Issue real signed JWT token with user identity and claims
+        var token = _jwtTokenService.GenerateToken(
+            user.UserCd,
+            user.UserName,
+            user.UserGrpCd,
+            user.TantoKbn,
+            user.Syubetu
+        );
+
         return Ok(new LoginResponseDto
         {
             Success = true,
             Message = "ログインしました。",
             User = authUser,
-            Token = $"session_{user.UserCd}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+            Token = token,
             PasswordExpired = passwordExpired,
             PasswordExpiredMessage = passwordExpiredMsg,
             MonthlyClosingWarning = monthlyWarning
@@ -151,6 +170,7 @@ public class AuthController : ControllerBase
     /// パスワード変更 (AD1010C - F10 Password Change)
     /// </summary>
     [HttpPost("change-password")]
+    [Authorize]
     public async Task<ActionResult<LoginResponseDto>> ChangePassword([FromBody] ChangePasswordRequestDto req)
     {
         if (string.IsNullOrWhiteSpace(req.UserCd) || string.IsNullOrWhiteSpace(req.NewPassword))
@@ -183,12 +203,12 @@ public class AuthController : ControllerBase
             return Unauthorized(new LoginResponseDto
             {
                 Success = false,
-                Message = "このユーザーアカウントは無効化（削除フラグ設定）されているため、ログオンできません。(AD1010C)"
+                Message = "このユーザーアカウントは無効化（削除フラグ設定）されているため、操作できません。(AD1010C)"
             });
         }
 
-        // Validate old password if set
-        if (!string.IsNullOrEmpty(user.PasswordHash) && !string.Equals(user.PasswordHash, req.OldPassword, StringComparison.Ordinal))
+        // Validate old password using BCrypt
+        if (!string.IsNullOrEmpty(user.PasswordHash) && !PasswordHasher.VerifyPassword(req.OldPassword, user.PasswordHash))
         {
             return Unauthorized(new LoginResponseDto
             {
@@ -197,7 +217,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        user.PasswordHash = req.NewPassword;
+        // Store new password with BCrypt hash
+        user.PasswordHash = PasswordHasher.HashPassword(req.NewPassword);
         user.PassUpdDate = DateTime.Now;
         user.UpdDate = DateTime.Now;
         user.UpdUser = user.UserCd;
@@ -208,6 +229,49 @@ public class AuthController : ControllerBase
         {
             Success = true,
             Message = "パスワードを変更しました。"
+        });
+    }
+
+    /// <summary>
+    /// 現在のログインユーザー情報取得 (Auth Verification)
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<AuthUserDto>> GetCurrentUser()
+    {
+        var userCd = User.FindFirst("userCd")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userCd))
+        {
+            return Unauthorized(new { message = "認証情報が見つかりません。" });
+        }
+
+        var user = await _context.UserMaster.AsNoTracking().FirstOrDefaultAsync(u => u.UserCd == userCd && u.DelFg == 0);
+        if (user == null)
+        {
+            return NotFound(new { message = "ユーザー情報が見つかりません。" });
+        }
+
+        string? userGrpNm = null;
+        if (!string.IsNullOrEmpty(user.UserGrpCd))
+        {
+            var grp = await _context.UserGrpMaster.AsNoTracking().FirstOrDefaultAsync(g => g.UserGrpCd == user.UserGrpCd);
+            userGrpNm = grp?.UserGrpName;
+        }
+
+        return Ok(new AuthUserDto
+        {
+            UserCd = user.UserCd,
+            UserName = user.UserName,
+            UserNameR = user.UserNameR,
+            UserNameK = user.UserNameK,
+            TantoKbn = user.TantoKbn,
+            TantoKbnNm = GetTantoKbnName(user.TantoKbn),
+            UserGrpCd = user.UserGrpCd,
+            UserGrpNm = userGrpNm ?? (user.UserGrpCd == "9" ? "システム管理者グループ" : "一般グループ"),
+            Syubetu = user.Syubetu,
+            SyubetuNm = GetSyubetuName(user.Syubetu),
+            LoginDate = user.LoginDate,
+            PassUpdDate = user.PassUpdDate
         });
     }
 
