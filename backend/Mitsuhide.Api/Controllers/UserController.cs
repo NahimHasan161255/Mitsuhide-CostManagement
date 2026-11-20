@@ -80,7 +80,16 @@ public class UserController : ControllerBase
                 DeleteFlg = x.u.DelFg == 1,
                 LoginDate = x.u.LoginDate,
                 PassUpdDate = x.u.PassUpdDate,
-                UpdDate = x.u.UpdDate ?? x.u.NewDate
+                PassKigen = x.u.PassKigen,
+                UserKigen = x.u.UserKigen,
+                NewUser = x.u.NewUser,
+                NewDate = x.u.NewDate,
+                NewApid = x.u.NewApid,
+                NewWsnm = x.u.NewWsnm,
+                UpdUser = x.u.UpdUser,
+                UpdDate = x.u.UpdDate ?? x.u.NewDate,
+                UpdApid = x.u.UpdApid,
+                UpdWsnm = x.u.UpdWsnm
             })
             .ToListAsync();
 
