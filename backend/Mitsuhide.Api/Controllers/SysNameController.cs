@@ -55,7 +55,8 @@ public class SysNameController : ControllerBase
                 Nm1 = x.Nm1,
                 Nm2 = x.Nm2,
                 Date1 = x.Date1,
-                Date2 = x.Date2
+                Date2 = x.Date2,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -85,7 +86,8 @@ public class SysNameController : ControllerBase
                 NameCd = x.NameCd,
                 Ch1 = x.Ch1,
                 Ch2 = x.Ch2,
-                Nm1 = x.Nm1
+                Nm1 = x.Nm1,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -101,6 +103,7 @@ public class SysNameController : ControllerBase
         var exists = await _context.SysNameMaster.AnyAsync(x => x.NameKbn == req.NameKbn && x.NameCd == req.NameCd);
         if (exists) return Conflict(new { message = $"区分 {req.NameKbn} のコード {req.NameCd} は既に存在します。" });
 
+        var now = DateTime.Now;
         var entity = new AdMSysName
         {
             NameKbn = req.NameKbn,
@@ -109,9 +112,12 @@ public class SysNameController : ControllerBase
             Ch2 = req.Ch2,
             Nm1 = req.Nm1,
             Nm2 = req.Nm2,
-            NewDate = DateTime.Now,
+            NewDate = now,
             NewUser = "SYSTEM",
-            NewApid = "AD1760C"
+            NewApid = "AD1760C",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "AD1760C"
         };
 
         _context.SysNameMaster.Add(entity);
@@ -124,7 +130,8 @@ public class SysNameController : ControllerBase
             Ch1 = entity.Ch1,
             Ch2 = entity.Ch2,
             Nm1 = entity.Nm1,
-            Nm2 = entity.Nm2
+            Nm2 = entity.Nm2,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -136,6 +143,12 @@ public class SysNameController : ControllerBase
     {
         var entity = await _context.SysNameMaster.FirstOrDefaultAsync(x => x.NameKbn == nameKbn && x.NameCd == nameCd);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         entity.Ch1 = req.Ch1;
         entity.Ch2 = req.Ch2;

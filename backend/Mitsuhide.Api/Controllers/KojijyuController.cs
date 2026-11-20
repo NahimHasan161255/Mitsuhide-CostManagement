@@ -100,7 +100,8 @@ public class KojijyuController : ControllerBase
                 Biko1 = x.k.Biko1,
                 Biko2 = x.k.Biko2,
                 KojiBiko1 = x.k.KojiBiko1,
-                KojiBiko2 = x.k.KojiBiko2
+                KojiBiko2 = x.k.KojiBiko2,
+                UpdDate = x.k.UpdDate ?? x.k.NewDate
             })
             .ToListAsync();
 
@@ -179,7 +180,8 @@ public class KojijyuController : ControllerBase
                               Biko1 = k.Biko1,
                               Biko2 = k.Biko2,
                               KojiBiko1 = k.KojiBiko1,
-                              KojiBiko2 = k.KojiBiko2
+                              KojiBiko2 = k.KojiBiko2,
+                              UpdDate = k.UpdDate ?? k.NewDate
                           }).FirstOrDefaultAsync();
 
         if (item == null) return NotFound(new { message = $"工事コード {kojiCd}-{kojiSyu} は見つかりません。" });
@@ -247,12 +249,15 @@ public class KojijyuController : ControllerBase
             KojiBiko1 = dto.KojiBiko1,
             KojiBiko2 = dto.KojiBiko2,
             NewDate = DateTime.Now,
-            NewApid = "GK0010"
+            NewApid = "GK0010",
+            UpdDate = DateTime.Now,
+            UpdApid = "GK0010"
         };
 
         _context.Kojijyu.Add(entity);
         await _context.SaveChangesAsync();
 
+        dto.UpdDate = entity.UpdDate;
         return CreatedAtAction(nameof(GetByKeys), new { kojiCd = entity.KojiCd, kojiSyu = entity.KojiSyu }, dto);
     }
 
@@ -264,6 +269,12 @@ public class KojijyuController : ControllerBase
     {
         var entity = await _context.Kojijyu.FirstOrDefaultAsync(x => x.KojiCd == kojiCd && x.KojiSyu == kojiSyu && x.DelFg == 0);
         if (entity == null) return NotFound(new { message = $"工事コード {kojiCd}-{kojiSyu} は見つかりません。" });
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && dto.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - dto.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         var totalNk = dto.Keiyaku0Nk + (dto.Keiyaku1Nk ?? 0) + (dto.Keiyaku2Nk ?? 0) + (dto.Keiyaku3Nk ?? 0);
         var totalKm = dto.Keiyaku0Km + (dto.Keiyaku1Km ?? 0) + (dto.Keiyaku2Km ?? 0) + (dto.Keiyaku3Km ?? 0);

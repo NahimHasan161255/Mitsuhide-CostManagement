@@ -47,6 +47,7 @@ export interface UserGrpItem {
   userGrpName: string;
   runAplCnt: number;
   permissions?: string[];
+  updDate?: string;
 }
 
 const INITIAL_FORM_VALUES: Partial<UserGrpItem> = {
@@ -183,28 +184,54 @@ export const UserGrpMasterPage: React.FC = () => {
       setIsSaving(true);
       const values = await form.validateFields();
       if (mode === 'edit' && currentRecord) {
-        await fetch(`${API_BASE_URL}/api/usergrp/${currentRecord.userGrpCd}`, {
+        const payload = {
+          ...values,
+          updDate: currentRecord.updDate,
+        };
+        const res = await fetch(`${API_BASE_URL}/api/usergrp/${currentRecord.userGrpCd}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
-        }).catch(() => {});
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchGroups();
+            },
+          });
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '更新処理に失敗しました。');
+        }
         message.success(`グループCD ${currentRecord.userGrpCd} を更新しました。`);
-        setData((prev) => prev.map((item) => (item.userGrpCd === currentRecord.userGrpCd ? { ...item, ...values } : item)));
-        setCurrentRecord({ ...currentRecord, ...values });
+        const updated = { ...currentRecord, ...payload, updDate: new Date().toISOString() };
+        setData((prev) => prev.map((item) => (item.userGrpCd === currentRecord.userGrpCd ? updated : item)));
+        setCurrentRecord(updated);
       } else {
-        await fetch(`${API_BASE_URL}/api/usergrp`, {
+        const res = await fetch(`${API_BASE_URL}/api/usergrp`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '新規登録処理に失敗しました。');
+        }
+        const created = await res.json().catch(() => values);
         message.success(`グループCD ${values.userGrpCd} を新規登録しました。`);
-        setData((prev) => [...prev, values]);
-        setCurrentRecord(values);
+        setData((prev) => [...prev, created]);
+        setCurrentRecord(created);
         setMode('edit');
       }
       fetchGroups();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      message.error(err.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }

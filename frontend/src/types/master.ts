@@ -22,6 +22,7 @@ export interface Jyucyu {
   biko1?: string;
   biko2?: string;
   biko3?: string;
+  updDate?: string;
 }
 
 export interface Siire {
@@ -48,6 +49,7 @@ export interface Siire {
   biko1?: string;
   biko2?: string;
   biko3?: string;
+  updDate?: string;
 }
 
 export interface PagedResult<T> {

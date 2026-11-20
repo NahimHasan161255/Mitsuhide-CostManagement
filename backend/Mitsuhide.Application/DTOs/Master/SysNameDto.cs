@@ -10,6 +10,7 @@ public class SysNameDto
     public decimal? Nm2 { get; set; }
     public int? Date1 { get; set; }
     public int? Date2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateSysNameRequest
@@ -28,4 +29,5 @@ public class UpdateSysNameRequest
     public string? Ch2 { get; set; }
     public decimal? Nm1 { get; set; }
     public decimal? Nm2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

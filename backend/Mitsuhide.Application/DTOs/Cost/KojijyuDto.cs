@@ -61,6 +61,7 @@ public class KojijyuDto
     public string? Biko2 { get; set; }
     public string? KojiBiko1 { get; set; }
     public string? KojiBiko2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateOrUpdateKojijyuDto
@@ -111,4 +112,5 @@ public class CreateOrUpdateKojijyuDto
     public string? Biko2 { get; set; }
     public string? KojiBiko1 { get; set; }
     public string? KojiBiko2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

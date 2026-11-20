@@ -47,6 +47,7 @@ interface SiireRecord {
   zeiGk: number;
   siireGkKm: number;
   biko?: string;
+  updDate?: string;
 }
 
 const YOSA_SYU_OPTIONS = [
@@ -202,24 +203,48 @@ export const SR0010Page: React.FC = () => {
     try {
       const values = await form.validateFields();
       if (editingItem) {
-        await fetch(`${API_BASE_URL}/api/siiredata/${editingItem.unqId}`, {
+        const payload = {
+          ...values,
+          updDate: editingItem.updDate,
+        };
+        const res = await fetch(`${API_BASE_URL}/api/siiredata/${editingItem.unqId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
         });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchData();
+            },
+          });
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '仕入伝票の更新に失敗しました。');
+        }
         message.success('仕入伝票を更新しました。');
       } else {
-        await fetch(`${API_BASE_URL}/api/siiredata`, {
+        const res = await fetch(`${API_BASE_URL}/api/siiredata`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(values),
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || '仕入伝票の登録に失敗しました。');
+        }
         message.success('仕入伝票を登録しました。');
       }
       setIsModalOpen(false);
       fetchData();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      message.error(err.message || '入力エラーがあります。確認してください。');
     }
   };
 

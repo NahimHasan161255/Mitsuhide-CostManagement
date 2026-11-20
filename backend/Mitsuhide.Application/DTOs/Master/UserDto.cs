@@ -22,6 +22,7 @@ public class UserDto
     public bool DeleteFlg { get; set; }
     public DateTime? LoginDate { get; set; }
     public DateTime? PassUpdDate { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateUserRequest
@@ -50,4 +51,5 @@ public class UpdateUserRequest
     public bool? DeleteFlg { get; set; }
     public string? NewPassword { get; set; }
     public string? Password { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

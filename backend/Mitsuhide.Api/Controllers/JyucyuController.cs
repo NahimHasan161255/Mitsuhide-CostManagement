@@ -80,7 +80,8 @@ public class JyucyuController : ControllerBase
                 ToriKb = x.ToriKb,
                 Biko1 = x.Biko1,
                 Biko2 = x.Biko2,
-                Biko3 = x.Biko3
+                Biko3 = x.Biko3,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -126,7 +127,8 @@ public class JyucyuController : ControllerBase
             ToriKb = x.ToriKb,
             Biko1 = x.Biko1,
             Biko2 = x.Biko2,
-            Biko3 = x.Biko3
+            Biko3 = x.Biko3,
+            UpdDate = x.UpdDate ?? x.NewDate
         });
     }
 
@@ -139,6 +141,7 @@ public class JyucyuController : ControllerBase
         var exists = await _context.Jyucyu.AnyAsync(e => e.Code == dto.Code);
         if (exists) return Conflict(new { message = $"受注先コード {dto.Code} は既に登録されています。" });
 
+        var now = DateTime.Now;
         var entity = new AdMJyucyu
         {
             Code = dto.Code,
@@ -164,13 +167,16 @@ public class JyucyuController : ControllerBase
             Biko1 = dto.Biko1,
             Biko2 = dto.Biko2,
             Biko3 = dto.Biko3,
-            NewDate = DateTime.Now,
-            NewApid = "AD1780C"
+            NewDate = now,
+            NewApid = "AD1780C",
+            UpdDate = now,
+            UpdApid = "AD1780C"
         };
 
         _context.Jyucyu.Add(entity);
         await _context.SaveChangesAsync();
 
+        dto.UpdDate = entity.UpdDate;
         return CreatedAtAction(nameof(GetByCode), new { code = entity.Code }, dto);
     }
 
@@ -182,6 +188,12 @@ public class JyucyuController : ControllerBase
     {
         var entity = await _context.Jyucyu.FirstOrDefaultAsync(e => e.Code == code);
         if (entity == null) return NotFound(new { message = $"受注先コード {code} は見つかりません。" });
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && dto.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - dto.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         entity.Name = dto.Name;
         entity.Ryaku = dto.Ryaku;

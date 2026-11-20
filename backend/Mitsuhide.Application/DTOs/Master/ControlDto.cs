@@ -9,6 +9,7 @@ public class ControlDto
     public decimal? Nm2 { get; set; }
     public string? Ch1 { get; set; }
     public string? Ch2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }
 
 public class CreateControlRequest
@@ -29,4 +30,5 @@ public class UpdateControlRequest
     public decimal? Nm2 { get; set; }
     public string? Ch1 { get; set; }
     public string? Ch2 { get; set; }
+    public DateTime? UpdDate { get; set; }
 }

@@ -16,6 +16,7 @@ import {
   Select,
   Tabs,
   Tooltip,
+  Modal,
 } from 'antd';
 import {
   FormOutlined,
@@ -276,22 +277,39 @@ export const JyucyuMasterPage: React.FC = () => {
       setIsSaving(true);
       const values = await form.validateFields();
       if (mode === 'edit' && currentRecord) {
-        await apiClient.put(`/jyucyu/${currentRecord.code}`, values).catch(() => {});
+        const payload = {
+          ...values,
+          updDate: currentRecord.updDate,
+        };
+        await apiClient.put(`/jyucyu/${currentRecord.code}`, payload);
         message.success(`受注先コード ${currentRecord.code} を更新しました。`);
         // Update local state
-        setData((prev) => prev.map((item) => (item.code === currentRecord.code ? { ...item, ...values } : item)));
-        setCurrentRecord({ ...currentRecord, ...values });
+        const updated = { ...currentRecord, ...payload, updDate: new Date().toISOString() };
+        setData((prev) => prev.map((item) => (item.code === currentRecord.code ? updated : item)));
+        setCurrentRecord(updated);
       } else {
-        await apiClient.post('/jyucyu', values).catch(() => {});
+        const res = await apiClient.post('/jyucyu', values);
         message.success(`受注先コード ${values.code} を新規登録しました。`);
         // Add to local state
-        setData((prev) => [...prev, values]);
-        setCurrentRecord(values);
+        const created = res.data || values;
+        setData((prev) => [...prev, created]);
+        setCurrentRecord(created);
         setMode('edit');
       }
       fetchData();
-    } catch {
-      message.error('入力必須項目またはフォーマットを確認してください。');
+    } catch (err: any) {
+      if (err?.response?.status === 409) {
+        Modal.error({
+          title: '排他エラー (409 Conflict)',
+          content: err.response?.data?.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+          okText: '最新データを再読み込み',
+          onOk: () => {
+            fetchData();
+          },
+        });
+        return;
+      }
+      message.error(err?.response?.data?.message || '入力必須項目またはフォーマットを確認してください。');
     } finally {
       setIsSaving(false);
     }

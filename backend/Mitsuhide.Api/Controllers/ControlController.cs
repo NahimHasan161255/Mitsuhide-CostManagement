@@ -49,7 +49,8 @@ public class ControlController : ControllerBase
                 Nm1 = x.Nm1,
                 Nm2 = x.Nm2,
                 Ch1 = x.Ch1,
-                Ch2 = x.Ch2
+                Ch2 = x.Ch2,
+                UpdDate = x.UpdDate ?? x.NewDate
             })
             .ToListAsync();
 
@@ -71,6 +72,7 @@ public class ControlController : ControllerBase
         var exists = await _context.ControlMaster.AnyAsync(x => x.SubSysCd == req.SubSysCd && x.ProgId == req.ProgId);
         if (exists) return Conflict(new { message = $"サブシステム {req.SubSysCd} のプログラム {req.ProgId} は既に存在します。" });
 
+        var now = DateTime.Now;
         var entity = new AdMControl
         {
             SubSysCd = req.SubSysCd,
@@ -80,9 +82,12 @@ public class ControlController : ControllerBase
             Nm2 = req.Nm2,
             Ch1 = req.Ch1,
             Ch2 = req.Ch2,
-            NewDate = DateTime.Now,
+            NewDate = now,
             NewUser = "SYSTEM",
-            NewApid = "AD1770C"
+            NewApid = "AD1770C",
+            UpdDate = now,
+            UpdUser = "SYSTEM",
+            UpdApid = "AD1770C"
         };
 
         _context.ControlMaster.Add(entity);
@@ -96,7 +101,8 @@ public class ControlController : ControllerBase
             Nm1 = entity.Nm1,
             Nm2 = entity.Nm2,
             Ch1 = entity.Ch1,
-            Ch2 = entity.Ch2
+            Ch2 = entity.Ch2,
+            UpdDate = entity.UpdDate
         });
     }
 
@@ -108,6 +114,12 @@ public class ControlController : ControllerBase
     {
         var entity = await _context.ControlMaster.FirstOrDefaultAsync(x => x.SubSysCd == subSysCd && x.ProgId == progId);
         if (entity == null) return NotFound();
+
+        // 排他制御 (Optimistic Concurrency Check)
+        if (entity.UpdDate.HasValue && req.UpdDate.HasValue && Math.Abs((entity.UpdDate.Value - req.UpdDate.Value).TotalSeconds) > 1)
+        {
+            return Conflict(new { message = "他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてから再度操作してください。(排他エラー / 409 Conflict)" });
+        }
 
         entity.KanriName = req.KanriName;
         entity.Nm1 = req.Nm1;

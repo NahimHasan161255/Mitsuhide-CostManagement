@@ -17,6 +17,7 @@ import {
   Tooltip,
   Checkbox,
   DatePicker,
+  Modal,
 } from 'antd';
 import {
   FormOutlined,
@@ -62,6 +63,7 @@ export interface UserItem {
   biko?: string;
   loginDate?: string;
   passUpdDate?: string;
+  updDate?: string;
 }
 
 // Initial Default Values per AD1730C Specification
@@ -334,21 +336,39 @@ export const UserMasterPage: React.FC = () => {
           return;
         }
 
+        const editPayload = {
+          ...payload,
+          updDate: currentRecord.updDate,
+        };
+
         const res = await fetch(`${API_BASE_URL}/api/user/${currentRecord.userCd}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'X-User-Cd': currentUser?.userCd || '',
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(editPayload),
         });
+        if (res.status === 409) {
+          const errData = await res.json().catch(() => ({}));
+          Modal.error({
+            title: '排他エラー (409 Conflict)',
+            content: errData.message || '他のユーザーまたは別画面によって既にデータが更新されています。最新データを再読み込みしてください。',
+            okText: '最新データを再読み込み',
+            onOk: () => {
+              fetchUsers();
+            },
+          });
+          return;
+        }
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.message || '更新処理に失敗しました。');
         }
         message.success(`ユーザーコード ${currentRecord.userCd} を更新しました。`);
-        setData((prev) => prev.map((item) => (item.userCd === currentRecord.userCd ? { ...item, ...payload } : item)));
-        setCurrentRecord({ ...currentRecord, ...payload });
+        const updated = { ...currentRecord, ...editPayload, updDate: new Date().toISOString() };
+        setData((prev) => prev.map((item) => (item.userCd === currentRecord.userCd ? updated : item)));
+        setCurrentRecord(updated);
       } else {
         const res = await fetch(`${API_BASE_URL}/api/user`, {
           method: 'POST',
